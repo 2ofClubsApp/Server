@@ -12,3 +12,10 @@ type Event struct {
 	Location    string
 	fee         float64
 }
+
+const (
+	ColumnDateTime = "date_time"
+	ColumnDescription= "description"
+	ColumnLocation = "location"
+	ColumnDateFee = "fee"
+)

@@ -3,13 +3,12 @@ package models
 type Student struct {
 	Person
 	IsHelping bool
-	Tags      []Tag   `gorm:"many2many:student_tag"`
-	Attends   []Event `gorm:"many2many:student_event"`
+	Chats     []Chat  `gorm:"many2many:student_chat;association_foreignkey:ID;foreignkey:ID"`
+	Tags      []Tag   `gorm:"many2many:student_tag;association_foreignkey:ID;foreignkey:ID"`
+	Attends   []Event `gorm:"many2many:student_event;association_foreignkey:ID;foreignkey:ID"`
+	Swipes    []Club  `gorm:"many2many:student_swipe;association_foreignkey:ID;foreignkey:ID"`
 }
 
-func (s *Student) SetIsHelping(isHelping bool) {
-	s.IsHelping = isHelping
-}
-func (s *Student) GetIsHelping() bool {
-	return s.IsHelping
-}
+const (
+	ColumnIsHelping = "is_helping"
+)
