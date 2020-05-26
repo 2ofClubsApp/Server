@@ -2,7 +2,7 @@ package app
 
 import (
 	"../config"
-	"../models"
+	"./models"
 	"./handlers"
 	"./logger"
 	"fmt"

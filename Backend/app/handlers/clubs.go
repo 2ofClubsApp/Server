@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"../../models"
+	"../models"
 	"../common"
 	"fmt"
 	"github.com/jinzhu/gorm"

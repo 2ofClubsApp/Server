@@ -1,4 +1,4 @@
-package status
+package models
 
 const (
 	FAILURE = "Student Not Found"

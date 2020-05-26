@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"../../models"
+	"../models"
 	"../common"
-	"../status"
+	"../models/status"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
