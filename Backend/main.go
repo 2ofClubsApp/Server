@@ -9,4 +9,5 @@ func main() {
 	dbConfig := config.GetConfig()
 	api := app.App{}
 	api.Initialize(dbConfig)
+	api.Run(":8080")
 }
