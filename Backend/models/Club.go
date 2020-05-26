@@ -10,8 +10,12 @@ type Club struct {
 	HelpNeeded bool
 }
 
+func NewClub() *Club {
+	return &Club{Person: NewPerson(), Tags: []Tag{}, Hosts: []Event{}, Chats: []Chat{}}
+}
+
 const (
-	ColumnSize = "size"
-	ColumnBio = "bio"
+	ColumnSize       = "size"
+	ColumnBio        = "bio"
 	ColumnHelpNeeded = "help_needed"
 )

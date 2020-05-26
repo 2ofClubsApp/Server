@@ -9,6 +9,9 @@ type Person struct {
 	Password string
 }
 
+func NewPerson() Person{
+	return Person{}
+}
 const (
 	ColumnUsername  = "username"
 	ColumnEmail     = "email"

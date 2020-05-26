@@ -3,8 +3,8 @@ package app
 import (
 	"../config"
 	"../models"
-	"./Logger"
 	"./handlers"
+	"./logger"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
@@ -37,11 +37,11 @@ func (app *App) Initialize(config *config.DBConfig) {
 	}
 	app.db = db
 	app.router = mux.NewRouter()
-	app.router.Use(Logger.LoggingMiddleware)
+	app.router.Use(logger.LoggingMiddleware)
 	app.setRoutes()
 	fmt.Println("Database Online")
 	db.SingularTable(true)
-	db.CreateTable(&models.Student{}, &models.Club{}, &models.Event{}, &models.Chat{}, &models.Log{})
+	db.CreateTable(models.NewStudent(), models.NewPerson(), models.NewEvent(), models.NewChat(), models.NewLog())
 }
 
 func (app *App) setRoutes() {

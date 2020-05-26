@@ -1,12 +1,17 @@
-package Status
+package status
 
 const (
-	FAILURE = 0
-	SUCCESS = 1
+	FAILURE = "Student Not Found"
+	SUCCESS = "Student Found"
 )
 
-type Status struct {
-	Status int
+type T struct {}
+
+type status struct {
+	Message string
 	Data   interface{}
 }
 
+func New() *status {
+	return &status{Message: SUCCESS, Data: T{}}
+}

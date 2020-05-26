@@ -13,6 +13,11 @@ type Event struct {
 	fee         float64
 }
 
+func NewEvent() *Event{
+	return &Event{}
+}
+
+
 const (
 	ColumnDateTime = "date_time"
 	ColumnDescription= "description"
