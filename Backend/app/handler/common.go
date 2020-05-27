@@ -1,7 +1,7 @@
-package handlers
+package handler
 
 import (
-	"../models"
+	"../model"
 	"encoding/json"
 	"fmt"
 	"github.com/jinzhu/gorm"
@@ -9,16 +9,16 @@ import (
 )
 
 /*
-	Common methods shared amongst the different models
+	Common methods shared amongst the different model
 */
 
 func RecordExists(db *gorm.DB, column string, val string, t interface{}) bool {
 	return !db.Where(column+"= ?", val).First(t).RecordNotFound()
 }
 
-func ExtractPersonInfo(r *http.Request) models.Person {
+func ExtractPersonInfo(r *http.Request) model.Person {
 	decoder := json.NewDecoder(r.Body)
-	p := models.NewPerson()
+	p := model.NewPerson()
 	decoder.Decode(&p)
 	return p
 }

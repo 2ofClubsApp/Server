@@ -1,8 +1,7 @@
-package handlers
+package handler
 
 import (
-	"../models"
-	"../common"
+	"../model"
 	"fmt"
 	"github.com/jinzhu/gorm"
 	"net/http"
@@ -13,10 +12,10 @@ func GetClubs(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request) {
-	c := models.NewClub()
-	p := common.ExtractPersonInfo(r)
+	c := model.NewClub()
+	p := ExtractPersonInfo(r)
 	c.Person = p
-	found := common.RecordExists(db, models.ColumnUsername, c.Username, c)
+	found := RecordExists(db, model.ColumnUsername, c.Username, c)
 	if !found {
 		db.Create(&c)
 	}
