@@ -1,9 +1,7 @@
-package handlers
+package handler
 
 import (
-	"../models"
-	"../common"
-	"../models/status"
+	"../model"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
@@ -12,10 +10,10 @@ import (
 
 func CreateStudent(db *gorm.DB, _ http.ResponseWriter, r *http.Request) {
 	// Check if content type is application/json?
-	s := models.NewStudent()
-	p := common.ExtractPersonInfo(r)
+	s := model.NewStudent()
+	p := ExtractPersonInfo(r)
 	s.Person = p
-	found := common.RecordExists(db, models.ColumnUsername, s.Username, s)
+	found := RecordExists(db, model.ColumnUsername, s.Username, s)
 	if !found {
 		db.Create(&s)
 	}
@@ -23,17 +21,17 @@ func CreateStudent(db *gorm.DB, _ http.ResponseWriter, r *http.Request) {
 
 func GetStudent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	username := vars[models.ColumnUsername]
-	s := models.NewStudent()
-	ss := status.New()
+	username := vars[model.ColumnUsername]
+	s := model.NewStudent()
+	ss := model.New()
 	// Defaults will be overridden when obtaining data and being inserted into struct except for null
-	found := common.RecordExists(db, models.ColumnUsername, username, s)
+	found := RecordExists(db, model.ColumnUsername, username, s)
 	if !found {
-		ss.Message = status.FAILURE
+		ss.Message = model.FAILURE
 	} else {
 		ss.Data = s
 	}
-	common.WriteData(common.ParseJSON(ss), http.StatusOK, w)
+	WriteData(ParseJSON(ss), http.StatusOK, w)
 }
 
 func UpdateStudent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {

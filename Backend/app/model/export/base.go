@@ -1,4 +1,4 @@
-package exports
+package export
 
 const (
 	ColumnID        = "id"

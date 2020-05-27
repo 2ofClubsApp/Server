@@ -2,9 +2,9 @@ package app
 
 import (
 	"../config"
-	"./models"
-	"./handlers"
+	"./handler"
 	"./logger"
+	"./model"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
@@ -14,7 +14,7 @@ import (
 )
 
 type routeHandler func(w http.ResponseWriter, r *http.Request)
-type handler func(db *gorm.DB, w http.ResponseWriter, r *http.Request)
+type hdlr func(db *gorm.DB, w http.ResponseWriter, r *http.Request)
 
 type App struct {
 	db     *gorm.DB
@@ -41,26 +41,26 @@ func (app *App) Initialize(config *config.DBConfig) {
 	app.setRoutes()
 	fmt.Println("Database Online")
 	db.SingularTable(true)
-	db.CreateTable(models.NewStudent(), models.NewPerson(), models.NewEvent(), models.NewChat(), models.NewLog())
+	db.CreateTable(model.NewStudent(), model.NewPerson(), model.NewEvent(), model.NewChat(), model.NewLog())
 }
 
 func (app *App) setRoutes() {
 	// Student Routes
-	app.Post("/students", app.Handle(handlers.CreateStudent))
-	app.Get("/students/{username}", app.Handle(handlers.GetStudent))
-	app.Put("/students/{username}", app.Handle(handlers.UpdateStudent))
+	app.Post("/students", app.Handle(handler.CreateStudent))
+	app.Get("/students/{username}", app.Handle(handler.GetStudent))
+	app.Put("/students/{username}", app.Handle(handler.UpdateStudent))
 
 	// Club routes
-	app.Get("/clubs", app.Handle(handlers.GetClubs))
-	app.Post("/clubs", app.Handle(handlers.CreateClub))
-	app.Get("/clubs/tags/{tag}", app.Handle(handlers.GetClubsTag))
-	app.Get("/clubs/{username}", app.Handle(handlers.GetClub))
-	app.Put("/clubs/{username}", app.Handle(handlers.UpdateClub))
-	app.Get("/clubs/events", app.Handle(handlers.GetEvents))
-	app.Get("/clubs/events/{username}", app.Handle(handlers.GetEvent))
-	app.Post("/clubs/events/{username}", app.Handle(handlers.CreateEvent))
-	app.Put("/clubs/events/{username}", app.Handle(handlers.UpdateEvent))
-	app.Delete("/clubs/events/{username}", app.Handle(handlers.DeleteEvent))
+	app.Get("/clubs", app.Handle(handler.GetClubs))
+	app.Post("/clubs", app.Handle(handler.CreateClub))
+	app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag))
+	app.Get("/clubs/{username}", app.Handle(handler.GetClub))
+	app.Put("/clubs/{username}", app.Handle(handler.UpdateClub))
+	app.Get("/clubs/events", app.Handle(handler.GetEvents))
+	app.Get("/clubs/events/{username}", app.Handle(handler.GetEvent))
+	app.Post("/clubs/events/{username}", app.Handle(handler.CreateEvent))
+	app.Put("/clubs/events/{username}", app.Handle(handler.UpdateEvent))
+	app.Delete("/clubs/events/{username}", app.Handle(handler.DeleteEvent))
 
 	// Chat Routes
 
@@ -86,7 +86,7 @@ func (app *App) Run(port string) {
 	http.ListenAndServe(port, app.router)
 }
 
-func (app *App) Handle(h handler) func(w http.ResponseWriter, r *http.Request) {
+func (app *App) Handle(h hdlr) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		h(app.db, w, r)
 	}
