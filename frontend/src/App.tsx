@@ -2,7 +2,7 @@ import React from 'react';
 import {LandingPage} from "./containers/Landing Page";
 import {BrowserRouter, Route, Switch} from "react-router-dom";
 import Login from "./components/Login";
-
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 /*
 Notes: Conditional rendering for the "/" route
