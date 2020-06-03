@@ -1,6 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap');
 /* 200, 300, 400, 700 */
-
 html {
     font-size: 16px;
     font-family: "Poppins", Helvetica, sans-serif;
@@ -13,6 +12,10 @@ body {
 
 .test{
     color: red;
+}
+
+.test:hover {
+    color:red;
 }
 
 hr.rounded {
@@ -38,6 +41,10 @@ hr.rounded {
     margin: 25vh 0 0 0;
 }
 
+.landing-title:hover {
+    cursor: default;
+}
+
 .landing-subtitle {
     font-family: "Poppins", Helvetica, sans-serif;
     font-size: 2rem;
@@ -45,6 +52,10 @@ hr.rounded {
     text-shadow: 3px 3px 3px rgba(55, 58, 143, 0.6);
     text-align: center;
     color: white;
+}
+
+.landing-subtitle:hover {
+    cursor: default;
 }
 
 .landing-text {
@@ -58,3 +69,14 @@ hr.rounded {
     margin: 1rem;
 }
 
+.landing-text:hover {
+    color: rgba(106, 189, 226, 1);
+    cursor: pointer;
+}
+
+/*style={{fontSize:"1.25rem", backgroundColor:"white", color: "#696DE9", textTransform: "uppercase", padding: "1rem 2rem", margin: "10vh 0 0 0", borderRadius: "1rem"}*/
+
+.btn-flat {
+    background-color: purple;
+    color: white;
+  }

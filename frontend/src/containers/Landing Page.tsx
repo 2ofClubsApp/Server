@@ -14,6 +14,15 @@ export const LandingPage = () => {
         history.replace({pathname: path})
     };
 
+    const signup = {
+        fontSize:"1.25rem", 
+        backgroundColor:"white", 
+        color: "#696DE9", 
+        padding: "1rem 2rem", 
+        margin: "10vh 0 0 0", 
+        borderRadius: "1rem"
+    };
+
     return (
  
         <Jumbotron fluid bsPrefix="landing">
@@ -29,12 +38,12 @@ export const LandingPage = () => {
                 </Row>
                 <Row >
                     <Col xs className="text-center">
-                        <Button style={{fontSize:"1.25rem", backgroundColor:"white", color: "#696DE9", textTransform: "uppercase", padding: "1rem 2rem", margin: "10vh 0 0 0", borderRadius: "1rem"}} onClick={() => changeRoute('/Signup/signup')}>Sign up</Button>
+                        <Button style={signup} onClick={() => changeRoute('/Signup/signup')}>SIGN UP</Button>
                     </Col>
                 </Row>
                 <Row >
                     <Col xs className="text-center">
-                        <h3 className="landing-text">CONTINUE WITHOUT ACCOUNT</h3>
+                        <h3 className="landing-text" onClick={() => changeRoute('/login')}>CONTINUE WITHOUT ACCOUNT</h3>
                     </Col>
                 </Row>
             </Container>
