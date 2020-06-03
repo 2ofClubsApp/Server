@@ -3,7 +3,7 @@ import Form from "react-bootstrap/Form";
 import Button from "react-bootstrap/Button";
 import Formz from "./Signup/Form/Form";
 import axios from '../axios'
-import '../App.css';
+import '../app.css';
 
 
 const Login = () => {
