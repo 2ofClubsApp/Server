@@ -7,6 +7,7 @@ type Person struct {
 	Username string `gorm: "UNIQUE"`
 	Email    string `gorm:"UNIQUE"`
 	Password string
+	//ApiKey   string `gorm:"UNIQUE"`
 }
 
 func NewPerson() Person{
@@ -16,4 +17,8 @@ const (
 	ColumnUsername  = "username"
 	ColumnEmail     = "email"
 	ColumnPassword  = "password"
+	ColumnID        = "id"
+	ColumnCreatedAt = "created_at"
+	ColumnDeletedAt = "deleted_at"
 )
+
