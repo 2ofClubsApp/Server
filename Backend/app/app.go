@@ -63,7 +63,6 @@ func (app *App) setRoutes() {
 	app.Delete("/clubs/events/{username}", app.Handle(handler.DeleteEvent))
 
 	// Chat Routes
-
 }
 
 func (app *App) Post(path string, f routeHandler) {

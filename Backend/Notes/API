@@ -3,7 +3,6 @@ Supported API Calls
 --------
 Students
 --------
-
 /Students/
     - POST: Create a new student
 

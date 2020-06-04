@@ -1,4 +1,4 @@
-package export
+package model
 
 const (
 	ColumnChatID = "chat_id"
@@ -7,5 +7,4 @@ const (
 	ColumnEventID = "event_id"
 	ColumnTagID = "tag_id"
 	ColumnStudentID = "student_id"
-
 )

@@ -12,9 +12,11 @@ func CreateStudent(db *gorm.DB, _ http.ResponseWriter, r *http.Request) {
 	// Check if content type is application/json?
 	s := model.NewStudent()
 	p := ExtractPersonInfo(r)
+	pass, hashed := GenerateSaltedPass(p.Password)
+	p.Password = pass
 	s.Person = p
 	found := RecordExists(db, model.ColumnUsername, s.Username, s)
-	if !found {
+	if !found && hashed {
 		db.Create(&s)
 	}
 }
