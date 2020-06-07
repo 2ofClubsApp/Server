@@ -4,14 +4,37 @@ import (
 	"../model"
 	"encoding/json"
 	"fmt"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
 	"net/http"
+	"time"
 )
 
 /*
 	Common methods shared amongst the different models
 */
+
+func NotFound() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		WriteData("Resource Not Found", http.StatusNotFound, w)
+	})
+}
+
+func GenerateJWT(subject string) (string, error) {
+	token := jwt.New(jwt.SigningMethodHS256)
+	claims := token.Claims.(jwt.MapClaims)
+	sysTime := time.Now()
+	claims["iat"] = sysTime
+	claims["exp"] = sysTime.Add(time.Minute * 5).Unix()
+	claims["sub"] = subject
+	// Note: This must be changed to an env variable later
+	tokenString, err := token.SignedString([]byte("2ofClubs"))
+	if err != nil {
+		return "", err
+	}
+	return tokenString, nil
+}
 
 func GenerateSaltedPass(password string) (string, bool) {
 	saltedHashPass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)

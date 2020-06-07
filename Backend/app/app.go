@@ -36,10 +36,10 @@ func (app *App) Initialize(config *config.DBConfig) {
 		log.Fatal("Unable to connect to database\n", err)
 	}
 	app.db = db
-	app.router = mux.NewRouter()
+	app.router = mux.NewRouter().StrictSlash(true)
 	app.router.Use(logger.LoggingMiddleware)
 	app.setRoutes()
-	fmt.Println("Database Online")
+	log.Println("Connected to Database")
 	db.SingularTable(true)
 	db.CreateTable(model.NewStudent(), model.NewPerson(), model.NewEvent(), model.NewChat(), model.NewLog())
 }
@@ -63,10 +63,13 @@ func (app *App) setRoutes() {
 	app.Delete("/clubs/events/{username}", app.Handle(handler.DeleteEvent))
 
 	// Chat Routes
+
+	// 404 Route
+	app.router.NotFoundHandler = handler.NotFound()
 }
 
 func (app *App) Post(path string, f routeHandler) {
-	app.router.HandleFunc(path, f).Methods(http.MethodPost)
+	app.router.HandleFunc(path, f).Methods(http.MethodPost).Queries()
 }
 
 func (app *App) Get(path string, f routeHandler) {

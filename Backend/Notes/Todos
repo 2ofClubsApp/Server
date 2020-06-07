@@ -1,0 +1,4 @@
+- Hash passwords (Done)
+- Setup JWT and login tokens to securely access API
+- Redirect 405's to 404's? (Optional)
+- Remove logs from "pq: relation already exists" (Optional)

@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-func CreateStudent(db *gorm.DB, _ http.ResponseWriter, r *http.Request) {
+func CreateStudent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	// Check if content type is application/json?
 	s := model.NewStudent()
 	p := ExtractPersonInfo(r)
@@ -18,6 +18,9 @@ func CreateStudent(db *gorm.DB, _ http.ResponseWriter, r *http.Request) {
 	found := RecordExists(db, model.ColumnUsername, s.Username, s)
 	if !found && hashed {
 		db.Create(&s)
+		if key, err := GenerateJWT(s.Username); err == nil {
+			WriteData(key, http.StatusCreated, w)
+		}
 	}
 }
 
