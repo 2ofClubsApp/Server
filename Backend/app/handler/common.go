@@ -21,6 +21,30 @@ func NotFound() http.Handler {
 	})
 }
 
+/*
+Note: Need to add more authentication checks later (This is temporary)
+ */
+func IsValidJWT(w http.ResponseWriter, r *http.Request) bool {
+	if token := r.Header["Token"]; token != nil {
+		if t, err := jwt.Parse(token[0], kf); err == nil {
+			if t.Valid {
+				return true
+			}
+		}
+	}
+	WriteData("Unauthorized", http.StatusUnauthorized, w)
+	return false
+}
+
+func kf(token *jwt.Token) (interface{}, error) {
+	// Verifying that the signing method is the same before continuing any further
+	if _, accepted := token.Method.(*jwt.SigningMethodHMAC); !accepted {
+		return nil, fmt.Errorf("an error occured")
+	}
+	// Note: This must be changed to an env variable later
+	return []byte("2ofClubs"), nil
+}
+
 func GenerateJWT(subject string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
