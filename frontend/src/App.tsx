@@ -2,6 +2,7 @@ import React from 'react';
 import {LandingPage} from "./containers/Landing Page";
 import {BrowserRouter, Route, Switch} from "react-router-dom";
 import Login from "./components/Login";
+import Signup from "./components/Signup/Signup"
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 /*
@@ -17,6 +18,7 @@ function App() {
                     <Switch>
                         <Route exact path={"/"} component={LandingPage}/>
                         <Route exact path={"/login"} component={Login}/>
+                        <Route exact path={"/signup"} component={Signup}/>
                     </Switch>
                 </div>
             </BrowserRouter>
