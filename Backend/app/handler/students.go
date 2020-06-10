@@ -18,9 +18,10 @@ func CreateStudent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	found := RecordExists(db, model.ColumnUsername, s.Username, s)
 	if !found && hashed {
 		db.Create(&s)
-		if key, err := GenerateJWT(s.Username); err == nil {
-			WriteData(key, http.StatusCreated, w)
+		if token, err  := GetTokenPair(s.Username, 5, 60*24); err == nil {
+			WriteData(ParseJSON(token), http.StatusOK, w)
 		}
+
 	}
 }
 

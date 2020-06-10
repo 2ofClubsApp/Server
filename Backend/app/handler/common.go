@@ -25,6 +25,7 @@ func NotFound() http.Handler {
 Note: Need to add more authentication checks later (This is temporary)
  */
 func IsValidJWT(w http.ResponseWriter, r *http.Request) bool {
+	fmt.Println(r.Header)
 	if token := r.Header["Token"]; token != nil {
 		if t, err := jwt.Parse(token[0], kf); err == nil {
 			if t.Valid {
@@ -39,25 +40,38 @@ func IsValidJWT(w http.ResponseWriter, r *http.Request) bool {
 func kf(token *jwt.Token) (interface{}, error) {
 	// Verifying that the signing method is the same before continuing any further
 	if _, accepted := token.Method.(*jwt.SigningMethodHMAC); !accepted {
+		fmt.Println("yikes")
 		return nil, fmt.Errorf("an error occured")
 	}
 	// Note: This must be changed to an env variable later
 	return []byte("2ofClubs"), nil
 }
 
-func GenerateJWT(subject string) (string, error) {
+func GenerateJWT(subject string, duration time.Duration) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	sysTime := time.Now()
 	claims["iat"] = sysTime
-	claims["exp"] = sysTime.Add(time.Minute * 5).Unix()
-	claims["sub"] = subject
+	claims["exp"] = sysTime.Add(time.Minute * duration).Unix()
+	claims["sub"] = subject // Subject usually as a number (unique value)
 	// Note: This must be changed to an env variable later
 	tokenString, err := token.SignedString([]byte("2ofClubs"))
 	if err != nil {
 		return "", err
 	}
 	return tokenString, nil
+}
+
+func GetTokenPair(subject string, accessDuration time.Duration, refreshDuration time.Duration) (*model.TokenInfo, error){
+	if accessToken, atErr := GenerateJWT(subject, accessDuration); atErr == nil {
+		if refreshToken, rtErr := GenerateJWT(subject, refreshDuration); rtErr == nil{
+			token := model.NewTokenInfo()
+			token.AccessToken = accessToken
+			token.RefreshToken = refreshToken
+			return token, nil
+		}
+	}
+	return nil, fmt.Errorf("token generation error")
 }
 
 func GenerateSaltedPass(password string) (string, bool) {

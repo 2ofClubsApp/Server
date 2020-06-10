@@ -1,4 +1,9 @@
 - Hash passwords (Done)
-- Setup JWT and login tokens to securely access API
+- Setup JWT and login tokens to securely access API (Partially done)
+
+- NEXT: Look at how to issue a new token once the other one is expired and to verify that it's the right user
+- ADD more checks to make sure that the token is valid
+- Login/Logout on token? (How to destroy them)
+
 - Redirect 405's to 404's? (Optional)
 - Remove logs from "pq: relation already exists" (Optional)

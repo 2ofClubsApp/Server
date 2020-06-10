@@ -13,8 +13,8 @@ import (
 	"net/http"
 )
 
-type RouteHandler func(w http.ResponseWriter, r *http.Request)
-type Hdlr func(db *gorm.DB, w http.ResponseWriter, r *http.Request)
+type routeHandler func(w http.ResponseWriter, r *http.Request)
+type hdlr func(db *gorm.DB, w http.ResponseWriter, r *http.Request)
 
 type App struct {
 	db     *gorm.DB
@@ -69,19 +69,19 @@ func (app *App) setRoutes() {
 	app.router.NotFoundHandler = handler.NotFound()
 }
 
-func (app *App) Post(path string, f RouteHandler) {
+func (app *App) Post(path string, f routeHandler) {
 	app.router.HandleFunc(path, f).Methods(http.MethodPost)
 }
 
-func (app *App) Get(path string, f RouteHandler) {
+func (app *App) Get(path string, f routeHandler) {
 	app.router.HandleFunc(path, f).Methods(http.MethodGet)
 }
 
-func (app *App) Put(path string, f RouteHandler) {
+func (app *App) Put(path string, f routeHandler) {
 	app.router.HandleFunc(path, f).Methods(http.MethodPut)
 }
 
-func (app *App) Delete(path string, f RouteHandler) {
+func (app *App) Delete(path string, f routeHandler) {
 	app.router.HandleFunc(path, f).Methods(http.MethodDelete)
 }
 
@@ -89,8 +89,9 @@ func (app *App) Run(port string) {
 	http.ListenAndServe(port, app.router)
 }
 
-func (app *App) Handle(h Hdlr, verifyRequest bool) func(w http.ResponseWriter, r *http.Request) {
+func (app *App) Handle(h hdlr, verifyRequest bool) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Must verify for sensitive information
 		if verifyRequest {
 			if isValid := handler.IsValidJWT(w, r); isValid {
 				h(app.db, w, r)
