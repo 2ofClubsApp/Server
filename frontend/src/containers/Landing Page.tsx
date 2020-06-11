@@ -33,12 +33,13 @@ export const LandingPage = () => {
                 <Row>
                     <Col xs><h1 className="landing-title">2ofClubs</h1></Col>
                 </Row>
+                
                 <Row>
                     <Col xs> <h2 className="landing-subtitle">Find the community for you!</h2></Col>
                 </Row>
                 <Row >
                     <Col xs className="text-center">
-                        <Button style={signup} onClick={() => changeRoute('/Signup/signup')}>SIGN UP</Button>
+                        <Button style={signup} onClick={() => changeRoute('/signup')}>SIGN UP</Button>
                     </Col>
                 </Row>
                 <Row >

@@ -4,10 +4,16 @@ html {
     font-size: 16px;
     font-family: "Poppins", Helvetica, sans-serif;
 }
+
 body {
     margin: 0;
     padding: 0;
     font-family: sans-serif;
+    background:linear-gradient(-135deg, rgba(106, 189, 226, 0.75), rgba(105, 109, 233, 0.75)), url("https://cdn.discordapp.com/attachments/719267602886688829/720133822058070076/Untitled-2.jpg");
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    height: 100vh;
 }
 
 .test{
@@ -75,8 +81,38 @@ hr.rounded {
 }
 
 /*style={{fontSize:"1.25rem", backgroundColor:"white", color: "#696DE9", textTransform: "uppercase", padding: "1rem 2rem", margin: "10vh 0 0 0", borderRadius: "1rem"}*/
+.form {
+    background-color: white;
+    margin: 10rem auto;
+    padding: 2rem 0;
+    border-radius: 25px;
+    box-shadow: 0 0 .5rem black;
+    color: #686ee8;
+}
 
-.btn-flat {
-    background-color: purple;
-    color: white;
-  }
+.form input {
+    width: 250px;
+    height:25px;
+    border: none;
+    border-bottom: 1px solid #686ee8;
+    border-radius: 0px;
+}
+
+.form button {
+    border-radius: 10px;
+    background-color: #686ee8;
+    border: none;
+}
+
+.form button:hover{
+    background-color: #979cf8;
+}
+
+.btn-grad {
+    background-image: linear-gradient(90deg, rgba(104,110,232,1) 0%, rgba(106,201,224,1) 100%);
+}
+
+.btn-grad:hover { 
+    background-color: rgba(6, 7, 75, 0.596);
+    background-blend-mode: screen;
+}
