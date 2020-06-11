@@ -7,11 +7,11 @@ const (
 
 type T struct {}
 
-type status struct {
+type Status struct {
 	Message string
 	Data   interface{}
 }
 
-func New() *status {
-	return &status{Message: SUCCESS, Data: T{}}
+func NewStatus() *Status {
+	return &Status{Message: SUCCESS, Data: T{}}
 }

@@ -34,7 +34,7 @@ func GetStudent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	username := vars[model.ColumnUsername]
 	s := model.NewStudent()
-	ss := model.New()
+	ss := model.NewStatus()
 	// Defaults will be overridden when obtaining data and being inserted into struct except for null
 	found := RecordExists(db, model.ColumnUsername, username, s)
 	if !found {
