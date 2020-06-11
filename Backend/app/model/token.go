@@ -8,3 +8,6 @@ type TokenInfo struct {
 func NewTokenInfo() *TokenInfo{
 	return &TokenInfo{}
 }
+
+const RefreshToken = "RefreshToken"
+const AccessToken = "AccessToken"

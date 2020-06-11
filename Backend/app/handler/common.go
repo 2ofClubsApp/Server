@@ -11,13 +11,20 @@ import (
 	"time"
 )
 
+const (
+	ErrGeneric          = "an error occured"
+	Err401              = "401: Unauthorized"
+	ErrResourceNotFound = "Resource Not Found"
+	ErrTokenGen         = "token generation error"
+)
+
 /*
 	Common methods shared amongst the different models
 */
 
 func NotFound() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		WriteData("Resource Not Found", http.StatusNotFound, w)
+		WriteData(ErrResourceNotFound, http.StatusNotFound, w)
 	})
 }
 
@@ -33,15 +40,14 @@ func IsValidJWT(w http.ResponseWriter, r *http.Request) bool {
 			}
 		}
 	}
-	WriteData("Unauthorized", http.StatusUnauthorized, w)
+	WriteData(Err401, http.StatusUnauthorized, w)
 	return false
 }
 
 func kf(token *jwt.Token) (interface{}, error) {
 	// Verifying that the signing method is the same before continuing any further
 	if _, accepted := token.Method.(*jwt.SigningMethodHMAC); !accepted {
-		fmt.Println("yikes")
-		return nil, fmt.Errorf("an error occured")
+		return nil, fmt.Errorf(ErrGeneric)
 	}
 	// Note: This must be changed to an env variable later
 	return []byte("2ofClubs"), nil
@@ -61,21 +67,30 @@ func GenerateJWT(subject string, duration time.Duration) (string, error) {
 	}
 	return tokenString, nil
 }
+func GenerateCookie(name string, value string) *http.Cookie {
+	return &http.Cookie{
+		Name:     name,
+		Value:    value,
+		HttpOnly: true,
+		Secure:   true,
+	}
+}
 
-func GetTokenPair(subject string, accessDuration time.Duration, refreshDuration time.Duration) (*model.TokenInfo, error){
+func GetTokenPair(subject string, accessDuration time.Duration, refreshDuration time.Duration) (*model.TokenInfo, error) {
 	if accessToken, atErr := GenerateJWT(subject, accessDuration); atErr == nil {
-		if refreshToken, rtErr := GenerateJWT(subject, refreshDuration); rtErr == nil{
+		if refreshToken, rtErr := GenerateJWT(subject, refreshDuration); rtErr == nil {
 			token := model.NewTokenInfo()
 			token.AccessToken = accessToken
 			token.RefreshToken = refreshToken
 			return token, nil
 		}
 	}
-	return nil, fmt.Errorf("token generation error")
+	return nil, fmt.Errorf(ErrTokenGen)
 }
 
-func GenerateSaltedPass(password string) (string, bool) {
-	saltedHashPass, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+func Hash(info string) (string, bool) {
+
+	saltedHashPass, err := bcrypt.GenerateFromPassword([]byte(info), bcrypt.DefaultCost)
 	if err != nil {
 		return "", false
 	}
