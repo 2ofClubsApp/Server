@@ -36,33 +36,37 @@ func (app *App) Initialize(config *config.DBConfig) {
 		log.Fatal("Unable to connect to database\n", err)
 	}
 	app.db = db
-	app.router = mux.NewRouter()
+	app.router = mux.NewRouter().StrictSlash(true)
 	app.router.Use(logger.LoggingMiddleware)
+	//app.router.Use(handler.ValidateJWT)
 	app.setRoutes()
-	fmt.Println("Database Online")
+	log.Println("Connected to Database")
 	db.SingularTable(true)
 	db.CreateTable(model.NewStudent(), model.NewPerson(), model.NewEvent(), model.NewChat(), model.NewLog())
 }
 
 func (app *App) setRoutes() {
 	// Student Routes
-	app.Post("/students", app.Handle(handler.CreateStudent))
-	app.Get("/students/{username}", app.Handle(handler.GetStudent))
-	app.Put("/students/{username}", app.Handle(handler.UpdateStudent))
+	app.Post("/students", app.Handle(handler.CreateStudent, false))
+	app.Get("/students/{username}", app.Handle(handler.GetStudent, true))
+	app.Put("/students/{username}", app.Handle(handler.UpdateStudent, true))
 
 	// Club routes
-	app.Get("/clubs", app.Handle(handler.GetClubs))
-	app.Post("/clubs", app.Handle(handler.CreateClub))
-	app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag))
-	app.Get("/clubs/{username}", app.Handle(handler.GetClub))
-	app.Put("/clubs/{username}", app.Handle(handler.UpdateClub))
-	app.Get("/clubs/events", app.Handle(handler.GetEvents))
-	app.Get("/clubs/events/{username}", app.Handle(handler.GetEvent))
-	app.Post("/clubs/events/{username}", app.Handle(handler.CreateEvent))
-	app.Put("/clubs/events/{username}", app.Handle(handler.UpdateEvent))
-	app.Delete("/clubs/events/{username}", app.Handle(handler.DeleteEvent))
+	app.Get("/clubs", app.Handle(handler.GetClubs, true))
+	app.Post("/clubs", app.Handle(handler.CreateClub, false))
+	app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, true))
+	app.Get("/clubs/{username}", app.Handle(handler.GetClub, true))
+	app.Put("/clubs/{username}", app.Handle(handler.UpdateClub, true))
+	app.Get("/clubs/events", app.Handle(handler.GetEvents, true))
+	app.Get("/clubs/events/{username}", app.Handle(handler.GetEvent, true))
+	app.Post("/clubs/events/{username}", app.Handle(handler.CreateEvent, true))
+	app.Put("/clubs/events/{username}", app.Handle(handler.UpdateEvent, true))
+	app.Delete("/clubs/events/{username}", app.Handle(handler.DeleteEvent, true))
 
 	// Chat Routes
+
+	// 404 Route
+	app.router.NotFoundHandler = handler.NotFound()
 }
 
 func (app *App) Post(path string, f routeHandler) {
@@ -85,8 +89,15 @@ func (app *App) Run(port string) {
 	http.ListenAndServe(port, app.router)
 }
 
-func (app *App) Handle(h hdlr) func(w http.ResponseWriter, r *http.Request) {
+func (app *App) Handle(h hdlr, verifyRequest bool) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		h(app.db, w, r)
+		// Must verify for sensitive information
+		if verifyRequest {
+			if isValid := handler.IsValidJWT(w, r); isValid {
+				h(app.db, w, r)
+			}
+		} else {
+			h(app.db, w, r)
+		}
 	}
 }
