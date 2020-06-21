@@ -1,27 +1,22 @@
 import React from 'react';
-import {LandingPage} from "./containers/Landing Page";
-import {BrowserRouter, Route, Switch} from "react-router-dom";
-import Login from "./components/Login";
-import Signup from "./components/Signup/Signup"
+import {LandingPage} from "./containers/LandingPage";
+import {Route, Switch} from "react-router-dom";
+import Login from "./containers/Login";
 import 'bootstrap/dist/css/bootstrap.min.css';
+import SignUp from "./containers/Signup";
 
 /*
 Notes: Conditional rendering for the "/" route
 When the user is logged in, it should automatically bring them to the main page rather than the landing one
-
  */
 function App() {
     return (
         <div className="App">
-            <BrowserRouter>
-                <div>
-                    <Switch>
-                        <Route exact path={"/"} component={LandingPage}/>
-                        <Route exact path={"/login"} component={Login}/>
-                        <Route exact path={"/signup"} component={Signup}/>
-                    </Switch>
-                </div>
-            </BrowserRouter>
+            <Switch>
+                <Route exact path={"/"} component={LandingPage}/>
+                <Route exact path={"/login"} component={Login}/>
+                <Route exact path={"/signup"} component={SignUp}/>
+            </Switch>
         </div>
     );
 }

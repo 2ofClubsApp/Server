@@ -11,7 +11,7 @@ import "../app.css"
 export const LandingPage = () => {
     const history = useHistory();
     const changeRoute = (path: string) => {
-        history.replace({pathname: path})
+        history.push({pathname: path})
     };
 
     const signup = {
@@ -24,7 +24,6 @@ export const LandingPage = () => {
     };
 
     return (
- 
         <Jumbotron fluid bsPrefix="landing">
             <Container fluid>
                 <Row>
@@ -49,8 +48,6 @@ export const LandingPage = () => {
                 </Row>
             </Container>
         </Jumbotron>
-
-    ); 
-
+    );
 };
 
