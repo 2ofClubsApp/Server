@@ -8,16 +8,32 @@ import {useHistory} from 'react-router-dom';
 import '../app.css';
 import axios from "../axios"
 
-const Signup = () => {
+const SignUp = () => {
     const history = useHistory();
     const changeRoute = (path: string) => {
         history.replace({pathname: path})
     };
 
+    const [state, setState] = React.useState({
+        username: "",
+        email: "",
+        password: "",
+        confirmpassword: ""
+    });
+
+    const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const value = event.target.value
+        const id = event.target.id
+        setState({
+            ...state,
+            [id]: value
+        })
+    }
+
     const labels = [userLabel, emailLabel, passLabel, passConfirmLabel];
     const formLabels = labels.map((label, index) => {
         return (
-            <Label key={index} props={label}/>
+            <Label key={index} info={label} onChange={handleChange}/>
         )
     });
 
@@ -37,7 +53,6 @@ const signup = () => {
     }).catch(err => {
         console.log(err + "Unable to get student ;.;");
     })
-    // console.log("Signing Up!")
 };
 
-export default Signup
+export default SignUp

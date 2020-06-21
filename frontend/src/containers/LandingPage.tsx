@@ -15,11 +15,11 @@ export const LandingPage = () => {
     };
 
     const signup = {
-        fontSize:"1.25rem", 
-        backgroundColor:"white", 
-        color: "#696DE9", 
-        padding: "1rem 2rem", 
-        margin: "10vh 0 0 0", 
+        fontSize: "1.25rem",
+        backgroundColor: "white",
+        color: "#696DE9",
+        padding: "1rem 2rem",
+        margin: "10vh 0 0 0",
         borderRadius: "1rem"
     };
 
@@ -27,23 +27,40 @@ export const LandingPage = () => {
         <Jumbotron fluid bsPrefix="landing">
             <Container fluid>
                 <Row>
-                    <Col xs><Button variant="outline-light" className="float-right" style={{margin: "10px", textTransform: "uppercase"}} onClick={() => changeRoute('/login')}>Login</Button></Col>
-                </Row> 
-                <Row>
-                    <Col xs><h1 className="landing-title">2ofClubs</h1></Col>
-                </Row>
-                
-                <Row>
-                    <Col xs> <h2 className="landing-subtitle">Find the community for you!</h2></Col>
-                </Row>
-                <Row >
-                    <Col xs className="text-center">
-                        <Button style={signup} onClick={() => changeRoute('/signup')}>SIGN UP</Button>
+                    <Col xs>
+                        <Button variant="outline-light" className="float-right"
+                                style={{margin: "10px", textTransform: "uppercase"}}
+                                onClick={() => changeRoute('/login')}>
+                            Login
+                        </Button>
                     </Col>
                 </Row>
-                <Row >
+                <Row>
+                    <Col xs>
+                        <h1 className="landing-title">
+                            2ofClubs
+                        </h1>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col xs>
+                        <h2 className="landing-subtitle">
+                            Find the community for you!
+                        </h2>
+                    </Col>
+                </Row>
+                <Row>
                     <Col xs className="text-center">
-                        <h3 className="landing-text" onClick={() => changeRoute('/login')}>CONTINUE WITHOUT ACCOUNT</h3>
+                        <Button style={signup} onClick={() => changeRoute('/signup')}>
+                            SIGN UP
+                        </Button>
+                    </Col>
+                </Row>
+                <Row>
+                    <Col xs className="text-center">
+                        <h3 className="landing-text" onClick={() => changeRoute('/login')}>
+                            CONTINUE WITHOUT ACCOUNT
+                        </h3>
                     </Col>
                 </Row>
             </Container>

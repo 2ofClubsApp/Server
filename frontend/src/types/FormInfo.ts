@@ -1,9 +1,12 @@
+import * as React from "react";
+
 export type FormInfo = {
     controlId: string
     label: string
     type: string
     placeholder: string
 }
+
 export const userLabel: FormInfo = {
     controlId: "username",
     label: "Username",
@@ -28,3 +31,9 @@ export const passConfirmLabel: FormInfo = {
     type: "password",
     placeholder: "Password"
 };
+
+export type FormLabel = {
+    key?: number
+    info: FormInfo
+    onChange: React.ChangeEventHandler<HTMLTextAreaElement>
+}

@@ -14,10 +14,25 @@ const Login = () => {
         history.replace({pathname: path})
     };
 
+    const [state, setState] = React.useState({
+        username: "",
+        email: "",
+        password: "",
+    });
+
+    const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+        const value = event.target.value
+        const id = event.target.id
+        setState({
+            ...state,
+            [id]: value
+        })
+    }
+
     const labels = [emailLabel, passLabel];
     const formLabels = labels.map((label, index) => {
         return (
-            <Label key={index} props={label}/>
+            <Label key={index} info={label} onChange={handleChange}/>
         )
     });
 
