@@ -32,7 +32,7 @@ const Login = () => {
     const labels = [emailLabel, passLabel];
     const formLabels = labels.map((label, index) => {
         return (
-            <Label key={index} info={label} onChange={handleChange}/>
+            <Label key={index} info={label}/>
         )
     });
 

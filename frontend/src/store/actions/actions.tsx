@@ -1,22 +1,12 @@
-import {SET_USERNAME, SET_PASSWORD, SET_EMAIL} from "./actionTypes";
+import {SET_USERDATA} from "./actionTypes";
+import React from "react";
 
-export const setUsername = (username: string) => ({
-    type: SET_USERNAME,
-    payload: {
-        username
-    }
-})
+export const setUserData = (id: string, value: string) => {
+    return (
+        {
+            type: SET_USERDATA,
+            payload: {id: value}
+        }
+    )
+}
 
-export const setPassword = (password: string) => ({
-    type: SET_USERNAME,
-    payload: {
-        password
-    }
-})
-
-export const setEmail = (email: string) => ({
-    type: SET_USERNAME,
-    payload: {
-        email
-    }
-})

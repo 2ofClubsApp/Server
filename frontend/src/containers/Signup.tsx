@@ -33,7 +33,7 @@ const SignUp = () => {
     const labels = [userLabel, emailLabel, passLabel, passConfirmLabel];
     const formLabels = labels.map((label, index) => {
         return (
-            <Label key={index} info={label} onChange={handleChange}/>
+            <Label key={index} info={label}/>
         )
     });
 

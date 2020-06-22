@@ -35,5 +35,5 @@ export const passConfirmLabel: FormInfo = {
 export type FormLabel = {
     key?: number
     info: FormInfo
-    onChange: React.ChangeEventHandler<HTMLTextAreaElement>
+    // onChange: React.ChangeEventHandler<HTMLTextAreaElement>
 }
