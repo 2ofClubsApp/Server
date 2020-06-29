@@ -8,12 +8,18 @@ type DBConfig struct {
 	Password string
 }
 
-func GetConfig() *DBConfig {
+func GetDBConfig() *DBConfig {
 	return &DBConfig{
 		Host:     "localhost",
 		Port:     5432,
 		Name:     "cdb",
 		User:     "postgres",
 		Password: "postgres",
+	}
+}
+
+func GetRedisConfig() * DBConfig {
+	return &DBConfig{
+
 	}
 }

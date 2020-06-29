@@ -1,8 +1,8 @@
 package model
 
 const (
-	FAILURE = "Student Not Found"
-	SUCCESS = "Student Found"
+	Failure = "Student Not Found"
+	Success = "Student Found"
 )
 
 type T struct {}
@@ -13,5 +13,5 @@ type Status struct {
 }
 
 func NewStatus() *Status {
-	return &Status{Message: SUCCESS, Data: T{}}
+	return &Status{Message: Success, Data: T{}}
 }
