@@ -6,6 +6,7 @@ import (
 	"./logger"
 	"./model"
 	"fmt"
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
@@ -17,8 +18,11 @@ type routeHandler func(w http.ResponseWriter, r *http.Request)
 type hdlr func(db *gorm.DB, w http.ResponseWriter, r *http.Request)
 
 type App struct {
-	db     *gorm.DB
-	router *mux.Router
+	db      *gorm.DB
+	router  *mux.Router
+	origin  handlers.CORSOption
+	methods handlers.CORSOption
+	headers handlers.CORSOption
 }
 
 func (app *App) Initialize(config *config.DBConfig) {
@@ -38,16 +42,24 @@ func (app *App) Initialize(config *config.DBConfig) {
 	app.db = db
 	app.router = mux.NewRouter().StrictSlash(true)
 	app.router.Use(logger.LoggingMiddleware)
-	//app.router.Use(handler.ValidateJWT)
+	// Note: Set this as env var later
+	app.origin = handlers.AllowedOrigins([]string{"http://localhost:3000"})
+	app.methods = handlers.AllowedMethods([]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete})
+	app.headers = handlers.AllowedHeaders([]string{"Content-Type"})
+
 	app.setRoutes()
 	log.Println("Connected to Database")
 	db.SingularTable(true)
 	db.CreateTable(model.NewStudent(), model.NewPerson(), model.NewEvent(), model.NewChat(), model.NewLog())
+
 }
 
 func (app *App) setRoutes() {
+
+	// Login Routes
+	app.Post("/login", app.Handle(handler.Login, true))
 	// Student Routes
-	app.Post("/students", app.Handle(handler.CreateStudent, false))
+	app.Post("/signup", app.Handle(handler.CreateStudent, false))
 	app.Get("/students/{username}", app.Handle(handler.GetStudent, true))
 	app.Put("/students/{username}", app.Handle(handler.UpdateStudent, true))
 
@@ -69,6 +81,10 @@ func (app *App) setRoutes() {
 	app.router.NotFoundHandler = handler.NotFound()
 }
 
+func (app *App) Run(port string) {
+	http.ListenAndServe(port, handlers.CORS(app.origin, app.methods, app.headers)(app.router))
+}
+
 func (app *App) Post(path string, f routeHandler) {
 	app.router.HandleFunc(path, f).Methods(http.MethodPost)
 }
@@ -83,10 +99,6 @@ func (app *App) Put(path string, f routeHandler) {
 
 func (app *App) Delete(path string, f routeHandler) {
 	app.router.HandleFunc(path, f).Methods(http.MethodDelete)
-}
-
-func (app *App) Run(port string) {
-	http.ListenAndServe(port, app.router)
 }
 
 func (app *App) Handle(h hdlr, verifyRequest bool) func(w http.ResponseWriter, r *http.Request) {

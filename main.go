@@ -6,7 +6,7 @@ import (
 )
 
 func main() {
-	dbConfig := config.GetConfig()
+	dbConfig := config.GetDBConfig()
 	api := app.App{}
 	api.Initialize(dbConfig)
 	api.Run(":8080")
