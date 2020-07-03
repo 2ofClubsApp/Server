@@ -1,11 +1,11 @@
 package app
 
 import (
-	"../config"
-	"./handler"
-	"./logger"
-	"./model"
 	"fmt"
+	"github.com/2-of-Clubs/2ofclubs-server/app/handler"
+	"github.com/2-of-Clubs/2ofclubs-server/app/logger"
+	"github.com/2-of-Clubs/2ofclubs-server/app/model"
+	"github.com/2-of-Clubs/2ofclubs-server/config"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
@@ -25,16 +25,27 @@ type App struct {
 	headers handlers.CORSOption
 }
 
-func (app *App) Initialize(config *config.DBConfig) {
+func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisConfig) {
+	//ctx := context.Background
 	dbFormat :=
 		fmt.Sprintf(
 			"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-			config.Host,
-			config.Port,
-			config.User,
-			config.Password,
-			config.Name,
+			dbConfig.Host,
+			dbConfig.Port,
+			dbConfig.User,
+			dbConfig.Password,
+			dbConfig.Name,
 		)
+	redisClient := redis.NewClient(
+		&redis.Options{
+			Addr:     redisConfig.Addr,
+			Password: redisConfig.Password,
+			DB:       redisConfig.DB,
+		})
+	fmt.Println(redisClient)
+	//pong, err := redisClient.Ping(ctx).Result()
+	//fmt.Println(pong)
+
 	db, err := gorm.Open("postgres", dbFormat)
 	if err != nil {
 		log.Fatal("Unable to connect to database\n", err)

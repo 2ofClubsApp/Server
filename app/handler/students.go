@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"../model"
 	"fmt"
+	"github.com/2-of-Clubs/2ofclubs-server/app/model"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
 	"net/http"

@@ -8,6 +8,12 @@ type DBConfig struct {
 	Password string
 }
 
+type RedisConfig struct {
+	Addr     string
+	Password string
+	DB       int
+}
+
 func GetDBConfig() *DBConfig {
 	return &DBConfig{
 		Host:     "localhost",
@@ -18,8 +24,10 @@ func GetDBConfig() *DBConfig {
 	}
 }
 
-func GetRedisConfig() * DBConfig {
-	return &DBConfig{
-
+func GetRedisConfig() *RedisConfig {
+	return &RedisConfig{
+		Addr:     "localhost:5432",
+		Password: "",
+		DB:       0,
 	}
 }

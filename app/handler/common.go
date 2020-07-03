@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"../model"
 	"encoding/json"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
@@ -12,8 +11,8 @@ import (
 )
 
 const (
-	ErrGeneric          = "an error occurred"
-	ErrTokenGen         = "token generation error"
+	ErrGeneric  = "an error occurred"
+	ErrTokenGen = "token generation error"
 )
 
 /*
@@ -26,9 +25,10 @@ func NotFound() http.Handler {
 	})
 }
 
-func Login(db *gorm.DB, w http.ResponseWriter, r *http.Request){
+func Login(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 
 }
+
 // Validate the user request to ensure that they can only access/modify their own respective data
 func ValidateUserReq(username string, r *http.Request) bool {
 	t := r.Header["Token"][0]
@@ -44,7 +44,6 @@ func ValidateUserReq(username string, r *http.Request) bool {
 Note: Need to add more authentication checks later (This is temporary)
 */
 func IsValidJWT(w http.ResponseWriter, r *http.Request) bool {
-	//fmt.Println(r.Header)
 	if token := r.Header["Token"]; token != nil {
 		if t, err := jwt.Parse(token[0], kf); err == nil {
 			if t.Valid {
