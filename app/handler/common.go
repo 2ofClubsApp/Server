@@ -3,7 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/2-of-clubs/2ofclubs-server/app/model"
+	"github.com/2-of-Clubs/2ofclubs-server/app/model"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
