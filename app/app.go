@@ -6,6 +6,7 @@ import (
 	"github.com/2-of-Clubs/2ofclubs-server/app/logger"
 	"github.com/2-of-Clubs/2ofclubs-server/app/model"
 	"github.com/2-of-Clubs/2ofclubs-server/config"
+	"github.com/go-redis/redis"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
