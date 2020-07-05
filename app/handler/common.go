@@ -96,8 +96,8 @@ func Hash(info string) (string, bool) {
 	}
 	return string(saltedHashPass), true
 }
-func RecordExists(db *gorm.DB, column string, val string, t interface{}) bool {
-	return !db.Where(column+"= ?", val).First(t).RecordNotFound()
+func RecordExists(db *gorm.DB, tableName string, column string, val string, t interface{}) bool {
+	return !db.Table(tableName).Where(column+"= ?", val).First(t).RecordNotFound()
 }
 
 func ExtractPersonInfo(r *http.Request) model.Person {

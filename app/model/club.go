@@ -15,7 +15,8 @@ func NewClub() *Club {
 }
 
 const (
-	ColumnSize       = "size"
-	ColumnBio        = "bio"
-	ColumnHelpNeeded = "help_needed"
+	SizeColumn       = "size"
+	BioColumn        = "bio"
+	HelpNeededColumn = "help_needed"
+	ClubTable = "club"
 )

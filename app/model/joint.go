@@ -1,10 +1,10 @@
 package model
 
 const (
-	ColumnChatID = "chat_id"
-	ColumnLogID = "log_id"
-	ColumnClubID = "club_id"
-	ColumnEventID = "event_id"
-	ColumnTagID = "tag_id"
-	ColumnStudentID = "student_id"
+	ChatIDColumn = "chat_id"
+	LogIDColumn = "log_id"
+	ClubIDColumn = "club_id"
+	EventIDColumn = "event_id"
+	TagIDColumn = "tag_id"
+	StudentIDColumn = "student_id"
 )

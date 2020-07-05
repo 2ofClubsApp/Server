@@ -15,7 +15,7 @@ func CreateClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request) {
 	c := model.NewClub()
 	p := ExtractPersonInfo(r)
 	c.Person = p
-	found := RecordExists(db, model.ColumnUsername, c.Username, c)
+	found := RecordExists(db, model.ClubTable, model.UsernameColumn, c.Username, c)
 	if !found {
 		db.Create(&c)
 	}

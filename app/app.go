@@ -46,8 +46,19 @@ func (app *App) Initialize(config *config.DBConfig) {
 }
 
 func (app *App) setRoutes() {
+<<<<<<< Updated upstream
 	// Student Routes
 	app.Post("/students", app.Handle(handler.CreateStudent, false))
+=======
+	// Signup Route
+	app.Post("/signup", app.Handle(handler.CreateStudent, false))
+	app.Get("/signup/usernames/{username}", app.Handle(handler.QueryUsername, false))
+	app.Get("/signup/emails/{email}", app.Handle(handler.QueryEmail, false))
+
+	// Login Routes
+	app.Post("/login", app.Handle(handler.Login, true))
+	// Student Routes
+>>>>>>> Stashed changes
 	app.Get("/students/{username}", app.Handle(handler.GetStudent, true))
 	app.Put("/students/{username}", app.Handle(handler.UpdateStudent, true))
 
