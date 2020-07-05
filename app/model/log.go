@@ -10,5 +10,5 @@ func NewLog() *Log{
 	return &Log{}
 }
 const (
-	ColumnMessage = "message"
+	MessageColumn = "message"
 )

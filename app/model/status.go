@@ -3,6 +3,8 @@ package model
 const (
 	Failure = "Student Not Found"
 	Success = "Student Found"
+	UsernameFound = "Username found"
+	EmailFound = "Email Found"
 )
 
 type T struct {}

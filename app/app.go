@@ -1,11 +1,12 @@
 package app
 
 import (
+	"../config"
+	"./handler"
+	"./logger"
+	"./model"
+	"context"
 	"fmt"
-	"github.com/2-of-Clubs/2ofclubs-server/app/handler"
-	"github.com/2-of-Clubs/2ofclubs-server/app/logger"
-	"github.com/2-of-Clubs/2ofclubs-server/app/model"
-	"github.com/2-of-Clubs/2ofclubs-server/config"
 	"github.com/go-redis/redis"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -27,7 +28,7 @@ type App struct {
 }
 
 func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisConfig) {
-	//ctx := context.Background
+	ctx := context.Background()
 	dbFormat :=
 		fmt.Sprintf(
 			"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
@@ -43,9 +44,10 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 			Password: redisConfig.Password,
 			DB:       redisConfig.DB,
 		})
-	fmt.Println(redisClient)
-	//pong, err := redisClient.Ping(ctx).Result()
-	//fmt.Println(pong)
+	_, err := redisClient.Ping(ctx).Result()
+	if err != nil {
+		log.Fatal("Unable to connect to Redis\n", err)
+	}
 
 	db, err := gorm.Open("postgres", dbFormat)
 	if err != nil {
@@ -60,6 +62,7 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 	app.headers = handlers.AllowedHeaders([]string{"Content-Type"})
 
 	app.setRoutes()
+	log.Println("Connected to Redis")
 	log.Println("Connected to Database")
 	db.SingularTable(true)
 	db.CreateTable(model.NewStudent(), model.NewPerson(), model.NewEvent(), model.NewChat(), model.NewLog())
@@ -67,11 +70,14 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 }
 
 func (app *App) setRoutes() {
+	// Signup Route
+	app.Post("/signup", app.Handle(handler.CreateStudent, false))
+	app.Get("/signup/usernames/{username}", app.Handle(handler.QueryUsername, false))
+	app.Get("/signup/emails/{email}", app.Handle(handler.QueryEmail, false))
 
 	// Login Routes
 	app.Post("/login", app.Handle(handler.Login, true))
 	// Student Routes
-	app.Post("/signup", app.Handle(handler.CreateStudent, false))
 	app.Get("/students/{username}", app.Handle(handler.GetStudent, true))
 	app.Put("/students/{username}", app.Handle(handler.UpdateStudent, true))
 

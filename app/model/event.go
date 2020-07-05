@@ -19,8 +19,8 @@ func NewEvent() *Event{
 
 
 const (
-	ColumnDateTime = "date_time"
-	ColumnDescription= "description"
-	ColumnLocation = "location"
-	ColumnDateFee = "fee"
+	DateTimeColumn = "date_time"
+	DescriptionColumn= "description"
+	LocationColumn = "location"
+	DateFeeColumn = "fee"
 )

@@ -14,5 +14,6 @@ func NewStudent() *Student {
 }
 
 const (
-	ColumnIsHelping = "is_helping"
+	IsHelpingColumn = "is_helping"
+	StudentTable = "student"
 )

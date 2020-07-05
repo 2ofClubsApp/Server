@@ -1,9 +1,9 @@
 package handler
 
 import (
+	"../model"
 	"encoding/json"
 	"fmt"
-	"github.com/2-of-Clubs/2ofclubs-server/app/model"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
@@ -109,8 +109,8 @@ func Hash(info string) (string, bool) {
 	}
 	return string(saltedHashPass), true
 }
-func RecordExists(db *gorm.DB, column string, val string, t interface{}) bool {
-	return !db.Where(column+"= ?", val).First(t).RecordNotFound()
+func RecordExists(db *gorm.DB, tableName string, column string, val string, t interface{}) bool {
+	return !db.Table(tableName).Where(column+"= ?", val).First(t).RecordNotFound()
 }
 
 func ExtractPersonInfo(r *http.Request) model.Person {

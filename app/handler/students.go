@@ -1,8 +1,8 @@
 package handler
 
 import (
+	"../model"
 	"fmt"
-	"github.com/2-of-Clubs/2ofclubs-server/app/model"
 	"github.com/gorilla/mux"
 	"github.com/jinzhu/gorm"
 	"net/http"
@@ -15,7 +15,7 @@ func CreateStudent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	pass, isHashed := Hash(p.Password)
 	p.Password = pass
 	s.Person = p
-	found := RecordExists(db, model.ColumnUsername, s.Username, s)
+	found := RecordExists(db, "student", model.UsernameColumn, s.Username, s)
 	if !found && isHashed {
 		fmt.Println(s.Username)
 		if tp, err := GetTokenPair(s.Username, 5, 60*24); err == nil {
@@ -31,12 +31,12 @@ func GetStudent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status := http.StatusOK
 	data := ""
 	vars := mux.Vars(r)
-	username := vars[model.ColumnUsername]
+	username := vars[model.UsernameColumn]
 	if ValidateUserReq(username, r) {
 		s := model.NewStudent()
 		ss := model.NewStatus()
 		// Defaults will be overridden when obtaining data and being inserted into struct except for null
-		found := RecordExists(db, model.ColumnUsername, username, s)
+		found := RecordExists(db, "student", model.UsernameColumn, username, s)
 		if !found {
 			ss.Message = model.Failure
 		} else {

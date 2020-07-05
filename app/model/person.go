@@ -14,11 +14,11 @@ func NewPerson() Person{
 	return Person{}
 }
 const (
-	ColumnUsername  = "username"
-	ColumnEmail     = "email"
-	ColumnPassword  = "password"
-	ColumnID        = "id"
-	ColumnCreatedAt = "created_at"
-	ColumnDeletedAt = "deleted_at"
+	UsernameColumn  = "username"
+	EmailColumn   = "email"
+	PasswordColumn  = "password"
+	IDColumn        = "id"
+	CreatedAtColumn = "created_at"
+	DeletedAtColumn = "deleted_at"
 )
 
