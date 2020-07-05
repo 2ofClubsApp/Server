@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/2-of-Clubs/2ofclubs-server/app"
-	"github.com/2-of-Clubs/2ofclubs-server/config"
+	"./app"
+	"./config"
 )
 
 func main() {

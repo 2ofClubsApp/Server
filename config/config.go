@@ -26,7 +26,7 @@ func GetDBConfig() *DBConfig {
 
 func GetRedisConfig() *RedisConfig {
 	return &RedisConfig{
-		Addr:     "localhost:5432",
+		Addr:     "localhost:2345",
 		Password: "",
 		DB:       0,
 	}
