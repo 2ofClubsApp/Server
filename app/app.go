@@ -65,32 +65,33 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 	log.Println("Connected to Redis")
 	log.Println("Connected to Database")
 	db.SingularTable(true)
-	db.CreateTable(model.NewStudent(), model.NewPerson(), model.NewEvent(), model.NewChat(), model.NewLog())
+	db.CreateTable(model.NewStudent(), model.NewEvent(), model.NewLog(), model.NewClub(), model.NewTag())
 
 }
 
 func (app *App) setRoutes() {
 	// Signup Route
-	app.Post("/signup", app.Handle(handler.CreateStudent, false))
-	app.Get("/signup/usernames/{username}", app.Handle(handler.QueryUsername, false))
-	app.Get("/signup/emails/{email}", app.Handle(handler.QueryEmail, false))
+	app.Post("/signup", app.Handle(handler.SignUp, false)) // Done
+	app.Get("/signup/usernames/{username}", app.Handle(handler.QueryUsername, false)) // Done
+	app.Get("/signup/emails/{email}", app.Handle(handler.QueryEmail, false)) // Done
 
 	// Login Routes
-	app.Post("/login", app.Handle(handler.Login, true))
-	// Student Routes
-	app.Get("/students/{username}", app.Handle(handler.GetStudent, true))
-	app.Put("/students/{username}", app.Handle(handler.UpdateStudent, true))
+	app.Post("/login", app.Handle(handler.Login, false)) // Done (Might need to check for synchronous token)
 
+	// Student Routes
+	app.Get("/students/{username}", app.Handle(handler.GetStudent, true)) // Partially working (must only return partial information)
+	app.Post("/students/{username}", app.Handle(handler.UpdateStudent, true)) // POST
+
+	app.Post("/test/{username}", app.Handle(handler.Test, false))
 	// Club routes
-	app.Get("/clubs", app.Handle(handler.GetClubs, true))
-	app.Post("/clubs", app.Handle(handler.CreateClub, false))
-	app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, true))
-	app.Get("/clubs/{username}", app.Handle(handler.GetClub, true))
-	app.Put("/clubs/{username}", app.Handle(handler.UpdateClub, true))
+	app.Get("/clubs", app.Handle(handler.GetClubs, false))
+	app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, false))
+	app.Get("/clubs/{username}", app.Handle(handler.GetClub, false))
+	app.Post("/clubs/{username}", app.Handle(handler.UpdateClub, true)) // POST
 	app.Get("/clubs/events", app.Handle(handler.GetEvents, true))
 	app.Get("/clubs/events/{username}", app.Handle(handler.GetEvent, true))
-	app.Post("/clubs/events/{username}", app.Handle(handler.CreateEvent, true))
-	app.Put("/clubs/events/{username}", app.Handle(handler.UpdateEvent, true))
+	app.Post("/clubs/events/{username}", app.Handle(handler.CreateEvent, true)) // POST
+	app.Post("/clubs/events/{username}", app.Handle(handler.UpdateEvent, true)) // POST
 	app.Delete("/clubs/events/{username}", app.Handle(handler.DeleteEvent, true))
 
 	// Chat Routes
@@ -109,10 +110,6 @@ func (app *App) Post(path string, f routeHandler) {
 
 func (app *App) Get(path string, f routeHandler) {
 	app.router.HandleFunc(path, f).Methods(http.MethodGet)
-}
-
-func (app *App) Put(path string, f routeHandler) {
-	app.router.HandleFunc(path, f).Methods(http.MethodPut)
 }
 
 func (app *App) Delete(path string, f routeHandler) {

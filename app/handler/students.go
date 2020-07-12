@@ -8,22 +8,19 @@ import (
 	"net/http"
 )
 
-func CreateStudent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	// Check if content type is application/json?
-	s := model.NewStudent()
-	p := ExtractPersonInfo(r)
-	pass, isHashed := Hash(p.Password)
-	p.Password = pass
-	s.Person = p
-	found := RecordExists(db, "student", model.UsernameColumn, s.Username, s)
+
+func CreateStudent(db *gorm.DB, w http.ResponseWriter, u *model.User, s *model.Student) {
+	pass, isHashed := Hash(u.Password)
+	u.Password = pass
+	s.User = u
+	found := RecordExists(db, model.StudentTable, model.UsernameColumn, s.Username, s)
+	status := model.NewStatus()
 	if !found && isHashed {
-		fmt.Println(s.Username)
-		if tp, err := GetTokenPair(s.Username, 5, 60*24); err == nil {
-			db.Create(&s)
-			c := GenerateCookie(model.RefreshToken, tp.RefreshToken)
-			http.SetCookie(w, c)
-			WriteData(tp.AccessToken, http.StatusOK, w)
-		}
+		db.Create(&s)
+		WriteData(ParseJSON(status), http.StatusOK, w)
+	} else {
+		status.Message = ErrSignUp
+		WriteData(ParseJSON(status), http.StatusOK, w)
 	}
 }
 

@@ -15,5 +15,5 @@ type Status struct {
 }
 
 func NewStatus() *Status {
-	return &Status{Message: Success, Data: T{}}
+	return &Status{Message: "", Data: T{}}
 }

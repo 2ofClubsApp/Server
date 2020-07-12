@@ -2,15 +2,14 @@ package model
 
 import (
 	"github.com/jinzhu/gorm"
-	"time"
 )
 
 type Event struct {
 	gorm.Model
-	DateTime    time.Time
+	DateTime    string
 	Description string
 	Location    string
-	fee         float64
+	Fee         float64
 }
 
 func NewEvent() *Event{

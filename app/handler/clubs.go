@@ -11,14 +11,8 @@ func GetClubs(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Get Clubs")
 }
 
-func CreateClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request) {
-	c := model.NewClub()
-	p := ExtractPersonInfo(r)
-	c.Person = p
-	found := RecordExists(db, model.ClubTable, model.UsernameColumn, c.Username, c)
-	if !found {
-		db.Create(&c)
-	}
+func CreateClub(db *gorm.DB, w http.ResponseWriter, p *model.User, c *model.Club, tableName string) {
+	fmt.Println("Creating a Club")
 }
 
 func GetClubsTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
@@ -26,7 +20,7 @@ func GetClubsTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 }
 
 func GetClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-
+	fmt.Println("Getting club")
 }
 
 func UpdateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
