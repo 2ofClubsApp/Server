@@ -3,7 +3,7 @@ package handler
 import (
 	"../model"
 	"fmt"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 	"net/http"
 )
 

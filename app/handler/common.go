@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/go-playground/validator"
-	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 	"net/http"
 	"regexp"
 	"strings"
@@ -25,7 +25,6 @@ const (
 /*
 	Common methods shared amongst the different models
 */
-
 func SignUp(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	// Check if content type is application/json?
 	u, isValid := VerifyUserInfo(r)
@@ -38,10 +37,10 @@ func SignUp(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		if username && email {
 			CreateStudent(db, w, u, s)
 		} else {
-			WriteData(ParseJSON(status), http.StatusOK, w)
+			WriteData(GetJSON(status), http.StatusOK, w)
 		}
 	} else {
-		WriteData(ParseJSON(status), http.StatusOK, w)
+		WriteData(GetJSON(status), http.StatusOK, w)
 	}
 }
 
@@ -100,7 +99,7 @@ func Login(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			s := model.NewStatus()
 			s.Message = ErrLogin
-			WriteData(ParseJSON(s), http.StatusOK, w)
+			WriteData(GetJSON(s), http.StatusOK, w)
 		} else {
 			if tp, err := GetTokenPair(u.Username, 5, 60*24); err == nil {
 				c := GenerateCookie(model.RefreshToken, tp.RefreshToken)
@@ -112,25 +111,27 @@ func Login(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 }
 
 /*
-	Gets password hash for both clubs and students provided the username
+	Gets password hash for both clubs and students provided the username.
 */
 func getPasswordHash(db *gorm.DB, userName string) ([]byte, bool) {
 	type p struct {
 		Password string
 	}
 	pass := &p{}
-	notFoundStudent := db.Table(model.StudentTable).Where("Username = ?", userName).Find(pass).RecordNotFound()
-	if !notFoundStudent {
+	notFoundStudent := db.Table(model.StudentTable).Where("Username = ?", userName).Find(pass)
+	if notFoundStudent != nil {
 		return []byte(pass.Password), true
 	}
-	notFoundClub := db.Table(model.ClubTable).Where("Username = ?", userName).Find(pass).RecordNotFound()
-	if !notFoundClub {
+	notFoundClub := db.Table(model.ClubTable).Where("Username = ?", userName).Find(pass)
+	if notFoundClub != nil {
 		return []byte(pass.Password), true
 	}
 	return []byte(""), false
 }
 
-// Validate the user request to ensure that they can only access/modify their own respective data
+/*
+Validating the user request to ensure that they can only access/modify their own data.
+ */
 func ValidateUserReq(username string, r *http.Request) bool {
 	t := r.Header["Token"][0]
 	claims := jwt.MapClaims{}
@@ -165,6 +166,9 @@ func kf(token *jwt.Token) (interface{}, error) {
 	return []byte("2ofClubs"), nil
 }
 
+/*
+Generating http cookie where the refresh token will be embedded.
+ */
 func GenerateCookie(name string, value string) *http.Cookie {
 	return &http.Cookie{
 		Name:     name,
@@ -201,6 +205,9 @@ func GetTokenPair(subject string, accessDuration time.Duration, refreshDuration 
 	return nil, fmt.Errorf(ErrTokenGen)
 }
 
+/*
+Returning (hash, true) on Hash success otherwise, ("", false) on error.
+ */
 func Hash(info string) (string, bool) {
 	// Change cost to 10+ (try to find a way to scale it with hardware?)
 	saltedHashPass, err := bcrypt.GenerateFromPassword([]byte(info), bcrypt.DefaultCost)
@@ -210,8 +217,14 @@ func Hash(info string) (string, bool) {
 	return string(saltedHashPass), true
 }
 
+/*
+Returning true if the record already exists in the table, false otherwise.
+ */
 func RecordExists(db *gorm.DB, tableName string, column string, val string, t interface{}) bool {
-	return !db.Table(tableName).Where(column+"= ?", val).First(t).RecordNotFound()
+	if db.Table(tableName).Where(column+"= ?", val).First(t) != nil {
+		return true
+	}
+	return false
 }
 
 /*
@@ -232,13 +245,20 @@ func VerifyUserInfo(r *http.Request) (*model.User, bool) {
 	u.Email = strings.ToLower(u.Email)
 	return u, true
 }
+
+/*
+Validate username against Regex pattern of being alphanumeric.
+ */
 func ValidateUsername(fl validator.FieldLevel) bool {
 	matched, _ := regexp.Match("^[a-zA-Z0-9]+$", []byte(fl.Field().String()))
 	//fmt.Printf("Valid Username: %v\n", matched)
 	return matched
 }
 
-func ParseJSON(response interface{}) string {
+/*
+Returning the representation of a struct formatted in JSON.
+ */
+func GetJSON(response interface{}) string {
 	data, err := json.MarshalIndent(response, "", "\t")
 	if err != nil {
 		fmt.Println(err)
@@ -247,6 +267,9 @@ func ParseJSON(response interface{}) string {
 	return string(data)
 }
 
+/*
+Return response message and an HTTP Status Code upon receiving a request.
+ */
 func WriteData(data string, code int, w http.ResponseWriter) int {
 	w.WriteHeader(code)
 	n, err := fmt.Fprint(w, data)

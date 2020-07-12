@@ -3,7 +3,7 @@ package handler
 import (
 	"../model"
 	"github.com/gorilla/mux"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 	"net/http"
 )
 
@@ -25,7 +25,7 @@ func returnRequest(fparam bool, sparam bool, w http.ResponseWriter, response str
 	if !(fparam && sparam) {
 		s := model.NewStatus()
 		s.Message = response
-		data := ParseJSON(s)
+		data := GetJSON(s)
 		return WriteData(data, http.StatusOK, w)
 	}
 	return -1

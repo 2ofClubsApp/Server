@@ -10,8 +10,8 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	"log"
 	"net/http"
 )
@@ -49,7 +49,7 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 		log.Fatal("Unable to connect to Redis\n", err)
 	}
 
-	db, err := gorm.Open("postgres", dbFormat)
+	db, err := gorm.Open(postgres.Open(dbFormat), &gorm.Config{})
 	if err != nil {
 		log.Fatal("Unable to connect to database\n", err)
 	}
@@ -64,8 +64,8 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 	app.setRoutes()
 	log.Println("Connected to Redis")
 	log.Println("Connected to Database")
-	db.SingularTable(true)
-	db.CreateTable(model.NewStudent(), model.NewEvent(), model.NewLog(), model.NewClub(), model.NewTag())
+	//db.Migrator().(true)
+	db.Migrator().CreateTable(model.NewStudent(), model.NewEvent(), model.NewStudentClub(), model.NewLog(), model.NewClub(), model.NewTag())
 
 }
 

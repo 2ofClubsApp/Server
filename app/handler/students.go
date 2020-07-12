@@ -4,11 +4,13 @@ import (
 	"../model"
 	"fmt"
 	"github.com/gorilla/mux"
-	"github.com/jinzhu/gorm"
+	"gorm.io/gorm"
 	"net/http"
 )
 
-
+/*
+Create student given a student JSON payload. (See models.Student for payload information).
+ */
 func CreateStudent(db *gorm.DB, w http.ResponseWriter, u *model.User, s *model.Student) {
 	pass, isHashed := Hash(u.Password)
 	u.Password = pass
@@ -17,10 +19,10 @@ func CreateStudent(db *gorm.DB, w http.ResponseWriter, u *model.User, s *model.S
 	status := model.NewStatus()
 	if !found && isHashed {
 		db.Create(&s)
-		WriteData(ParseJSON(status), http.StatusOK, w)
+		WriteData(GetJSON(status), http.StatusOK, w)
 	} else {
 		status.Message = ErrSignUp
-		WriteData(ParseJSON(status), http.StatusOK, w)
+		WriteData(GetJSON(status), http.StatusOK, w)
 	}
 }
 
@@ -39,7 +41,7 @@ func GetStudent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		} else {
 			ss.Data = s
 		}
-		data = ParseJSON(ss)
+		data = GetJSON(ss)
 	} else {
 		data = http.StatusText(http.StatusForbidden)
 		status = http.StatusForbidden
