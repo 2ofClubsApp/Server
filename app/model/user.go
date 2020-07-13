@@ -4,22 +4,20 @@ import "gorm.io/gorm"
 
 type User struct {
 	gorm.Model
-	// Regex's not added in metadata since it can conflict with commas and other symbols
-	Username  string `gorm:"UNIQUE" validate:"alpha,min=2,max=15,required"`
-	Email     string `gorm:"UNIQUE" validate:"required,email"`
-	Password  string `validate:"required,min=3,max=45"`
-	// Max 45 due to 50 length limitation of bcrypt
+	*Credentials
+	//Swipes []Club `gorm:"many2many:student_swipe;association_foreignkey:ID;foreignkey:ID"`
+	//Tags    []Tag   `gorm:"many2many:student_tag;association_foreignkey:ID;foreignkey:ID"`
+	//Attends []Event `gorm:"many2many:student_event;association_foreignkey:ID;foreignkey:ID"`
+	IsAdmin bool
 }
 
 func NewUser() *User {
-	return &User{}
+	return &User{Credentials: NewCredentials()}
 }
 
-
 const (
-	UsernameColumn  = "username"
-	EmailColumn     = "email"
-	PasswordColumn  = "password"
+	IsHelpingColumn = "is_helping"
+	UserTable       = "user"
 	IDColumn        = "id"
 	CreatedAtColumn = "created_at"
 	DeletedAtColumn = "deleted_at"

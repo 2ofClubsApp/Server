@@ -18,8 +18,9 @@ import (
 const (
 	ErrGeneric  = "an error occurred"
 	ErrTokenGen = "token generation error"
-	ErrSignUp   = "Unable to Sign Up Student"
+	ErrSignUp   = "Unable to Sign Up User"
 	ErrLogin    = "Username or Password is Incorrect"
+	ErrHash     = "hashing Error"
 )
 
 /*
@@ -27,16 +28,25 @@ const (
 */
 func SignUp(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	// Check if content type is application/json?
-	u, isValid := VerifyUserInfo(r)
+	creds, isValid := VerifyCredentials(r)
+	hashedPass, err := Hash(creds.Password)
+	creds.Password = hashedPass
 	status := model.NewStatus()
 	status.Message = ErrSignUp
-	if isValid {
-		s := model.NewStudent()
-		username := !RecordExists(db, model.StudentTable, model.UsernameColumn, u.Username, s)
-		email := !RecordExists(db, model.StudentTable, model.EmailColumn, u.Email, s)
-		if username && email {
-			CreateStudent(db, w, u, s)
+	if isValid && (err == nil) {
+		user := model.NewUser()
+		unameAvailable := !RecordExists(db, model.UserTable, model.UsernameColumn, creds.Username, user)
+		emailAvailable := !RecordExists(db, model.UserTable, model.EmailColumn, creds.Email, user)
+		if unameAvailable && emailAvailable {
+			CreateUser(db, w, creds, user)
 		} else {
+			status := model.CredentialStatus{}
+			if !unameAvailable {
+				status.Username = model.UsernameExists
+			}
+			if !emailAvailable{
+				status.Email = model.EmailExists
+			}
 			WriteData(GetJSON(status), http.StatusOK, w)
 		}
 	} else {
@@ -69,13 +79,13 @@ func Test(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	e1.Fee = 99.0
 
 	cc := model.NewClub()
-	cc.Username = "Banana"
+	//cc.Username = "Banana"
 	cc.Bio = "We are ACS!"
-	cc.Password = "Hackhackhack"
+	//cc.Password = "Hackhackhack"
 	cc.Size = 123456789
-	cc.Email = "acs@utm.com"
-	cc.Hosts = []model.Event{*e, *e1}
-	cc.Tags = []model.Tag{*t, *t1}
+	//cc.Email = "acs@utm.com"
+	//cc.Hosts = []model.Event{*e, *e1}
+	//cc.Tags = []model.Tag{*t, *t1}
 	db.Create(cc)
 
 	//cc.HelpNeeded = true
@@ -88,7 +98,7 @@ func Test(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 }
 
 func Login(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	u, isValid := VerifyUserInfo(r)
+	u, isValid := VerifyCredentials(r)
 	if isValid {
 		hash, isFound := getPasswordHash(db, u.Username)
 		err := errors.New("unable to find password")
@@ -111,15 +121,15 @@ func Login(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 }
 
 /*
-	Gets password hash for both clubs and students provided the username.
+	Gets password hash for both clubs and users provided the username.
 */
 func getPasswordHash(db *gorm.DB, userName string) ([]byte, bool) {
 	type p struct {
 		Password string
 	}
 	pass := &p{}
-	notFoundStudent := db.Table(model.StudentTable).Where("Username = ?", userName).Find(pass)
-	if notFoundStudent != nil {
+	notFoundUser := db.Table(model.UserTable).Where("Username = ?", userName).Find(pass)
+	if notFoundUser != nil {
 		return []byte(pass.Password), true
 	}
 	notFoundClub := db.Table(model.ClubTable).Where("Username = ?", userName).Find(pass)
@@ -131,7 +141,7 @@ func getPasswordHash(db *gorm.DB, userName string) ([]byte, bool) {
 
 /*
 Validating the user request to ensure that they can only access/modify their own data.
- */
+*/
 func ValidateUserReq(username string, r *http.Request) bool {
 	t := r.Header["Token"][0]
 	claims := jwt.MapClaims{}
@@ -168,7 +178,7 @@ func kf(token *jwt.Token) (interface{}, error) {
 
 /*
 Generating http cookie where the refresh token will be embedded.
- */
+*/
 func GenerateCookie(name string, value string) *http.Cookie {
 	return &http.Cookie{
 		Name:     name,
@@ -207,57 +217,53 @@ func GetTokenPair(subject string, accessDuration time.Duration, refreshDuration 
 
 /*
 Returning (hash, true) on Hash success otherwise, ("", false) on error.
- */
-func Hash(info string) (string, bool) {
+*/
+func Hash(info string) (string, error) {
 	// Change cost to 10+ (try to find a way to scale it with hardware?)
 	saltedHashPass, err := bcrypt.GenerateFromPassword([]byte(info), bcrypt.DefaultCost)
 	if err != nil {
-		return "", false
+		return "", errors.New(ErrHash)
 	}
-	return string(saltedHashPass), true
+	return string(saltedHashPass), nil
 }
 
 /*
 Returning true if the record already exists in the table, false otherwise.
- */
+*/
 func RecordExists(db *gorm.DB, tableName string, column string, val string, t interface{}) bool {
-	if db.Table(tableName).Where(column+"= ?", val).First(t) != nil {
-		return true
-	}
-	return false
+	result := db.Table(tableName).Where(column+"= ?", val).First(t)
+	return result.Error == nil
 }
 
 /*
 Extracting JSON payload and returning (model, true) if valid, otherwise (model, false).
 */
-func VerifyUserInfo(r *http.Request) (*model.User, bool) {
+func VerifyCredentials(r *http.Request) (*model.Credentials, bool) {
 	decoder := json.NewDecoder(r.Body)
-	u := model.NewUser()
-	decoder.Decode(u)
+	c := model.NewCredentials()
+	decoder.Decode(c)
 	validate := validator.New()
 	validate.RegisterValidation("alpha", ValidateUsername)
-	err := validate.Struct(u)
-	//fmt.Println(err)
+	err := validate.Struct(c)
 	if err != nil {
-		return u, false
+		return c, false
 	}
-	u.Username = strings.ToLower(u.Username)
-	u.Email = strings.ToLower(u.Email)
-	return u, true
+	c.Username = strings.ToLower(c.Username)
+	c.Email = strings.ToLower(c.Email)
+	return c, true
 }
 
 /*
 Validate username against Regex pattern of being alphanumeric.
- */
+*/
 func ValidateUsername(fl validator.FieldLevel) bool {
-	matched, _ := regexp.Match("^[a-zA-Z0-9]+$", []byte(fl.Field().String()))
-	//fmt.Printf("Valid Username: %v\n", matched)
+	matched, _ := regexp.Match("^[a-zA-Z][a-zA-Z0-9_]*$", []byte(fl.Field().String()))
 	return matched
 }
 
 /*
 Returning the representation of a struct formatted in JSON.
- */
+*/
 func GetJSON(response interface{}) string {
 	data, err := json.MarshalIndent(response, "", "\t")
 	if err != nil {
@@ -269,7 +275,7 @@ func GetJSON(response interface{}) string {
 
 /*
 Return response message and an HTTP Status Code upon receiving a request.
- */
+*/
 func WriteData(data string, code int, w http.ResponseWriter) int {
 	w.WriteHeader(code)
 	n, err := fmt.Fprint(w, data)

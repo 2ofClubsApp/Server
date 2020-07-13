@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/schema"
 	"log"
 	"net/http"
 )
@@ -49,7 +50,9 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 		log.Fatal("Unable to connect to Redis\n", err)
 	}
 
-	db, err := gorm.Open(postgres.Open(dbFormat), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open(dbFormat), &gorm.Config{
+		NamingStrategy: schema.NamingStrategy{SingularTable: true},
+	})
 	if err != nil {
 		log.Fatal("Unable to connect to database\n", err)
 	}
@@ -64,25 +67,25 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 	app.setRoutes()
 	log.Println("Connected to Redis")
 	log.Println("Connected to Database")
-	//db.Migrator().(true)
-	db.Migrator().CreateTable(model.NewStudent(), model.NewEvent(), model.NewStudentClub(), model.NewLog(), model.NewClub(), model.NewTag())
-
+	db.Migrator().CreateTable(model.NewUser(), model.NewEvent(), model.NewClub(), model.NewTag())
 }
 
 func (app *App) setRoutes() {
 	// Signup Route
-	app.Post("/signup", app.Handle(handler.SignUp, false)) // Done
+	app.Post("/signup", app.Handle(handler.SignUp, false))                            // Done
 	app.Get("/signup/usernames/{username}", app.Handle(handler.QueryUsername, false)) // Done
-	app.Get("/signup/emails/{email}", app.Handle(handler.QueryEmail, false)) // Done
+	app.Get("/signup/emails/{email}", app.Handle(handler.QueryEmail, false))          // Done
 
 	// Login Routes
 	app.Post("/login", app.Handle(handler.Login, false)) // Done (Might need to check for synchronous token)
 
-	// Student Routes
-	app.Get("/students/{username}", app.Handle(handler.GetStudent, true)) // Partially working (must only return partial information)
-	app.Post("/students/{username}", app.Handle(handler.UpdateStudent, true)) // POST
+	// User Routes
+	app.Get("/users/{username}", app.Handle(handler.GetUser, true))     // Partially working (must only return partial information)
+	app.Post("/users/{username}", app.Handle(handler.UpdateUser, true)) // POST
 
+	// Test Routes
 	app.Post("/test/{username}", app.Handle(handler.Test, false))
+
 	// Club routes
 	app.Get("/clubs", app.Handle(handler.GetClubs, false))
 	app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, false))

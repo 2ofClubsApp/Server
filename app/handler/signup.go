@@ -7,22 +7,19 @@ import (
 	"net/http"
 )
 
-func isUserAvailable(db *gorm.DB, r *http.Request, tableName, column string) bool {
+func isCredAvailable(db *gorm.DB, r *http.Request, tableName, column string) bool {
 	var placeholder interface{}
-	switch tableName {
-	case model.ClubTable:
-		placeholder = model.NewClub()
-		break
-	case model.StudentTable:
-		placeholder = model.NewStudent()
-	}
 	vars := mux.Vars(r)
-	email := vars[column]
-	return !RecordExists(db, tableName, column, email, placeholder)
+	cred := vars[column]
+	return !RecordExists(db, tableName, column, cred, placeholder)
 }
 
-func returnRequest(fparam bool, sparam bool, w http.ResponseWriter, response string) int {
-	if !(fparam && sparam) {
+/*
+Returning the availability of a username or email.
+On success nothing is return otherwise, a status error is returned
+ */
+func returnRequest(fieldAvailable bool, w http.ResponseWriter, response string) int {
+	if fieldAvailable {
 		s := model.NewStatus()
 		s.Message = response
 		data := GetJSON(s)
@@ -31,14 +28,15 @@ func returnRequest(fparam bool, sparam bool, w http.ResponseWriter, response str
 	return -1
 }
 
+/*
+Querying username against database to find the availability of username
+ */
 func QueryUsername(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	userClub := isUserAvailable(db, r, model.ClubTable, model.UsernameColumn)
-	userStudent := isUserAvailable(db, r, model.StudentTable, model.UsernameColumn)
-	returnRequest(userClub, userStudent, w, model.UsernameFound)
+	unameAvailable := isCredAvailable(db, r, model.UserTable, model.UsernameColumn)
+	returnRequest(unameAvailable, w, model.UsernameExists)
 }
 
 func QueryEmail(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	emailClub := isUserAvailable(db, r, model.ClubTable, model.EmailColumn)
-	emailStudent := isUserAvailable(db, r, model.StudentTable, model.EmailColumn)
-	returnRequest(emailClub, emailStudent, w, model.EmailFound)
+	emailAvailable := isCredAvailable(db, r, model.UserTable, model.EmailColumn)
+	returnRequest(emailAvailable, w, model.EmailExists)
 }
