@@ -39,25 +39,25 @@ func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	var data string
 	vars := mux.Vars(r)
 	username := strings.ToLower(vars[model.UsernameColumn])
-	ss := model.NewStatus()
+	status := model.NewStatus()
 	if IsValidRequest(username, r) {
-		s := model.NewUser()
+		u := model.NewUser()
 		// Defaults will be overridden when obtaining data and being inserted into struct except for null
-		found := RecordExists(db, "user", model.UsernameColumn, username, s)
+		found := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, u)
 		if !found {
-			ss.Message = model.UserNotFound
-			ss.Code = model.FailureCode
+			status.Message = model.UserNotFound
+			status.Code = model.FailureCode
 		} else {
-			ss.Data = s
-			ss.Message = model.UserFound
+			status.Data = u
+			status.Message = model.UserFound
 		}
 		statusCode = http.StatusOK
 	} else {
-		ss.Message = http.StatusText(http.StatusForbidden)
+		status.Message = http.StatusText(http.StatusForbidden)
 		statusCode = http.StatusForbidden
-		ss.Code = -1
+		status.Code = -1
 	}
-	data = GetJSON(ss)
+	data = GetJSON(status)
 	WriteData(data, statusCode, w)
 }
 

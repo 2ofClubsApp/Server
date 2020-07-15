@@ -1,10 +1,12 @@
 package model
 
 const (
-	UserNotFound     = "User Not Found"
 	UserFound        = "User Found"
+	UserNotFound     = "User Not Found"
+	ClubFound        = "Club Found"
+	ClubNotFound     = "Club Not Found"
 	UsernameExists   = "Username already exists"
-	UsernameAlphaNum = "Username must start with a letter and can only contain the following characters: a-zA-Z0-9_"
+	UsernameAlphaNum = "Username must start with a letter and can only contain the following characters: a-zA-Z0-9_ and must be 50 characters or less"
 	ValidEmail       = "Must be a valid email"
 	EmailExists      = "Email already exists"
 	FailureCode      = -1

@@ -75,8 +75,8 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 func (app *App) setRoutes() {
 	// Signup Route
 	app.Post("/signup", app.Handle(handler.SignUp, false))                            // Done
-	//app.Get("/signup/usernames/{username}", app.Handle(handler.QueryUsername, false)) // Integrated into singup above
-	//app.Get("/signup/emails/{email}", app.Handle(handler.QueryEmail, false))          // Integrated into signup above
+	//app.Get("/signup/usernames/{username}", app.Handle(handler.QueryUsername, false)) // Integrated into /signup
+	//app.Get("/signup/emails/{email}", app.Handle(handler.QueryEmail, false))          // Integrated into /signup
 
 	// Login Routes
 	app.Post("/login", app.Handle(handler.Login, false)) // Done (Need to check for synchronous token (CSRF prevention))
@@ -86,13 +86,14 @@ func (app *App) setRoutes() {
 	app.Post("/users/{username}", app.Handle(handler.UpdateUser, true)) // POST
 
 	// Test Routes
-	app.Post("/test/{username}", app.Handle(handler.Test, false))
+	app.Post("/test/{username}", app.Handle(handler.Test, false)) // Ignor
 
 	// Club routes
-	app.Post("/clubs", app.Handle(handler.CreateClub, true)) // Done for the most part
+	app.Post("/clubs", app.Handle(handler.CreateClub, true)) // Done
+	app.Get("/clubs/{name}", app.Handle(handler.GetClub, false)) // Done
+
 	app.Get("/clubs", app.Handle(handler.GetClubs, false))
 	app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, false))
-	app.Get("/clubs/{username}", app.Handle(handler.GetClub, false))
 	app.Post("/clubs/{username}", app.Handle(handler.UpdateClub, true)) // POST
 	app.Get("/clubs/events", app.Handle(handler.GetEvents, true))
 	app.Get("/clubs/events/{username}", app.Handle(handler.GetEvent, true))

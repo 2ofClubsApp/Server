@@ -28,8 +28,8 @@ func SignUp(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	credStatus := model.CredentialStatus{}
 	if isValid && (err == nil) {
 		user := model.NewUser()
-		unameAvailable := !RecordExists(db, model.UserTable, model.UsernameColumn, creds.Username, user)
-		emailAvailable := !RecordExists(db, model.UserTable, model.EmailColumn, creds.Email, user)
+		unameAvailable := !SingleRecordExists(db, model.UserTable, model.UsernameColumn, creds.Username, user)
+		emailAvailable := !SingleRecordExists(db, model.UserTable, model.EmailColumn, creds.Email, user)
 		if unameAvailable && emailAvailable {
 			CreateUser(db, w, creds, user)
 		} else {

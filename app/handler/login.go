@@ -13,12 +13,12 @@ import (
 )
 
 const (
-	LoginFailure    = "Username or Password is Incorrect"
-	HashErr       = "hashing Error"
-	ErrTokenGen   = "token generation error"
+	LoginFailure = "Username or Password is Incorrect"
+	HashErr      = "hashing Error"
+	ErrTokenGen  = "token generation error"
 )
 
-
+// TODO: Prevent login many times (if user tries to brute force this)
 func Login(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	creds := getCredentials(r)
 	hash, isFound := getPasswordHash(db, creds.Username)
