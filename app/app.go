@@ -88,10 +88,11 @@ func (app *App) setRoutes() {
 	// Test Routes
 	app.Post("/test/{username}", app.Handle(handler.Test, false)) // Ignor
 
+	// Potential code merger on /clubs/{name} and /users/{username}
+
 	// Club routes
 	app.Post("/clubs", app.Handle(handler.CreateClub, true)) // Done
 	app.Get("/clubs/{name}", app.Handle(handler.GetClub, false)) // Done
-
 	app.Get("/clubs", app.Handle(handler.GetClubs, false))
 	app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, false))
 	app.Post("/clubs/{username}", app.Handle(handler.UpdateClub, true)) // POST
@@ -100,6 +101,7 @@ func (app *App) setRoutes() {
 	app.Post("/clubs/events/{username}", app.Handle(handler.CreateEvent, true)) // POST
 	app.Post("/clubs/events/{username}", app.Handle(handler.UpdateEvent, true)) // POST
 	app.Delete("/clubs/events/{username}", app.Handle(handler.DeleteEvent, true))
+
 
 	// Chat Routes
 

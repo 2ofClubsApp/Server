@@ -46,7 +46,7 @@ func CreateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	// Keeping userExists as a check even though the user should exist given the valid token because there's a chance that the user is deleted
 	// In this case the user will still exist in the database but will be inaccessible.
 	if !clubExists && userExists && err == nil {
-		db.Model(user).Table(model.ClubTable).Association("Manages").Append(club)
+		db.Model(user).Association("Manages").Append(club)
 		db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ? AND is_owner = ?", user.ID, club.ID, false).Update("is_owner", true)
 		status.Message = SuccessClubCreation
 	} else {

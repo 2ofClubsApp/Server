@@ -1,6 +1,9 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	"fmt"
+	"gorm.io/gorm"
+)
 
 type User struct {
 	gorm.Model   `json:"-"`
@@ -15,10 +18,19 @@ func NewUser() *User {
 	return &User{Credentials: NewCredentials(), Manages: []Club{}}
 }
 
+/*
+Add IsOwner in Manages
+ */
+func (u *User) AfterFind(tx *gorm.DB) error{
+	fmt.Println(tx)
+	return nil
+}
+
 const (
 	UserClubTable   = "user_club"
 	IsHelpingColumn = "is_helping"
 	UserTable       = "user"
+	ManagesColumn   = "Manages"
 	IDColumn        = "id"
 	CreatedAtColumn = "created_at"
 	DeletedAtColumn = "deleted_at"

@@ -20,7 +20,6 @@ func CreateUser(db *gorm.DB, w http.ResponseWriter, c *model.Credentials, u *mod
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
 
-
 /*
 Validating the user request to ensure that they can only access/modify their own data.
 If valid, (sub, true) is returned, otherwise (sub, false) where sub represents the username accessing the resource.
@@ -40,10 +39,12 @@ func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	username := strings.ToLower(vars[model.UsernameColumn])
 	status := model.NewStatus()
+	u := model.NewUser()
+
 	if IsValidRequest(username, r) {
-		u := model.NewUser()
 		// Defaults will be overridden when obtaining data and being inserted into struct except for null
 		found := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, u)
+		db.Table(model.UserTable).Preload(model.ManagesColumn).Find(u)
 		if !found {
 			status.Message = model.UserNotFound
 			status.Code = model.FailureCode
