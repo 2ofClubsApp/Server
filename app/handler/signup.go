@@ -2,41 +2,88 @@ package handler
 
 import (
 	"../model"
-	"github.com/gorilla/mux"
+	"encoding/json"
+	"errors"
+	"github.com/go-playground/validator"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"net/http"
+	"regexp"
+	"strings"
 )
 
-func isCredAvailable(db *gorm.DB, r *http.Request, tableName, column string) bool {
-	var placeholder interface{}
-	vars := mux.Vars(r)
-	cred := vars[column]
-	return !RecordExists(db, tableName, column, cred, placeholder)
-}
+const (
+	SignupSuccess = "Signup Successful"
+	SignupFailure = "Unable to Sign Up User"
+)
 
-/*
-Returning the availability of a username or email.
-On success nothing is return otherwise, a status error is returned
- */
-func returnRequest(fieldAvailable bool, w http.ResponseWriter, response string) int {
-	if fieldAvailable {
-		s := model.NewStatus()
-		s.Message = response
-		data := GetJSON(s)
-		return WriteData(data, http.StatusOK, w)
+func SignUp(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	// Check if content type is application/json?
+	creds, isValid := VerifyCredentials(r)
+	hashedPass, err := Hash(creds.Password)
+	creds.Password = hashedPass
+	status := model.NewStatus()
+	status.Code = model.FailureCode
+	status.Message = SignupFailure
+	credStatus := model.CredentialStatus{}
+	if isValid && (err == nil) {
+		user := model.NewUser()
+		unameAvailable := !RecordExists(db, model.UserTable, model.UsernameColumn, creds.Username, user)
+		emailAvailable := !RecordExists(db, model.UserTable, model.EmailColumn, creds.Email, user)
+		if unameAvailable && emailAvailable {
+			CreateUser(db, w, creds, user)
+		} else {
+			if !unameAvailable {
+				credStatus.Username = model.UsernameExists
+			}
+			if !emailAvailable {
+				credStatus.Email = model.EmailExists
+			}
+			status.Data = credStatus
+			WriteData(GetJSON(status), http.StatusOK, w)
+		}
+	} else {
+		credStatus.Username = model.UsernameAlphaNum
+		credStatus.Email = model.ValidEmail
+		status.Data = credStatus
+		WriteData(GetJSON(status), http.StatusOK, w)
 	}
-	return -1
 }
 
 /*
-Querying username against database to find the availability of username
- */
-func QueryUsername(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	unameAvailable := isCredAvailable(db, r, model.UserTable, model.UsernameColumn)
-	returnRequest(unameAvailable, w, model.UsernameExists)
+Returning (hash, true) on Hash success otherwise, ("", false) on error.
+*/
+func Hash(info string) (string, error) {
+	// Change cost to 10+ (try to find a way to scale it with hardware?)
+	saltedHashPass, err := bcrypt.GenerateFromPassword([]byte(info), bcrypt.DefaultCost)
+	if err != nil {
+		return "", errors.New(HashErr)
+	}
+	return string(saltedHashPass), nil
 }
 
-func QueryEmail(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	emailAvailable := isCredAvailable(db, r, model.UserTable, model.EmailColumn)
-	returnRequest(emailAvailable, w, model.EmailExists)
+/*
+Extracting JSON payload credentials and returning (model, true) if valid, otherwise (model, false).
+*/
+func VerifyCredentials(r *http.Request) (*model.Credentials, bool) {
+	decoder := json.NewDecoder(r.Body)
+	c := model.NewCredentials()
+	decoder.Decode(c)
+	validate := validator.New()
+	validate.RegisterValidation("alpha", ValidateUsername)
+	err := validate.Struct(c)
+	if err != nil {
+		return c, false
+	}
+	c.Username = strings.ToLower(c.Username)
+	c.Email = strings.ToLower(c.Email)
+	return c, true
+}
+
+/*
+Validate username against Regex pattern of being alphanumeric.
+*/
+func ValidateUsername(fl validator.FieldLevel) bool {
+	matched, _ := regexp.Match("^[a-zA-Z][a-zA-Z0-9_]*$", []byte(fl.Field().String()))
+	return matched
 }

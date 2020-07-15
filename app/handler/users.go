@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 	"net/http"
+	"strings"
 )
 
 /*
@@ -14,32 +15,50 @@ Create a User given a JSON payload. (See models.User for payload information).
 func CreateUser(db *gorm.DB, w http.ResponseWriter, c *model.Credentials, u *model.User) {
 	u.Credentials = c
 	status := model.NewStatus()
+	status.Message = SignupSuccess
 	db.Create(&u)
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
 
+
+/*
+Validating the user request to ensure that they can only access/modify their own data.
+If valid, (sub, true) is returned, otherwise (sub, false) where sub represents the username accessing the resource.
+*/
+func IsValidRequest(username string, r *http.Request) bool {
+	claims := GetTokenClaims(r)
+	sub := fmt.Sprintf("%v", claims["sub"])
+	fmt.Println(username)
+	fmt.Println(sub)
+	return sub == username
+}
+
+// FIX: Extract user Club info from "Manages" (List them as club names rather than the entire club? with an isOwner) in JSON
 func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	status := http.StatusOK
-	data := ""
+	var statusCode int
+	var data string
 	vars := mux.Vars(r)
-	username := vars[model.UsernameColumn]
-	if ValidateUserReq(username, r) {
+	username := strings.ToLower(vars[model.UsernameColumn])
+	ss := model.NewStatus()
+	if IsValidRequest(username, r) {
 		s := model.NewUser()
-		ss := model.NewStatus()
 		// Defaults will be overridden when obtaining data and being inserted into struct except for null
 		found := RecordExists(db, "user", model.UsernameColumn, username, s)
 		if !found {
 			ss.Message = model.UserNotFound
+			ss.Code = model.FailureCode
 		} else {
 			ss.Data = s
+			ss.Message = model.UserFound
 		}
-		data = GetJSON(ss)
+		statusCode = http.StatusOK
 	} else {
-		data = http.StatusText(http.StatusForbidden)
-		status = http.StatusForbidden
+		ss.Message = http.StatusText(http.StatusForbidden)
+		statusCode = http.StatusForbidden
+		ss.Code = -1
 	}
-	WriteData(data, status, w)
-
+	data = GetJSON(ss)
+	WriteData(data, statusCode, w)
 }
 
 func UpdateUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {

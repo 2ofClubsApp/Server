@@ -67,26 +67,29 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 	app.setRoutes()
 	log.Println("Connected to Redis")
 	log.Println("Connected to Database")
-	db.Migrator().CreateTable(model.NewUser(), model.NewEvent(), model.NewClub(), model.NewTag())
+	db.Migrator().CreateTable(model.NewUser(), model.NewEvent(), model.NewClub(), model.NewTag(), model.UserClub{})
+	db.SetupJoinTable(model.User{}, "Manages", &model.UserClub{})
+
 }
 
 func (app *App) setRoutes() {
 	// Signup Route
 	app.Post("/signup", app.Handle(handler.SignUp, false))                            // Done
-	app.Get("/signup/usernames/{username}", app.Handle(handler.QueryUsername, false)) // Done
-	app.Get("/signup/emails/{email}", app.Handle(handler.QueryEmail, false))          // Done
+	//app.Get("/signup/usernames/{username}", app.Handle(handler.QueryUsername, false)) // Integrated into singup above
+	//app.Get("/signup/emails/{email}", app.Handle(handler.QueryEmail, false))          // Integrated into signup above
 
 	// Login Routes
-	app.Post("/login", app.Handle(handler.Login, false)) // Done (Might need to check for synchronous token)
+	app.Post("/login", app.Handle(handler.Login, false)) // Done (Need to check for synchronous token (CSRF prevention))
 
 	// User Routes
-	app.Get("/users/{username}", app.Handle(handler.GetUser, true))     // Partially working (must only return partial information)
+	app.Get("/users/{username}", app.Handle(handler.GetUser, true))     // Done
 	app.Post("/users/{username}", app.Handle(handler.UpdateUser, true)) // POST
 
 	// Test Routes
 	app.Post("/test/{username}", app.Handle(handler.Test, false))
 
 	// Club routes
+	app.Post("/clubs", app.Handle(handler.CreateClub, true)) // Done for the most part
 	app.Get("/clubs", app.Handle(handler.GetClubs, false))
 	app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, false))
 	app.Get("/clubs/{username}", app.Handle(handler.GetClub, false))

@@ -1,15 +1,20 @@
 package model
 
 const (
-	UserNotFound  = "User Not Found"
-	UserFound     = "User Found"
-	UsernameExists = "Username already exists"
-	EmailExists    = "Email already exists"
+	UserNotFound     = "User Not Found"
+	UserFound        = "User Found"
+	UsernameExists   = "Username already exists"
+	UsernameAlphaNum = "Username must start with a letter and can only contain the following characters: a-zA-Z0-9_"
+	ValidEmail       = "Must be a valid email"
+	EmailExists      = "Email already exists"
+	FailureCode      = -1
+	SuccessCode      = 1
 )
 
 type T struct{}
 
 type Status struct {
+	Code    int
 	Message string
 	Data    interface{}
 }
@@ -20,5 +25,5 @@ type CredentialStatus struct {
 }
 
 func NewStatus() *Status {
-	return &Status{Message: "", Data: T{}}
+	return &Status{Code: SuccessCode, Message: "", Data: T{}}
 }
