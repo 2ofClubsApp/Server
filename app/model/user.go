@@ -1,25 +1,36 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	"fmt"
+	"gorm.io/gorm"
+)
 
 type User struct {
-	gorm.Model
-	// Regex's not added in metadata since it can conflict with commas and other symbols
-	Username  string `gorm:"UNIQUE" validate:"alpha,min=2,max=15,required"`
-	Email     string `gorm:"UNIQUE" validate:"required,email"`
-	Password  string `validate:"required,min=3,max=45"`
-	// Max 45 due to 50 length limitation of bcrypt
+	gorm.Model   `json:"-"`
+	*Credentials `json:"-"`
+	Manages      []Club `gorm:"many2many:user_club;"`
+	//Tags    []Tag   `gorm:"many2many:student_tag;association_foreignkey:ID;foreignkey:ID"`
+	//Attends []Event `gorm:"many2many:student_event;association_foreignkey:ID;foreignkey:ID"`
+	IsAdmin bool
 }
 
 func NewUser() *User {
-	return &User{}
+	return &User{Credentials: NewCredentials(), Manages: []Club{}}
 }
 
+/*
+Add IsOwner in Manages
+ */
+func (u *User) AfterFind(tx *gorm.DB) error{
+	fmt.Println(tx)
+	return nil
+}
 
 const (
-	UsernameColumn  = "username"
-	EmailColumn     = "email"
-	PasswordColumn  = "password"
+	UserClubTable   = "user_club"
+	IsHelpingColumn = "is_helping"
+	UserTable       = "user"
+	ManagesColumn   = "Manages"
 	IDColumn        = "id"
 	CreatedAtColumn = "created_at"
 	DeletedAtColumn = "deleted_at"
