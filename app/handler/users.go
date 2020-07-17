@@ -16,7 +16,7 @@ func CreateUser(db *gorm.DB, w http.ResponseWriter, c *model.Credentials, u *mod
 	u.Credentials = c
 	status := model.NewStatus()
 	status.Message = SignupSuccess
-	db.Create(&u)
+	db.Create(u)
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
 
@@ -27,12 +27,12 @@ If valid, (sub, true) is returned, otherwise (sub, false) where sub represents t
 func IsValidRequest(username string, r *http.Request) bool {
 	claims := GetTokenClaims(r)
 	sub := fmt.Sprintf("%v", claims["sub"])
-	fmt.Println(username)
-	fmt.Println(sub)
+	//fmt.Println(username)
+	//fmt.Println(sub)
 	return sub == username
 }
 
-// FIX: Extract user Club info from "Manages" (List them as club names rather than the entire club? with an isOwner) in JSON
+// FIX: Extract user Club info from "Manages" (List them as club names with an isOwner) in JSON
 func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	var statusCode int
 	var data string
