@@ -1,6 +1,10 @@
 package model
 
 const (
+	TagsError        = "Unable to get tags"
+	TagsFound        = "Tags Found"
+	TagDelete        = "Tag Deleted"
+	TagNotFound      = "Tag doesn't exist"
 	InvalidFile      = "Invalid File: A .txt file is required"
 	AdminRequired    = "Please contact an administrator."
 	UserFound        = "User Found"
@@ -10,7 +14,7 @@ const (
 	UsernameExists   = "Username already exists"
 	TagCreated       = "Successfully created tag"
 	TagsCreated      = "Successfully created tags"
-	TagFound         = "Tag already exists"
+	TagExists        = "Tag already exists"
 	UsernameAlphaNum = "Username must start with a letter and can only contain the following characters: a-zA-Z0-9_ and must be 50 characters or less"
 	ValidEmail       = "Must be a valid email"
 	EmailExists      = "Email already exists"

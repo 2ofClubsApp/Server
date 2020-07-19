@@ -74,7 +74,7 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 
 func (app *App) setRoutes() {
 	// Signup Route
-	app.Post("/signup", app.Handle(handler.SignUp, false))                            // Done
+	app.Post("/signup", app.Handle(handler.SignUp, false)) // Done
 	//app.Get("/signup/usernames/{username}", app.Handle(handler.QueryUsername, false)) // Integrated into /signup
 	//app.Get("/signup/emails/{email}", app.Handle(handler.QueryEmail, false))          // Integrated into /signup
 
@@ -93,10 +93,10 @@ func (app *App) setRoutes() {
 	// Tag Routes
 	app.Get("/tags", app.Handle(handler.GetTags, false))
 	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true)) // Should verify request later and restrict only to admins
-	app.Post("/tags/{tag}", app.Handle(handler.CreateTag, true)) // Verify request later and restrict only to admins
-
+	app.Post("/tags/{tag}", app.Handle(handler.CreateTag, true))       // Verify request later and restrict only to admins
+	app.Delete("/tags/{tag}", app.Handle(handler.DeleteTag, true))
 	// Club routes
-	app.Post("/clubs", app.Handle(handler.CreateClub, true)) // Done
+	app.Post("/clubs", app.Handle(handler.CreateClub, true))     // Done
 	app.Get("/clubs/{name}", app.Handle(handler.GetClub, false)) // Done
 
 	app.Get("/clubs", app.Handle(handler.GetClubs, false))
@@ -107,9 +107,6 @@ func (app *App) setRoutes() {
 	app.Post("/clubs/events/{username}", app.Handle(handler.CreateEvent, true)) // POST
 	app.Post("/clubs/events/{username}", app.Handle(handler.UpdateEvent, true)) // POST
 	app.Delete("/clubs/events/{username}", app.Handle(handler.DeleteEvent, true))
-
-
-
 
 	// Chat Routes
 
