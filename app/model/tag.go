@@ -4,7 +4,7 @@ import "gorm.io/gorm"
 
 type Tag struct {
 	gorm.Model
-	Name string
+	Name string `validate:"required,min=1,max=25"`
 }
 
 func NewTag() *Tag {
