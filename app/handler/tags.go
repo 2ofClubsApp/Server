@@ -35,14 +35,19 @@ Create a tag based on the name provided by the request URL
 */
 func CreateTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status := model.NewStatus()
-	vars := mux.Vars(r)
-	tagName := vars["tag"]
-	tagName = strings.TrimSpace(tagName)
-	if TagExists(db, tagName) {
-		status.Message = model.TagFound
-		status.Code = model.FailureCode
+	if isAdmin(db, r) {
+		vars := mux.Vars(r)
+		tagName := vars["tag"]
+		tagName = strings.TrimSpace(tagName)
+		if TagExists(db, tagName) {
+			status.Message = model.TagFound
+			status.Code = model.FailureCode
+		} else {
+			status.Message = model.TagCreated
+		}
 	} else {
-		status.Message = model.TagCreated
+		status.Code = model.FailureCode
+		status.Message = model.AdminRequired
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
@@ -54,27 +59,33 @@ Refer to docs for file specifications.
 */
 func UploadTagsList(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status := model.NewStatus()
-	file, handler, err := r.FormFile("file")
-	if err != nil {
-		fmt.Errorf("file doesn't exist: %v", err)
-		return
-	}
-	if filepath.Ext(handler.Filename) != ".txt" {
-		status.Code = model.FailureCode
-		status.Message = model.InvalidFile
-	} else {
-		fileContent, err := ioutil.ReadAll(file)
-		defer file.Close()
+	if isAdmin(db, r) {
+		file, handler, err := r.FormFile("file")
 		if err != nil {
-			fmt.Errorf("cannot read file: %v", err)
+			fmt.Errorf("file doesn't exist: %v", err)
+			return
 		}
-		for _, tagName := range strings.Split(string(fileContent), "\n") {
-			tagName = strings.TrimSpace(tagName)
-			TagExists(db, tagName)
+		if filepath.Ext(handler.Filename) != ".txt" {
+			status.Code = model.FailureCode
+			status.Message = model.InvalidFile
+		} else {
+			fileContent, err := ioutil.ReadAll(file)
+			defer file.Close()
+			if err != nil {
+				fmt.Errorf("cannot read file: %v", err)
+			}
+			for _, tagName := range strings.Split(string(fileContent), "\n") {
+				tagName = strings.TrimSpace(tagName)
+				TagExists(db, tagName)
+			}
+			status.Message = model.TagsCreated
 		}
-		status.Message = model.TagsCreated
+	} else {
+		status.Code = model.FailureCode
+		status.Message = model.AdminRequired
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)
+
 }
 
 func GetTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {

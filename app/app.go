@@ -92,8 +92,8 @@ func (app *App) setRoutes() {
 
 	// Tag Routes
 	app.Get("/tags", app.Handle(handler.GetTags, false))
-	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, false)) // Should verify request later and restrict only to admins
-	app.Post("/tags/{tag}", app.Handle(handler.CreateTag, false)) // Verify request later and restrict only to admins
+	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true)) // Should verify request later and restrict only to admins
+	app.Post("/tags/{tag}", app.Handle(handler.CreateTag, true)) // Verify request later and restrict only to admins
 
 	// Club routes
 	app.Post("/clubs", app.Handle(handler.CreateClub, true)) // Done
