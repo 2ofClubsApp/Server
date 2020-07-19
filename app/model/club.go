@@ -10,7 +10,7 @@ type Club struct {
 	Email      string `gorm:"UNIQUE" validate:"required,email"`
 	Bio        string `validate:"required,max=300"`
 	Size       int    `validate:"required"`
-	Approved   bool   `json:"-"`
+	Active     bool   `json:"-"`
 	//Tags       []Tag   `gorm:"many2many:club_tag;association_foreignkey:ID;foreignkey:ID"`
 	//Hosts      []Event `gorm:"many2many:club_event;association_foreignkey:ID;foreignkey:ID"`
 	//HelpNeeded bool

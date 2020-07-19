@@ -90,9 +90,15 @@ func (app *App) setRoutes() {
 
 	// Potential code merger on /clubs/{name} and /users/{username}
 
+	// Tag Routes
+	app.Get("/tags", app.Handle(handler.GetTags, false))
+	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, false)) // Should verify request later and restrict only to admins
+	app.Post("/tags/{tag}", app.Handle(handler.CreateTag, false)) // Verify request later and restrict only to admins
+
 	// Club routes
 	app.Post("/clubs", app.Handle(handler.CreateClub, true)) // Done
 	app.Get("/clubs/{name}", app.Handle(handler.GetClub, false)) // Done
+
 	app.Get("/clubs", app.Handle(handler.GetClubs, false))
 	app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, false))
 	app.Post("/clubs/{username}", app.Handle(handler.UpdateClub, true)) // POST
@@ -101,6 +107,8 @@ func (app *App) setRoutes() {
 	app.Post("/clubs/events/{username}", app.Handle(handler.CreateEvent, true)) // POST
 	app.Post("/clubs/events/{username}", app.Handle(handler.UpdateEvent, true)) // POST
 	app.Delete("/clubs/events/{username}", app.Handle(handler.DeleteEvent, true))
+
+
 
 
 	// Chat Routes
