@@ -2,6 +2,7 @@ package model
 
 const (
 	InvalidFile      = "Invalid File: A .txt file is required"
+	AdminRequired    = "Please contact an administrator."
 	UserFound        = "User Found"
 	UserNotFound     = "User Not Found"
 	ClubFound        = "Club Found"

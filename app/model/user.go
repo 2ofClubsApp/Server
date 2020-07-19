@@ -31,6 +31,7 @@ const (
 	IsHelpingColumn = "is_helping"
 	UserTable       = "user"
 	ManagesColumn   = "Manages"
+	IsAdminColumn   = "is_admin"
 	IDColumn        = "id"
 	CreatedAtColumn = "created_at"
 	DeletedAtColumn = "deleted_at"
