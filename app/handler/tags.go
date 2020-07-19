@@ -3,31 +3,32 @@ package handler
 import (
 	"../model"
 	"bufio"
-	"encoding/json"
 	"fmt"
+	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 )
 
-func CreateTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	for _, name := range getTagInfo(r){
-		if !SingleRecordExists(db, model.TagTable, model.NameColumn, name, model.NewTag()){
-			tag := model.NewTag()
-			tag.Name = name
-			db.Create(tag)
-		} else {
-			fmt.Println("Record already exists")
-		}
+// Note: Tags such as Computer Science and ComputerScience are different, should we account for this or is this a user fault?
+func CreateTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	status := model.NewStatus()
+	vars := mux.Vars(r)
+	tagName := vars["tag"]
+	tagName = strings.TrimSpace(tagName)
+	if !SingleRecordExists(db, model.TagTable, model.NameColumn, tagName, model.NewTag()) {
+		tag := model.NewTag()
+		tag.Name = tagName
+		db.Create(tag)
+		status.Message = model.TagCreated
+	} else {
+		status.Message = model.TagFound
+		status.Code = model.FailureCode
 	}
-}
-
-func getTagInfo(r *http.Request) []string {
-	payload := map[string][]string{"Tags": []string{}}
-	decoder := json.NewDecoder(r.Body)
-	decoder.Decode(&payload)
-	return payload["Tags"]
+	WriteData(GetJSON(status), http.StatusOK, w)
 
 }
 
@@ -45,6 +46,8 @@ func UploadTagsList(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	}
 	defer f.Close()
 	_, err1 := io.Copy(f, file)
+	fc, _ := ioutil.ReadAll(file)
+	fmt.Println(fc)
 	if err1 != nil {
 		fmt.Println("Error copying contents from other file")
 		return

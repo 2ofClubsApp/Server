@@ -71,7 +71,7 @@ func GetClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	var statusCode int
 	var data string
 	vars := mux.Vars(r)
-	clubName := strings.ToLower(vars[model.NameColumn])
+	clubName := strings.ToLower(vars["name"])
 	status := model.NewStatus()
 	c := model.NewClub()
 	found := SingleRecordExists(db, model.ClubTable, model.NameColumn, clubName, c)

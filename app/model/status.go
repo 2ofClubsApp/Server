@@ -6,6 +6,8 @@ const (
 	ClubFound        = "Club Found"
 	ClubNotFound     = "Club Not Found"
 	UsernameExists   = "Username already exists"
+	TagCreated       = "Successfully created tag"
+	TagFound         = "Tag already exists"
 	UsernameAlphaNum = "Username must start with a letter and can only contain the following characters: a-zA-Z0-9_ and must be 50 characters or less"
 	ValidEmail       = "Must be a valid email"
 	EmailExists      = "Email already exists"

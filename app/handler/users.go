@@ -37,7 +37,7 @@ func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	var statusCode int
 	var data string
 	vars := mux.Vars(r)
-	username := strings.ToLower(vars[model.UsernameColumn])
+	username := strings.ToLower(vars["username"])
 	status := model.NewStatus()
 	u := model.NewUser()
 
