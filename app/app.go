@@ -86,18 +86,20 @@ func (app *App) setRoutes() {
 	app.Post("/users/{username}", app.Handle(handler.UpdateUser, true)) // POST
 
 	// Test Routes
-	app.Post("/test/{username}", app.Handle(handler.Test, false)) // Ignor
+	app.Post("/test/{username}", app.Handle(handler.Test, false)) // Ignore
 
 	// Potential code merger on /clubs/{name} and /users/{username}
 
 	// Tag Routes
-	app.Get("/tags", app.Handle(handler.GetTags, false))
-	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true)) // Should verify request later and restrict only to admins
-	app.Post("/tags/{tag}", app.Handle(handler.CreateTag, true))       // Verify request later and restrict only to admins
-	app.Delete("/tags/{tag}", app.Handle(handler.DeleteTag, true))
+	app.Get("/tags", app.Handle(handler.GetTags, false)) // Done
+	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true)) // Done
+	app.Post("/tags/{tag}", app.Handle(handler.CreateTag, true))       // Done
+	app.Delete("/tags/{tag}", app.Handle(handler.DeleteTag, true)) // Done
+
 	// Club routes
 	app.Post("/clubs", app.Handle(handler.CreateClub, true))     // Done
 	app.Get("/clubs/{name}", app.Handle(handler.GetClub, false)) // Done
+
 
 	app.Get("/clubs", app.Handle(handler.GetClubs, false))
 	app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, false))
