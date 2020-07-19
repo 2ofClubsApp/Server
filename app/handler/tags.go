@@ -40,7 +40,7 @@ func CreateTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		tagName := vars["tag"]
 		tagName = strings.TrimSpace(tagName)
 		if TagExists(db, tagName) {
-			status.Message = model.TagFound
+			status.Message = model.TagExists
 			status.Code = model.FailureCode
 		} else {
 			status.Message = model.TagCreated
@@ -73,6 +73,7 @@ func UploadTagsList(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 			defer file.Close()
 			if err != nil {
 				fmt.Errorf("cannot read file: %v", err)
+				return
 			}
 			for _, tagName := range strings.Split(string(fileContent), "\n") {
 				tagName = strings.TrimSpace(tagName)
@@ -85,9 +86,45 @@ func UploadTagsList(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		status.Message = model.AdminRequired
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)
-
 }
 
 func GetTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Get Club Tags")
+	status := model.NewStatus()
+	var allTags []model.Tag
+	var tagsList []string
+	type TagData struct {
+		Tags []string
+	}
+	result := db.Find(&allTags)
+	if result.Error != nil {
+		fmt.Errorf("unable to get tags: %v", result.Error)
+		return
+	}
+	for _, tag := range allTags {
+		tagsList = append(tagsList, tag.Name)
+	}
+	status.Message = model.TagsFound
+	status.Data = TagData{Tags: tagsList}
+	WriteData(GetJSON(status), http.StatusOK, w)
+}
+
+func DeleteTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	status := model.NewStatus()
+	if isAdmin(db, r) {
+		vars := mux.Vars(r)
+		tagName := vars["tag"]
+		tagName = strings.TrimSpace(tagName)
+		tag := model.NewTag()
+		if SingleRecordExists(db, model.TagTable, model.NameColumn, tagName, tag) {
+			db.Delete(tag)
+			status.Message = model.TagDelete
+		} else {
+			status.Code = -1
+			status.Message = model.TagNotFound
+		}
+	} else {
+		status.Code = -1
+		status.Message = model.AdminRequired
+	}
+	WriteData(GetJSON(status), http.StatusOK, w)
 }
