@@ -67,8 +67,9 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 	app.setRoutes()
 	log.Println("Connected to Redis")
 	log.Println("Connected to Database")
-	db.Migrator().CreateTable(model.NewUser(), model.NewEvent(), model.NewClub(), model.NewTag(), model.UserClub{})
+	db.Migrator().CreateTable(model.NewEvent(), model.NewClub(), model.NewTag(), model.NewUserClub())
 	db.SetupJoinTable(model.User{}, "Manages", &model.UserClub{})
+	db.AutoMigrate(model.NewUser())
 
 }
 
@@ -83,7 +84,7 @@ func (app *App) setRoutes() {
 
 	// User Routes
 	app.Get("/users/{username}", app.Handle(handler.GetUser, true))     // Done
-	app.Post("/users/{username}", app.Handle(handler.UpdateUser, true)) // POST
+	app.Post("/users/{username}/tags", app.Handle(handler.UpdateUserTags, true)) // POST
 
 	// Test Routes
 	app.Post("/test/{username}", app.Handle(handler.Test, false)) // Ignore
@@ -91,16 +92,16 @@ func (app *App) setRoutes() {
 	// Potential code merger on /clubs/{name} and /users/{username}
 
 	// Tag Routes
-	app.Get("/tags", app.Handle(handler.GetTags, false)) // Done
-	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true)) // Done
+	app.Get("/tags", app.Handle(handler.GetTags, false))               // Done
 	app.Post("/tags/{tag}", app.Handle(handler.CreateTag, true))       // Done
-	app.Delete("/tags/{tag}", app.Handle(handler.DeleteTag, true)) // Done
+	app.Delete("/tags/{tag}", app.Handle(handler.DeleteTag, true))     // Done
+	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true)) // Done
 
 	// Club routes
 	app.Post("/clubs", app.Handle(handler.CreateClub, true))     // Done
 	app.Get("/clubs/{name}", app.Handle(handler.GetClub, false)) // Done
 
-
+	//app.Delete("/clubs{username}, ")
 	app.Get("/clubs", app.Handle(handler.GetClubs, false))
 	app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, false))
 	app.Post("/clubs/{username}", app.Handle(handler.UpdateClub, true)) // POST

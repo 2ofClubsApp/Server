@@ -18,7 +18,6 @@ func CreateEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request){
 	fmt.Println("Create Event")
 }
 
-
 func UpdateEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request){
 	fmt.Println("Update Event")
 }

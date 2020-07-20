@@ -1,7 +1,7 @@
 package model
 
 const (
-	TagsError        = "Unable to get tags"
+	TagsUpdated      = "Tags Updated"
 	TagsFound        = "Tags Found"
 	TagDelete        = "Tag Deleted"
 	TagNotFound      = "Tag doesn't exist"
