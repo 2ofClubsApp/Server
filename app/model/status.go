@@ -1,6 +1,8 @@
 package model
 
 const (
+	SuccessClubDelete = "Successfully deleted club"
+	FailureClubDelete = "Unable to delete club"
 	TagsUpdated      = "Tags Updated"
 	TagsFound        = "Tags Found"
 	TagDelete        = "Tag Deleted"
