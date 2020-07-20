@@ -103,7 +103,7 @@ func (app *App) setRoutes() {
 	app.Get("/clubs/{name}", app.Handle(handler.GetClub, false)) // Done
 
 	app.Delete("/clubs/{name}", app.Handle(handler.DeleteClub, true)) // Done
-	// app.Post("/clubs/manage/{username}, app.Handler(handler.)) (Adding managers/maintainers to club)
+	app.Post("/clubs/{clubname}/manages/{username}", app.Handle(handler.AddManager, true)) // (Adding managers/maintainers to club)
 	//app.Post("/clubs/{username}/tags", app.Handle(handler.)) (Adding tags for clubs)
 
 	app.Get("/clubs", app.Handle(handler.GetClubs, false))

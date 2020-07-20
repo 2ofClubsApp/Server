@@ -64,7 +64,8 @@ func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 }
 
 /*
-Updating the user's choice of tags and attended events
+Updating the users choice of tags and attended events. Only valid tags will be extracted and added if it's not already.
+If an invalid format is provided where there aren't any valid tags to be extracted, the users tag preferences will be reset
 */
 func UpdateUserTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	var httpStatus int
