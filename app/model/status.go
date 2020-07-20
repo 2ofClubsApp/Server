@@ -1,7 +1,9 @@
 package model
 
 const (
-	TagsError        = "Unable to get tags"
+	SuccessClubDelete = "Successfully deleted club"
+	FailureClubDelete = "Unable to delete club"
+	TagsUpdated      = "Tags Updated"
 	TagsFound        = "Tags Found"
 	TagDelete        = "Tag Deleted"
 	TagNotFound      = "Tag doesn't exist"

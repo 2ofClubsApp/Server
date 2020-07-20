@@ -22,6 +22,7 @@ func GetClubs(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 
 /*
 Check if the email & username is available (RecordExists)
+
 */
 func CreateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	/*
@@ -42,12 +43,13 @@ func CreateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	validate := validator.New()
 	err := validate.Struct(club)
 	clubExists := SingleRecordExists(db, model.ClubTable, model.NameColumn, club.Name, model.NewClub())
+	emailExists := SingleRecordExists(db, model.ClubTable, model.EmailColumn, club.Email, model.NewClub())
 	status := model.NewStatus()
 	// Keeping userExists as a check even though the user should exist given the valid token because there's a chance that the user is deleted
 	// In this case the user will still exist in the database but will be inaccessible.
-	if !clubExists && userExists && err == nil {
+	if !emailExists && !clubExists && userExists && err == nil {
 		db.Model(user).Association("Manages").Append(club)
-		db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ? AND is_owner = ?", user.ID, club.ID, false).Update("is_owner", true)
+		db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ? AND is_owner = ?", user.ID, club.ID, false).Update(model.IsOwnerColumn, true)
 		status.Message = SuccessClubCreation
 	} else {
 		status.Code = model.FailureCode
@@ -89,4 +91,38 @@ func GetClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 
 func UpdateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Update Club")
+}
+
+func DeleteClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	status := model.NewStatus()
+	vars := mux.Vars(r)
+	clubName := vars["name"]
+	club := model.NewClub()
+	if SingleRecordExists(db, model.ClubTable, model.NameColumn, clubName, club){
+		claims := GetTokenClaims(r)
+		uname := fmt.Sprintf("%v", claims["sub"])
+		user := model.NewUser()
+		SingleRecordExists(db, model.UserTable, model.UsernameColumn, uname, user)
+		if isOwner(db, user, club) || isAdmin(db, r){
+			db.Model(user).Association(model.ManagesColumn).Delete(club)
+			db.Delete(club)
+			status.Message = model.SuccessClubDelete
+		} else {
+			status.Code = -1
+			status.Message = model.FailureClubDelete
+		}
+	} else {
+		status.Code = -1
+		status.Message = model.FailureClubDelete
+	}
+	WriteData(GetJSON(status), http.StatusOK, w)
+}
+
+/*
+Returns true, if the user is the owner of the club and false otherwise
+ */
+func isOwner(db *gorm.DB, user *model.User, club *model.Club) bool {
+	userClub := model.NewUserClub()
+	db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ?", user.ID, club.ID).Find(userClub)
+	return userClub.IsOwner
 }

@@ -8,14 +8,14 @@ type User struct {
 	gorm.Model   `json:"-"`
 	*Credentials `json:"-"`
 	Manages      []Club `gorm:"many2many:user_club;"`
-	//Tags    []Tag   `gorm:"many2many:student_tag;association_foreignkey:ID;foreignkey:ID"`
-	//Attends []Event `gorm:"many2many:student_event;association_foreignkey:ID;foreignkey:ID"`
-	IsAdmin    bool
-	IsApproved bool
+	Chooses      []Tag  `gorm:"many2many:user_tag;"`
+	//Attends      []Event `gorm:"many2many:User_Event;`
+	IsAdmin    bool `json:"-"`
+	IsApproved bool `json:"-"`
 }
 
 func NewUser() *User {
-	return &User{Credentials: NewCredentials(), Manages: []Club{}}
+	return &User{Credentials: NewCredentials(), Manages: []Club{}, Chooses: []Tag{}}
 }
 
 /*
@@ -27,6 +27,8 @@ Add IsOwner in Manages
 //}
 
 const (
+	ChoosesColumn   = "Chooses"
+	UserTagTable    = "user_tag"
 	UserClubTable   = "user_club"
 	IsHelpingColumn = "is_helping"
 	UserTable       = "user"

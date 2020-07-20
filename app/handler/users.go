@@ -2,6 +2,7 @@ package handler
 
 import (
 	"../model"
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
@@ -22,7 +23,7 @@ func CreateUser(db *gorm.DB, w http.ResponseWriter, c *model.Credentials, u *mod
 
 /*
 Validating the user request to ensure that they can only access/modify their own data.
-If valid, (sub, true) is returned, otherwise (sub, false) where sub represents the username accessing the resource.
+True if the requested user has the same username identifier as the token username
 */
 func IsValidRequest(username string, r *http.Request) bool {
 	claims := GetTokenClaims(r)
@@ -34,7 +35,7 @@ func IsValidRequest(username string, r *http.Request) bool {
 
 // FIX: Extract user Club info from "Manages" (List them as club names with an isOwner) in JSON
 func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	var statusCode int
+	var httpStatus int
 	var data string
 	vars := mux.Vars(r)
 	username := strings.ToLower(vars["username"])
@@ -52,16 +53,50 @@ func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 			status.Data = u
 			status.Message = model.UserFound
 		}
-		statusCode = http.StatusOK
+		httpStatus = http.StatusOK
 	} else {
 		status.Message = http.StatusText(http.StatusForbidden)
-		statusCode = http.StatusForbidden
+		httpStatus = http.StatusForbidden
 		status.Code = -1
 	}
 	data = GetJSON(status)
-	WriteData(data, statusCode, w)
+	WriteData(data, httpStatus, w)
 }
 
-func UpdateUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Update User")
+/*
+Updating the user's choice of tags and attended events
+*/
+func UpdateUserTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	var httpStatus int
+	status := model.NewStatus()
+	vars := mux.Vars(r)
+	username := strings.ToLower(vars["username"])
+	if IsValidRequest(username, r) {
+		user := model.NewUser()
+		// User is guaranteed to have an account (Verified JWT and request is verified)
+		SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
+		var chooses []*model.Tag
+		for _, name := range getTagInfo(r) {
+			tag := model.NewTag()
+			if SingleRecordExists(db, model.TagTable, model.NameColumn, name, tag) {
+				tag.Name = name
+				chooses = append(chooses, tag)
+			}
+		}
+		db.Model(user).Association(model.ChoosesColumn).Replace(chooses)
+		status.Message = model.TagsUpdated
+		httpStatus = http.StatusOK
+	} else {
+		status.Code = model.FailureCode
+		status.Message = http.StatusText(http.StatusForbidden)
+		httpStatus = http.StatusForbidden
+	}
+	WriteData(GetJSON(status), httpStatus, w)
+}
+
+func getTagInfo(r *http.Request) []string {
+	payload := map[string][]string{"Tags": {}}
+	decoder := json.NewDecoder(r.Body)
+	decoder.Decode(&payload)
+	return payload["Tags"]
 }

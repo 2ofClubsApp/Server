@@ -5,21 +5,20 @@ import (
 )
 
 type Event struct {
-	gorm.Model
+	gorm.Model  `json:"-"`
 	DateTime    string
 	Description string
 	Location    string
 	Fee         float64
 }
 
-func NewEvent() *Event{
+func NewEvent() *Event {
 	return &Event{}
 }
 
-
 const (
-	DateTimeColumn = "date_time"
-	DescriptionColumn= "description"
-	LocationColumn = "location"
-	DateFeeColumn = "fee"
+	DateTimeColumn    = "date_time"
+	DescriptionColumn = "description"
+	LocationColumn    = "location"
+	DateFeeColumn     = "fee"
 )

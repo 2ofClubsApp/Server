@@ -101,7 +101,8 @@ func kf(token *jwt.Token) (interface{}, error) {
 /*
 Returning true if the record already exists in the table, false otherwise.
 */
-// TODO: You can put a check on Record Exists on the deleted column as long as it's null it'll exist then
+//You can put a check on Record Exists on the deleted column as long as it's null it'll exist then
+// WHen soft deleted, the record won't exist anymore
 func SingleRecordExists(db *gorm.DB, tableName string, column string, val string, t interface{}) bool {
 	result := db.Table(tableName).Where(column+"= ?", val).First(t)
 	return result.Error == nil

@@ -52,6 +52,7 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 
 	db, err := gorm.Open(postgres.Open(dbFormat), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{SingularTable: true},
+		//DisableForeignKeyConstraintWhenMigrating: true,
 	})
 	if err != nil {
 		log.Fatal("Unable to connect to database\n", err)
@@ -67,8 +68,9 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 	app.setRoutes()
 	log.Println("Connected to Redis")
 	log.Println("Connected to Database")
-	db.Migrator().CreateTable(model.NewUser(), model.NewEvent(), model.NewClub(), model.NewTag(), model.UserClub{})
-	db.SetupJoinTable(model.User{}, "Manages", &model.UserClub{})
+	db.Migrator().CreateTable(model.NewEvent(), model.NewTag(), model.NewUserClub())
+	db.SetupJoinTable(&model.User{}, "Manages", &model.UserClub{})
+	db.AutoMigrate(model.NewUser(), model.NewClub())
 
 }
 
@@ -82,8 +84,8 @@ func (app *App) setRoutes() {
 	app.Post("/login", app.Handle(handler.Login, false)) // Done (Need to check for synchronous token (CSRF prevention))
 
 	// User Routes
-	app.Get("/users/{username}", app.Handle(handler.GetUser, true))     // Done
-	app.Post("/users/{username}", app.Handle(handler.UpdateUser, true)) // POST
+	app.Get("/users/{username}", app.Handle(handler.GetUser, true))              // Done
+	app.Post("/users/{username}/tags", app.Handle(handler.UpdateUserTags, true)) // Done
 
 	// Test Routes
 	app.Post("/test/{username}", app.Handle(handler.Test, false)) // Ignore
@@ -91,15 +93,18 @@ func (app *App) setRoutes() {
 	// Potential code merger on /clubs/{name} and /users/{username}
 
 	// Tag Routes
-	app.Get("/tags", app.Handle(handler.GetTags, false)) // Done
-	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true)) // Done
+	app.Get("/tags", app.Handle(handler.GetTags, false))               // Done
 	app.Post("/tags/{tag}", app.Handle(handler.CreateTag, true))       // Done
-	app.Delete("/tags/{tag}", app.Handle(handler.DeleteTag, true)) // Done
+	app.Delete("/tags/{tag}", app.Handle(handler.DeleteTag, true))     // Done
+	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true)) // Done
 
 	// Club routes
 	app.Post("/clubs", app.Handle(handler.CreateClub, true))     // Done
 	app.Get("/clubs/{name}", app.Handle(handler.GetClub, false)) // Done
 
+	app.Delete("/clubs/{name}", app.Handle(handler.DeleteClub, true)) // Done
+	// app.Post("/clubs/manage/{username}, app.Handler(handler.)) (Adding managers/maintainers to club)
+	//app.Post("/clubs/{username}/tags", app.Handle(handler.)) (Adding tags for clubs)
 
 	app.Get("/clubs", app.Handle(handler.GetClubs, false))
 	app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, false))
@@ -110,10 +115,10 @@ func (app *App) setRoutes() {
 	app.Post("/clubs/events/{username}", app.Handle(handler.UpdateEvent, true)) // POST
 	app.Delete("/clubs/events/{username}", app.Handle(handler.DeleteEvent, true))
 
-	// Chat Routes
-
+	// Admin Route
+	// Approve usernames
 	// 404 Route
-	app.router.NotFoundHandler = handler.NotFound()
+	app.router.NotFoundHandler = handler.NotFound() // Done
 }
 
 func (app *App) Run(port string) {
