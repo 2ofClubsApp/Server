@@ -188,11 +188,11 @@ func editManagers(db *gorm.DB, w http.ResponseWriter, r *http.Request, op string
 	newManager := model.NewUser()
 	club := model.NewClub()
 	// Added user must exist
-	SingleRecordExists(db, model.UserTable, model.UsernameColumn, clubOwnerUsername, owner)
+	ownerExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, clubOwnerUsername, owner)
 	// If owner is found, then the owner struct isn't populated, which gives ID=0, but ID's start at 1, so this shouldn't cause any potential security issues
 	managerExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, newManagerUname, newManager)
 	clubExists := SingleRecordExists(db, model.ClubTable, model.NameColumn, clubname, club)
-	if managerExists && clubExists {
+	if ownerExists && managerExists && clubExists {
 		if isOwner(db, owner, club) && owner.Username != newManager.Username {
 			switch op {
 			case model.OpAdd:
