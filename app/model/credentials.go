@@ -15,6 +15,7 @@ func NewCredentials() *Credentials {
 }
 
 const (
+
 	UsernameColumn  = "username"
 	EmailColumn     = "email"
 	PasswordColumn  = "password"

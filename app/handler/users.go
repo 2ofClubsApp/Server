@@ -72,21 +72,15 @@ func UpdateUserTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status := model.NewStatus()
 	vars := mux.Vars(r)
 	username := strings.ToLower(vars["username"])
-	if IsValidRequest(username, r) {
-		user := model.NewUser()
+	user := model.NewUser()
+	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
+	if userExists && IsValidRequest(username, r) {
+		httpStatus = http.StatusOK
+
 		// User is guaranteed to have an account (Verified JWT and request is verified)
-		SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
-		var chooses []*model.Tag
-		for _, name := range getTagInfo(r) {
-			tag := model.NewTag()
-			if SingleRecordExists(db, model.TagTable, model.NameColumn, name, tag) {
-				tag.Name = name
-				chooses = append(chooses, tag)
-			}
-		}
+		chooses := extractTags(db, r)
 		db.Model(user).Association(model.ChoosesColumn).Replace(chooses)
 		status.Message = model.TagsUpdated
-		httpStatus = http.StatusOK
 	} else {
 		status.Code = model.FailureCode
 		status.Message = http.StatusText(http.StatusForbidden)

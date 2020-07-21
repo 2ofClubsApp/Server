@@ -8,7 +8,6 @@ import (
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 	"net/http"
-	"strings"
 )
 
 const (
@@ -73,15 +72,15 @@ func GetClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	var statusCode int
 	var data string
 	vars := mux.Vars(r)
-	clubName := strings.ToLower(vars["name"])
+	clubName := vars["name"]
 	status := model.NewStatus()
-	c := model.NewClub()
-	found := SingleRecordExists(db, model.ClubTable, model.NameColumn, clubName, c)
+	club := model.NewClub()
+	found := SingleRecordExists(db, model.ClubTable, model.NameColumn, clubName, club)
 	if !found {
 		status.Message = model.ClubNotFound
 		status.Code = model.FailureCode
 	} else {
-		status.Data = c
+		status.Data = club
 		status.Message = model.ClubFound
 	}
 	statusCode = http.StatusOK
@@ -102,8 +101,8 @@ func DeleteClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		claims := GetTokenClaims(r)
 		uname := fmt.Sprintf("%v", claims["sub"])
 		user := model.NewUser()
-		SingleRecordExists(db, model.UserTable, model.UsernameColumn, uname, user)
-		if isOwner(db, user, club) || isAdmin(db, r) {
+		userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, uname, user)
+		if userExists && isOwner(db, user, club) || isAdmin(db, r) {
 			db.Model(user).Association(model.ManagesColumn).Delete(club)
 			db.Delete(club)
 			status.Message = model.SuccessClubDelete
@@ -119,7 +118,7 @@ func DeleteClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 }
 
 /*
-Returns true, if the user is the owner of the club and false otherwise
+Returns true if the user is an owner of the club, false otherwise
 */
 func isOwner(db *gorm.DB, user *model.User, club *model.Club) bool {
 	userClub := model.NewUserClub()
@@ -127,39 +126,81 @@ func isOwner(db *gorm.DB, user *model.User, club *model.Club) bool {
 	return userClub.IsOwner
 }
 
+func isManager(db *gorm.DB, user *model.User, club *model.Club) bool {
+	userClub := model.NewUserClub()
+	res := db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ?", user.ID, club.ID).Find(userClub)
+	return res.Error == nil
+}
+
 func RemoveManager(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	SetManager(db, w, r, model.OpRemove, model.SuccessManagerRemove, model.FailureManagerRemove)
+	editManagers(db, w, r, model.OpRemove)
 }
 
 func AddManager(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	SetManager(db, w, r, model.OpAdd, model.SuccessManagerAddition, model.FailureManagerAddition)
+	editManagers(db, w, r, model.OpAdd)
 }
 
-func SetManager(db *gorm.DB, w http.ResponseWriter, r *http.Request, op string, successMessage string, failureMessage string) {
+func UpdateClubTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	var httpStatus int
+	status := model.NewStatus()
+	vars := mux.Vars(r)
+	clubname := vars["clubname"]
+	club := model.NewClub()
+	claims := GetTokenClaims(r)
+	username := fmt.Sprintf("%v", claims["sub"])
+	user := model.NewUser()
+	clubExists := SingleRecordExists(db, model.ClubTable, model.NameColumn, clubname, club)
+	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
+	// Must check with both user and club existing in the event that a user gets deleted but you manage to get a hold of their access token
+	if userExists && clubExists && (isOwner(db, user, club) || isManager(db, user, club)) {
+		tags := extractTags(db, r)
+		db.Model(club).Association(model.SetsColumn).Replace(tags)
+		status.Message = model.TagsUpdated
+		httpStatus = http.StatusOK
+	} else {
+		status.Code = model.FailureCode
+		status.Message = http.StatusText(http.StatusForbidden)
+		httpStatus = http.StatusForbidden
+	}
+	WriteData(GetJSON(status), httpStatus, w)
+
+	//isOwner(db,
+}
+
+/*
+Adding or removing managers and their associations to a particular club
+*/
+func editManagers(db *gorm.DB, w http.ResponseWriter, r *http.Request, op string) {
+	// Default messages set to manager addition, otherwise manager removal
+	var successMessage = model.SuccessManagerAddition
+	var failureMessage = model.FailureManagerAddition
+	if op == model.OpRemove {
+		successMessage = model.SuccessManagerRemove
+		failureMessage = model.FailureManagerRemove
+	}
 	status := model.NewStatus()
 	claims := GetTokenClaims(r)
 	clubOwnerUsername := fmt.Sprintf("%v", claims["sub"])
 	vars := mux.Vars(r)
-	managerUsername := vars["username"]
+	newManagerUname := vars["username"]
 	clubname := vars["clubname"]
 	owner := model.NewUser()
-	manager := model.NewUser()
+	newManager := model.NewUser()
 	club := model.NewClub()
 	// Added user must exist
 	SingleRecordExists(db, model.UserTable, model.UsernameColumn, clubOwnerUsername, owner)
 	// If owner is found, then the owner struct isn't populated, which gives ID=0, but ID's start at 1, so this shouldn't cause any potential security issues
-	managerExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, managerUsername, manager)
+	managerExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, newManagerUname, newManager)
 	clubExists := SingleRecordExists(db, model.ClubTable, model.NameColumn, clubname, club)
 	if managerExists && clubExists {
-		if isOwner(db, owner, club) && owner.Username != manager.Username {
+		if isOwner(db, owner, club) && owner.Username != newManager.Username {
 			switch op {
 			case model.OpAdd:
-				db.Model(manager).Association(model.ManagesColumn).Append(club)
-				status.Message = successMessage
+				db.Model(newManager).Association(model.ManagesColumn).Append(club)
 			case model.OpRemove:
-				status.Message = successMessage
-				db.Model(manager).Association(model.ManagesColumn).Delete(club)
+				db.Model(newManager).Association(model.ManagesColumn).Delete(club)
 			}
+			status.Message = successMessage
 		} else {
 			status.Message = failureMessage
 			status.Code = model.FailureCode
@@ -170,3 +211,5 @@ func SetManager(db *gorm.DB, w http.ResponseWriter, r *http.Request, op string, 
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
+
+
