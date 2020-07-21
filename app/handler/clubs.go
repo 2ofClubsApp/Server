@@ -127,7 +127,15 @@ func isOwner(db *gorm.DB, user *model.User, club *model.Club) bool {
 	return userClub.IsOwner
 }
 
+func RemoveManager(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	SetManager(db, w, r, model.OpRemove, model.SuccessManagerRemove, model.FailureManagerRemove)
+}
+
 func AddManager(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	SetManager(db, w, r, model.OpAdd, model.SuccessManagerAddition, model.FailureManagerAddition)
+}
+
+func SetManager(db *gorm.DB, w http.ResponseWriter, r *http.Request, op string, successMessage string, failureMessage string) {
 	status := model.NewStatus()
 	claims := GetTokenClaims(r)
 	clubOwnerUsername := fmt.Sprintf("%v", claims["sub"])
@@ -144,15 +152,21 @@ func AddManager(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	clubExists := SingleRecordExists(db, model.ClubTable, model.NameColumn, clubname, club)
 	if managerExists && clubExists {
 		if isOwner(db, owner, club) && owner.Username != manager.Username {
-			db.Model(manager).Association(model.ManagesColumn).Append(club)
-			status.Message = model.SuccessManagerAddition
+			switch op {
+			case model.OpAdd:
+				db.Model(manager).Association(model.ManagesColumn).Append(club)
+				status.Message = successMessage
+			case model.OpRemove:
+				status.Message = successMessage
+				db.Model(manager).Association(model.ManagesColumn).Delete(club)
+			}
 		} else {
-			status.Message = model.FailureManagerAddition
+			status.Message = failureMessage
 			status.Code = model.FailureCode
 		}
 	} else {
 		status.Code = model.FailureCode
-		status.Message = model.FailureManagerAddition
+		status.Message = failureMessage
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
