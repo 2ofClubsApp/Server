@@ -108,6 +108,21 @@ func GetTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
 
+/*
+Extract all tags from payload and returns them as an array of model.Tag
+ */
+func extractTags(db *gorm.DB, r *http.Request) []model.Tag {
+	var chooses []model.Tag
+	for _, name := range getTagInfo(r) {
+		tag := model.NewTag()
+		if SingleRecordExists(db, model.TagTable, model.NameColumn, name, tag) {
+			tag.Name = name
+			chooses = append(chooses, *tag)
+		}
+	}
+	return chooses
+}
+
 func DeleteTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status := model.NewStatus()
 	if isAdmin(db, r) {
