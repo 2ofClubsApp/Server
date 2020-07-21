@@ -28,7 +28,7 @@ type App struct {
 	headers handlers.CORSOption
 }
 
-func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisConfig) {
+func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisConfig, adminConfig *model.User) {
 	ctx := context.Background()
 	dbFormat :=
 		fmt.Sprintf(
@@ -71,7 +71,8 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 	db.Migrator().CreateTable(model.NewEvent(), model.NewTag(), model.NewUserClub())
 	db.SetupJoinTable(&model.User{}, "Manages", &model.UserClub{})
 	db.AutoMigrate(model.NewUser(), model.NewClub())
-
+	// GORM already ensures the uniqueness of the username and email, thus we don't need to check if the admin already exists or not
+	db.Create(adminConfig)
 }
 
 func (app *App) setRoutes() {
