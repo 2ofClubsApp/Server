@@ -29,4 +29,7 @@ const (
 	HelpNeededColumn = "help_needed"
 	ClubTable        = "club"
 	NameColumn       = "name"
+	OpAdd = "ADD"
+	OpRemove = "REMOVE"
+
 )
