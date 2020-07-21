@@ -76,11 +76,13 @@ func GetClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status := model.NewStatus()
 	club := model.NewClub()
 	found := SingleRecordExists(db, model.ClubTable, model.NameColumn, clubName, club)
+	clubDisplay := club.Display()
+	loadClubData(db, club, clubDisplay)
 	if !found {
 		status.Message = model.ClubNotFound
 		status.Code = model.FailureCode
 	} else {
-		status.Data = club
+		status.Data = clubDisplay
 		status.Message = model.ClubFound
 	}
 	statusCode = http.StatusOK
@@ -88,6 +90,11 @@ func GetClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	WriteData(data, statusCode, w)
 }
 
+func loadClubData(db *gorm.DB, club *model.Club, clubDisplay *model.ClubDisplay) {
+	db.Table(model.ClubTable).Preload(model.SetsColumn).Find(club)
+	clubDisplay.Tags = flatten(club.Sets)
+
+}
 func UpdateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Update Club")
 }
@@ -122,13 +129,13 @@ Returns true if the user is an owner of the club, false otherwise
 */
 func isOwner(db *gorm.DB, user *model.User, club *model.Club) bool {
 	userClub := model.NewUserClub()
-	db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ?", user.ID, club.ID).Find(userClub)
+	db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ?", user.ID, club.ID).First(userClub)
 	return userClub.IsOwner
 }
 
 func isManager(db *gorm.DB, user *model.User, club *model.Club) bool {
 	userClub := model.NewUserClub()
-	res := db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ?", user.ID, club.ID).Find(userClub)
+	res := db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ?", user.ID, club.ID).First(userClub)
 	return res.Error == nil
 }
 
@@ -152,7 +159,7 @@ func UpdateClubTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	clubExists := SingleRecordExists(db, model.ClubTable, model.NameColumn, clubname, club)
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
 	// Must check with both user and club existing in the event that a user gets deleted but you manage to get a hold of their access token
-	if userExists && clubExists && (isOwner(db, user, club) || isManager(db, user, club)) {
+	if userExists && clubExists && isManager(db, user, club) {
 		tags := extractTags(db, r)
 		db.Model(club).Association(model.SetsColumn).Replace(tags)
 		status.Message = model.TagsUpdated
@@ -163,8 +170,6 @@ func UpdateClubTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		httpStatus = http.StatusForbidden
 	}
 	WriteData(GetJSON(status), httpStatus, w)
-
-	//isOwner(db,
 }
 
 /*
@@ -211,5 +216,3 @@ func editManagers(db *gorm.DB, w http.ResponseWriter, r *http.Request, op string
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
-
-

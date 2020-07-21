@@ -16,6 +16,23 @@ type Club struct {
 	//HelpNeeded bool
 }
 
+type ClubDisplay struct {
+	Name  string
+	Email string
+	Bio   string
+	Size  int
+	Tags  []string
+}
+
+func (c *Club) Display() *ClubDisplay {
+	return &ClubDisplay{
+		Name:  c.Name,
+		Email: c.Email,
+		Bio:   c.Bio,
+		Size:  c.Size,
+	}
+}
+
 func NewClub() *Club {
 	return &Club{Sets: []Tag{}}
 }
@@ -28,8 +45,8 @@ const (
 	BioColumn        = "bio"
 	HelpNeededColumn = "help_needed"
 
-	ClubTable        = "club"
-	NameColumn       = "name"
-	OpAdd            = "ADD"
-	OpRemove         = "REMOVE"
+	ClubTable  = "club"
+	NameColumn = "name"
+	OpAdd      = "ADD"
+	OpRemove   = "REMOVE"
 )

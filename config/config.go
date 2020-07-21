@@ -1,5 +1,10 @@
 package config
 
+import (
+	"../app/handler"
+	"../app/model"
+)
+
 type DBConfig struct {
 	Host     string
 	Port     int
@@ -30,4 +35,20 @@ func GetRedisConfig() *RedisConfig {
 		Password: "",
 		DB:       0,
 	}
+}
+
+func GetAdminConfig() *model.User {
+	credentials := model.NewCredentials()
+	credentials.Username = "admin"
+	credentials.Email = "admin@utmsu.ca"
+	hashedPass, err := handler.Hash("password")
+	if err != nil {
+		return nil
+	}
+	credentials.Password = hashedPass
+	user := model.NewUser()
+	user.Credentials = credentials
+	user.IsAdmin = true
+	user.IsApproved = true
+	return user
 }
