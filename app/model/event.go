@@ -2,14 +2,15 @@ package model
 
 import (
 	"gorm.io/gorm"
+	"time"
 )
 
 type Event struct {
 	gorm.Model  `json:"-"`
-	DateTime    string
-	Description string
-	Location    string
-	Fee         float64
+	DateTime    time.Time  `validate:"required,gtetoday,datetime"`
+	Description string  `validate:"required"`
+	Location    string  `validate:"required"`
+	Fee         float64 `validate:"required"`
 }
 
 func NewEvent() *Event {

@@ -5,9 +5,7 @@ import (
 	"./handler"
 	"./logger"
 	"./model"
-	"context"
 	"fmt"
-	"github.com/go-redis/redis"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"gorm.io/driver/postgres"
@@ -28,8 +26,8 @@ type App struct {
 	headers handlers.CORSOption
 }
 
-func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisConfig) {
-	ctx := context.Background()
+func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisConfig, adminConfig *model.User) {
+	//ctx := context.Background()
 	dbFormat :=
 		fmt.Sprintf(
 			"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
@@ -39,16 +37,16 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 			dbConfig.Password,
 			dbConfig.Name,
 		)
-	redisClient := redis.NewClient(
-		&redis.Options{
-			Addr:     redisConfig.Addr,
-			Password: redisConfig.Password,
-			DB:       redisConfig.DB,
-		})
-	_, err := redisClient.Ping(ctx).Result()
-	if err != nil {
-		log.Fatal("Unable to connect to Redis\n", err)
-	}
+	//redisClient := redis.NewClient(
+	//	&redis.Options{
+	//		Addr:     redisConfig.Addr,
+	//		Password: redisConfig.Password,
+	//		DB:       redisConfig.DB,
+	//	})
+	//_, err := redisClient.Ping(ctx).Result()
+	//if err != nil {
+	//	log.Fatal("Unable to connect to Redis\n", err)
+	//}
 
 	db, err := gorm.Open(postgres.Open(dbFormat), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{SingularTable: true},
@@ -102,12 +100,12 @@ func (app *App) setRoutes() {
 	app.Post("/clubs", app.Handle(handler.CreateClub, true))     // Done
 	app.Get("/clubs/{name}", app.Handle(handler.GetClub, false)) // Done
 
-	app.Delete("/clubs/{name}", app.Handle(handler.DeleteClub, true)) // Done
-	app.Post("/clubs/{clubname}/manages/{username}", app.Handle(handler.AddManager, true)) // Adding managers/maintainers to club
-	app.Delete("/clubs/{clubname}/manages/{username}", app.Handle(handler.RemoveManager, true)) // Removing managers/maintainers
+	app.Delete("/clubs/{name}", app.Handle(handler.DeleteClub, true)) // Partially Done (The owner can delete the club and all associations will be removed?)
+	app.Post("/clubs/{clubname}/manages/{username}", app.Handle(handler.AddManager, true)) // Done (Adding managers/maintainers to club)
+	app.Delete("/clubs/{clubname}/manages/{username}", app.Handle(handler.RemoveManager, true)) // Partially done (Removing managers/maintainers) (If the current owner wants to leave, then they must appoint a new person)
 	app.Post("/clubs/{clubname}/tags", app.Handle(handler.UpdateClubTags, true)) // (Adding tags for clubs)
+	app.Get("/clubs", app.Handle(handler.GetClubs, false)) // In-Progress
 
-	app.Get("/clubs", app.Handle(handler.GetClubs, false))
 	app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, false))
 	app.Post("/clubs/{username}", app.Handle(handler.UpdateClub, true)) // POST
 	app.Get("/clubs/events", app.Handle(handler.GetEvents, true))
