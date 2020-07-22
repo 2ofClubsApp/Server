@@ -4,8 +4,8 @@ services:
         image: postgres
         container_name: 2ofClubsDB
         # Building on DockerFile
-        build:
-            context: ./db
+#        build:
+#            context: ./db
             # If using default filename then no need to put line below
             # dockerfile: Dockerfile
         ports:
