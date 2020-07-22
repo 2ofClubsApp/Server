@@ -5,7 +5,9 @@ import (
 	"./handler"
 	"./logger"
 	"./model"
+	"context"
 	"fmt"
+	"github.com/go-redis/redis"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"gorm.io/driver/postgres"
@@ -27,7 +29,7 @@ type App struct {
 }
 
 func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisConfig, adminConfig *model.User) {
-	//ctx := context.Background()
+	ctx := context.Background()
 	dbFormat :=
 		fmt.Sprintf(
 			"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
@@ -37,16 +39,16 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 			dbConfig.Password,
 			dbConfig.Name,
 		)
-	//redisClient := redis.NewClient(
-	//	&redis.Options{
-	//		Addr:     redisConfig.Addr,
-	//		Password: redisConfig.Password,
-	//		DB:       redisConfig.DB,
-	//	})
-	//_, err := redisClient.Ping(ctx).Result()
-	//if err != nil {
-	//	log.Fatal("Unable to connect to Redis\n", err)
-	//}
+	redisClient := redis.NewClient(
+		&redis.Options{
+			Addr:     redisConfig.Addr,
+			Password: redisConfig.Password,
+			DB:       redisConfig.DB,
+		})
+	_, err := redisClient.Ping(ctx).Result()
+	if err != nil {
+		log.Fatal("Unable to connect to Redis\n", err)
+	}
 
 	db, err := gorm.Open(postgres.Open(dbFormat), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{SingularTable: true},
@@ -69,7 +71,8 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 	db.Migrator().CreateTable(model.NewEvent(), model.NewTag(), model.NewUserClub())
 	db.SetupJoinTable(&model.User{}, "Manages", &model.UserClub{})
 	db.AutoMigrate(model.NewUser(), model.NewClub())
-
+	// GORM already ensures the uniqueness of the username and email, thus we don't need to check if the admin already exists or not
+	db.Create(adminConfig)
 }
 
 func (app *App) setRoutes() {

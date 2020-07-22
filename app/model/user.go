@@ -7,23 +7,39 @@ import (
 type User struct {
 	gorm.Model   `json:"-"`
 	*Credentials `json:"-"`
-	Manages      []Club `gorm:"many2many:user_club;"`
-	Chooses      []Tag  `gorm:"many2many:user_tag;"`
+	Manages      []*Club `gorm:"many2many:user_club;"`
+	Chooses      []Tag  `gorm:"many2many:user_tag;" json:"-"`
 	//Attends      []Event `gorm:"many2many:User_Event;`
 	IsAdmin    bool `json:"-"`
 	IsApproved bool `json:"-"`
 }
 
-func NewUser() *User {
-	return &User{Credentials: NewCredentials(), Manages: []Club{}, Chooses: []Tag{}}
+type UserDisplay struct {
+	Manages []*ManagesDisplay
+	Tags    []string
 }
 
-/*
-Add IsOwner in Manages
-*/
-//func (u *User) AfterFind(tx *gorm.DB) error{
-//	fmt.Println(tx)
-//	return nil
+type ManagesDisplay struct {
+	*ClubDisplay
+	IsOwner bool
+}
+func (u *User) Display() *UserDisplay {
+	return &UserDisplay{}
+}
+
+func NewUser() *User {
+	return &User{Credentials: NewCredentials(), Manages: []*Club{}, Chooses: []Tag{}}
+}
+
+//func (u *User) AfterFind(db *gorm.DB) error {
+	//var clubsList []Club
+	//for _, club := range u.Manages {
+	//	db.Table(ClubTable).Preload(SetsColumn).Find(club)
+	//	clubsList = append(clubsList, club)
+	//}
+	//u.Manages = clubsList
+	//db.Table(UserTable).Preload(ChoosesColumn).Find(u)
+	//return nil
 //}
 
 const (

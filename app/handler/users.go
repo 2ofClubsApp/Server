@@ -33,24 +33,26 @@ func IsValidRequest(username string, r *http.Request) bool {
 	return sub == username
 }
 
-// FIX: Extract user Club info from "Manages" (List them as club names with an isOwner) in JSON
 func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	var httpStatus int
 	var data string
 	vars := mux.Vars(r)
 	username := strings.ToLower(vars["username"])
 	status := model.NewStatus()
-	u := model.NewUser()
-
+	user := model.NewUser()
+	userDisplay := user.Display()
 	if IsValidRequest(username, r) {
 		// Defaults will be overridden when obtaining data and being inserted into struct except for null
-		found := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, u)
-		db.Table(model.UserTable).Preload(model.ManagesColumn).Find(u)
+		found := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
+		db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
+		db.Table(model.UserTable).Preload(model.ChoosesColumn).Find(user)
+		userDisplay.Manages = getManages(db, user)
+		userDisplay.Tags = flatten(user.Chooses)
 		if !found {
 			status.Message = model.UserNotFound
 			status.Code = model.FailureCode
 		} else {
-			status.Data = u
+			status.Data = userDisplay
 			status.Message = model.UserFound
 		}
 		httpStatus = http.StatusOK
@@ -63,6 +65,18 @@ func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	WriteData(data, httpStatus, w)
 }
 
+func getManages(db *gorm.DB, user *model.User) []*model.ManagesDisplay{
+	manages := []*model.ManagesDisplay{}
+	for _, club := range user.Manages {
+		clubDisplay := club.Display()
+		managesDisplay := model.ManagesDisplay{}
+		loadClubData(db, club, clubDisplay)
+		managesDisplay.ClubDisplay = clubDisplay
+		managesDisplay.IsOwner = isOwner(db, user, club)
+		manages = append(manages, &managesDisplay)
+	}
+	return manages
+}
 /*
 Updating the users choice of tags and attended events. Only valid tags will be extracted and added if it's not already.
 If an invalid format is provided where there aren't any valid tags to be extracted, the users tag preferences will be reset
