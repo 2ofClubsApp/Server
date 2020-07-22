@@ -1,26 +1,26 @@
 version: '3.3'
 services:
-    db:
-        image: postgres
-        container_name: 2ofClubsDB
-        # Building on DockerFile
-#        build:
-#            context: ./db
-            # If using default filename then no need to put line below
-            # dockerfile: Dockerfile
-        ports:
-            - "5432:5432"
-        environment:
-            - POSTGRES_USER=postgres
-            - POSTGRES_PASSWORD=postgres
-            - POSTGRES_DB=cdb # Default would be POSTGRES_USER
-        volumes:
-            - 2ofClubsVolume:/var/lib/postgresql/data
-        # networks: later too
-            # - bridge?
+  db:
+    image: postgres
+    container_name: 2ofClubsDB
+      # Building on DockerFile
+      #        build:
+      #            context: ./db
+      # If using default filename then no need to put line below
+    # dockerfile: Dockerfile
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=cdb # Default would be POSTGRES_USER
+    volumes:
+      - 2ofClubsVolume:/var/lib/postgresql/data
+      # networks: later too
+      # - bridge?
 volumes:
-    # db:
-    2ofClubsVolume:
+  # db:
+  2ofClubsVolume:
 # networks: Later
 
 
