@@ -8,7 +8,7 @@ type User struct {
 	gorm.Model   `json:"-"`
 	*Credentials `json:"-"`
 	Manages      []*Club `gorm:"many2many:user_club;"`
-	Chooses      []Tag  `gorm:"many2many:user_tag;" json:"-"`
+	Chooses      []Tag   `gorm:"many2many:user_tag;foreignKey:id;References:Name" json:"-"`
 	//Attends      []Event `gorm:"many2many:User_Event;`
 	IsAdmin    bool `json:"-"`
 	IsApproved bool `json:"-"`
@@ -23,6 +23,7 @@ type ManagesDisplay struct {
 	*ClubDisplay
 	IsOwner bool
 }
+
 func (u *User) Display() *UserDisplay {
 	return &UserDisplay{}
 }
@@ -32,14 +33,14 @@ func NewUser() *User {
 }
 
 //func (u *User) AfterFind(db *gorm.DB) error {
-	//var clubsList []Club
-	//for _, club := range u.Manages {
-	//	db.Table(ClubTable).Preload(SetsColumn).Find(club)
-	//	clubsList = append(clubsList, club)
-	//}
-	//u.Manages = clubsList
-	//db.Table(UserTable).Preload(ChoosesColumn).Find(u)
-	//return nil
+//var clubsList []Club
+//for _, club := range u.Manages {
+//	db.Table(ClubTable).Preload(SetsColumn).Find(club)
+//	clubsList = append(clubsList, club)
+//}
+//u.Manages = clubsList
+//db.Table(UserTable).Preload(ChoosesColumn).Find(u)
+//return nil
 //}
 
 const (

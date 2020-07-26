@@ -3,7 +3,6 @@ package model
 import "gorm.io/gorm"
 
 type Club struct {
-	//*User Infinite Loop Error here
 	// Owners/Administrator
 	gorm.Model `json:"-"`
 	Name       string `validate:"required,max=50"`
@@ -11,9 +10,8 @@ type Club struct {
 	Bio        string `validate:"required,max=300"`
 	Size       int    `validate:"required"`
 	Active     bool   `json:"-"`
-	Sets       []Tag  `gorm:"many2many:club_tag;"`
+	Sets       []Tag  `gorm:"many2many:club_tag;foreignKey:id;References:Name;"`
 	//Hosts      []Event `gorm:"many2many:club_event;association_foreignkey:ID;foreignkey:ID"`
-	//HelpNeeded bool
 }
 
 type ClubDisplay struct {

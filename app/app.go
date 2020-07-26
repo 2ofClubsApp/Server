@@ -67,8 +67,9 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 	log.Println("Connected to Redis")
 	log.Println("Connected to Database")
 	db.Migrator().CreateTable(model.NewEvent(), model.NewTag(), model.NewUserClub())
-	db.SetupJoinTable(&model.User{}, "Manages", &model.UserClub{})
 	db.AutoMigrate(model.NewUser(), model.NewClub())
+	db.SetupJoinTable(&model.User{}, "Manages", &model.UserClub{})
+
 	// GORM already ensures the uniqueness of the username and email, thus we don't need to check if the admin already exists or not
 	db.Create(adminConfig)
 }
@@ -94,7 +95,7 @@ func (app *App) setRoutes() {
 	// Tag Routes
 	app.Get("/tags", app.Handle(handler.GetTags, false))               // Done
 	app.Post("/tags/{tag}", app.Handle(handler.CreateTag, true))       // Done
-	app.Delete("/tags/{tag}", app.Handle(handler.DeleteTag, true))     // Done
+	app.Delete("/tags/{tag}", app.Handle(handler.DeleteTag, true))     // (Change to a toggle action)
 	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true)) // Done
 
 	// Club routes
