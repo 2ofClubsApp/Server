@@ -108,7 +108,6 @@ func SingleRecordExists(db *gorm.DB, tableName string, column string, val string
 	return result.Error == nil
 }
 
-
 /*
 Returning the JSON representation of a struct.
 */

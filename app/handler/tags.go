@@ -17,11 +17,12 @@ import (
 Returns true if the tag already exists in the database, false otherwise.
 If false, the tag will be created and inserted into the database.
 */
-func TagExists(db *gorm.DB, tagName string) bool {
+func tagExists(db *gorm.DB, tagName string) bool {
 	validate := validator.New()
 	if !SingleRecordExists(db, model.TagTable, model.NameColumn, tagName, model.NewTag()) {
 		tag := model.NewTag()
 		tag.Name = tagName
+		tag.IsActive = true
 		if validate.Struct(tag) == nil {
 			db.Create(tag)
 		}
@@ -39,7 +40,7 @@ func CreateTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		tagName := vars["tag"]
 		tagName = strings.TrimSpace(tagName)
-		if TagExists(db, tagName) {
+		if tagExists(db, tagName) {
 			status.Message = model.TagExists
 			status.Code = model.FailureCode
 		} else {
@@ -77,7 +78,7 @@ func UploadTagsList(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 			}
 			for _, tagName := range strings.Split(string(fileContent), "\n") {
 				tagName = strings.TrimSpace(tagName)
-				TagExists(db, tagName)
+				tagExists(db, tagName)
 			}
 			status.Message = model.TagsCreated
 		}
