@@ -95,8 +95,9 @@ func (app *App) setRoutes() {
 	// Tag Routes
 	app.Get("/tags", app.Handle(handler.GetTags, false))               // Done
 	app.Post("/tags/{tag}", app.Handle(handler.CreateTag, true))       // Done
-	app.Delete("/tags/{tag}", app.Handle(handler.DeleteTag, true))     // (Change to a toggle action)
+	//app.Delete("/tags/{tag}", app.Handle(handler.DeleteTag, true))     // (Change to a toggle action)
 	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true)) // Done
+	app.Post("/tags/{tag}/toggle", app.Handle(handler.ToggleTag, true)) // Done
 
 	// Club routes
 	app.Post("/clubs", app.Handle(handler.CreateClub, true))     // Done

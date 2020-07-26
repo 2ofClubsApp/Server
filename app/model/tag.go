@@ -13,5 +13,6 @@ func NewTag() *Tag {
 }
 
 const (
-	TagTable = "tag"
+	TagTable       = "tag"
+	IsActiveColumn = "is_active"
 )

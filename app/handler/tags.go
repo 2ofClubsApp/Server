@@ -145,6 +145,30 @@ func DeleteTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
 
+func ToggleTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	status := model.NewStatus()
+	if isAdmin(db, r) {
+		vars := mux.Vars(r)
+		tagName := vars["tag"]
+		tagName = strings.TrimSpace(tagName)
+		tag := model.NewTag()
+		if SingleRecordExists(db, model.TagTable, model.NameColumn, tagName, tag) {
+			err := db.Model(tag).Update(model.IsActiveColumn, !tag.IsActive).Error
+			if err != nil {
+				status.Message = model.TagUpdateError
+			}
+			status.Message = model.TagsUpdated
+		} else {
+			status.Code = -1
+			status.Message = model.TagNotFound
+		}
+	} else {
+		status.Code = -1
+		status.Message = model.AdminRequired
+	}
+	WriteData(GetJSON(status), http.StatusOK, w)
+}
+
 func flatten(tags []model.Tag) []string {
 	flattenTags := []string{}
 	for _, tag := range tags {
