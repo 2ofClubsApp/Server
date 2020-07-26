@@ -92,7 +92,7 @@ func GetClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 
 func loadClubData(db *gorm.DB, club *model.Club, clubDisplay *model.ClubDisplay) {
 	db.Table(model.ClubTable).Preload(model.SetsColumn).Find(club)
-	clubDisplay.Tags = flatten(club.Sets)
+	clubDisplay.Tags = flatten(filterTags(club.Sets))
 
 }
 func UpdateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
@@ -160,7 +160,7 @@ func UpdateClubTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
 	// Must check with both user and club existing in the event that a user gets deleted but you manage to get a hold of their access token
 	if userExists && clubExists && isManager(db, user, club) {
-		tags := extractTags(db, r)
+		tags := filterTags(extractTags(db, r))
 		db.Model(club).Association(model.SetsColumn).Replace(tags)
 		status.Message = model.TagsUpdated
 		httpStatus = http.StatusOK
