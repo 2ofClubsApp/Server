@@ -101,7 +101,7 @@ func GetTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		fmt.Errorf("unable to get tags: %v", result.Error)
 		return
 	}
-	for _, tag := range allTags {
+	for _, tag := range filterTags(allTags) {
 		tagsList = append(tagsList, tag.Name)
 	}
 	status.Message = model.TagsFound
@@ -122,27 +122,6 @@ func extractTags(db *gorm.DB, r *http.Request) []model.Tag {
 		}
 	}
 	return chooses
-}
-
-func DeleteTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	status := model.NewStatus()
-	if isAdmin(db, r) {
-		vars := mux.Vars(r)
-		tagName := vars["tag"]
-		tagName = strings.TrimSpace(tagName)
-		tag := model.NewTag()
-		if SingleRecordExists(db, model.TagTable, model.NameColumn, tagName, tag) {
-			db.Delete(tag)
-			status.Message = model.TagDelete
-		} else {
-			status.Code = -1
-			status.Message = model.TagNotFound
-		}
-	} else {
-		status.Code = -1
-		status.Message = model.AdminRequired
-	}
-	WriteData(GetJSON(status), http.StatusOK, w)
 }
 
 func ToggleTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
@@ -168,7 +147,15 @@ func ToggleTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
-
+func filterTags(tags []model.Tag) []model.Tag {
+	filteredTags := []model.Tag{}
+	for _, tag := range tags {
+		if tag.IsActive {
+			filteredTags = append(filteredTags, tag)
+		}
+	}
+	return filteredTags
+}
 func flatten(tags []model.Tag) []string {
 	flattenTags := []string{}
 	for _, tag := range tags {

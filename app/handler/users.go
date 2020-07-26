@@ -47,7 +47,7 @@ func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
 		db.Table(model.UserTable).Preload(model.ChoosesColumn).Find(user)
 		userDisplay.Manages = getManages(db, user)
-		userDisplay.Tags = flatten(user.Chooses)
+		userDisplay.Tags = flatten(filterTags(user.Chooses))
 		if !found {
 			status.Message = model.UserNotFound
 			status.Code = model.FailureCode
@@ -92,7 +92,7 @@ func UpdateUserTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		httpStatus = http.StatusOK
 
 		// User is guaranteed to have an account (Verified JWT and request is verified)
-		chooses := extractTags(db, r)
+		chooses := filterTags(extractTags(db, r))
 		db.Model(user).Association(model.ChoosesColumn).Replace(chooses)
 		status.Message = model.TagsUpdated
 	} else {
