@@ -10,6 +10,7 @@ const (
 	FailureClubDelete = "Unable to delete club"
 
 	TagUpdateError = "Error Updating Tag"
+	TagUpdated     = "Tag Updated"
 	TagCreated     = "Successfully created tag"
 	TagsCreated    = "Successfully created tags"
 	TagExists      = "Tag already exists"
@@ -18,10 +19,12 @@ const (
 	TagDelete      = "Tag Deleted"
 	TagNotFound    = "Tag doesn't exist"
 
-	UserFound    = "User Found"
-	UserNotFound = "User Not Found"
-	ClubFound    = "Club Found"
-	ClubNotFound = "Club Not Found"
+	UserFound     = "User Found"
+	UserNotFound  = "User Not Found"
+	ClubsFound    = "Clubs Found"
+	ClubsNotFound = "Clubs Not Found"
+	ClubFound     = "Club Found"
+	ClubNotFound  = "Club Not Found"
 
 	UsernameExists   = "Username already exists"
 	UsernameAlphaNum = "Username must start with a letter and can only contain the following characters: a-zA-Z0-9_ and must be 50 characters or less"

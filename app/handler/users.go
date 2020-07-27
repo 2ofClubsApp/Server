@@ -2,7 +2,6 @@ package handler
 
 import (
 	"../model"
-	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
@@ -47,7 +46,7 @@ func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
 		db.Table(model.UserTable).Preload(model.ChoosesColumn).Find(user)
 		userDisplay.Manages = getManages(db, user)
-		userDisplay.Tags = flatten(filterTags(user.Chooses))
+		userDisplay.Tags = getTagDisplay(filterTags(user.Chooses))
 		if !found {
 			status.Message = model.UserNotFound
 			status.Code = model.FailureCode
@@ -64,6 +63,8 @@ func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	data = GetJSON(status)
 	WriteData(data, httpStatus, w)
 }
+
+
 
 func getManages(db *gorm.DB, user *model.User) []*model.ManagesDisplay{
 	manages := []*model.ManagesDisplay{}
@@ -90,7 +91,6 @@ func UpdateUserTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
 	if userExists && IsValidRequest(username, r) {
 		httpStatus = http.StatusOK
-
 		// User is guaranteed to have an account (Verified JWT and request is verified)
 		chooses := filterTags(extractTags(db, r))
 		db.Model(user).Association(model.ChoosesColumn).Replace(chooses)
@@ -103,9 +103,4 @@ func UpdateUserTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	WriteData(GetJSON(status), httpStatus, w)
 }
 
-func getTagInfo(r *http.Request) []string {
-	payload := map[string][]string{"Tags": {}}
-	decoder := json.NewDecoder(r.Body)
-	decoder.Decode(&payload)
-	return payload["Tags"]
-}
+

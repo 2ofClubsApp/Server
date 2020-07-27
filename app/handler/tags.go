@@ -2,6 +2,7 @@ package handler
 
 import (
 	"../model"
+	"encoding/json"
 	"fmt"
 	"github.com/go-playground/validator"
 	"github.com/gorilla/mux"
@@ -9,6 +10,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -32,14 +34,15 @@ func tagExists(db *gorm.DB, tagName string) bool {
 }
 
 /*
-Create a tag based on the name provided by the request URL
+Create a single tag provided the proper JSON request (See the docs for more info)
 */
 func CreateTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status := model.NewStatus()
 	if isAdmin(db, r) {
-		vars := mux.Vars(r)
-		tagName := vars["tag"]
-		tagName = strings.TrimSpace(tagName)
+		payload := map[string]string{}
+		decoder := json.NewDecoder(r.Body)
+		decoder.Decode(&payload)
+		tagName := payload["Tag"]
 		if tagExists(db, tagName) {
 			status.Message = model.TagExists
 			status.Code = model.FailureCode
@@ -92,20 +95,19 @@ func UploadTagsList(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 func GetTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status := model.NewStatus()
 	var allTags []model.Tag
-	var tagsList []string
-	type TagData struct {
-		Tags []string
-	}
+	var tagsList []model.TagDisplay
+	tagDisplays := model.TagDisplayCollection{}
 	result := db.Find(&allTags)
 	if result.Error != nil {
 		fmt.Errorf("unable to get tags: %v", result.Error)
 		return
 	}
-	for _, tag := range filterTags(allTags) {
-		tagsList = append(tagsList, tag.Name)
+	for _, tag := range getTagDisplay(filterTags(allTags)) {
+		tagsList = append(tagsList, *tag)
 	}
+	tagDisplays.Tags = tagsList
 	status.Message = model.TagsFound
-	status.Data = TagData{Tags: tagsList}
+	status.Data = tagDisplays
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
 
@@ -114,10 +116,9 @@ Extract all tags from payload and returns them as an array of model.Tag
 */
 func extractTags(db *gorm.DB, r *http.Request) []model.Tag {
 	var chooses []model.Tag
-	for _, name := range getTagInfo(r) {
+	for _, tagID := range getTagID(r) {
 		tag := model.NewTag()
-		if SingleRecordExists(db, model.TagTable, model.NameColumn, name, tag) {
-			tag.Name = name
+		if SingleRecordExists(db, model.TagTable, model.IDColumn, strconv.Itoa(tagID), tag) {
 			chooses = append(chooses, *tag)
 		}
 	}
@@ -128,15 +129,17 @@ func ToggleTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status := model.NewStatus()
 	if isAdmin(db, r) {
 		vars := mux.Vars(r)
-		tagName := vars["tag"]
-		tagName = strings.TrimSpace(tagName)
+		tagID := vars["id"]
 		tag := model.NewTag()
-		if SingleRecordExists(db, model.TagTable, model.NameColumn, tagName, tag) {
+		if SingleRecordExists(db, model.TagTable, model.IDColumn, tagID, tag) {
 			err := db.Model(tag).Update(model.IsActiveColumn, !tag.IsActive).Error
 			if err != nil {
 				status.Message = model.TagUpdateError
+				status.Code = -1
+			} else {
+				status.Message = model.TagUpdated
 			}
-			status.Message = model.TagsUpdated
+
 		} else {
 			status.Code = -1
 			status.Message = model.TagNotFound
@@ -156,10 +159,18 @@ func filterTags(tags []model.Tag) []model.Tag {
 	}
 	return filteredTags
 }
-func flatten(tags []model.Tag) []string {
-	flattenTags := []string{}
+
+func getTagDisplay(tags []model.Tag) []*model.TagDisplay {
+	chooses := []*model.TagDisplay{}
 	for _, tag := range tags {
-		flattenTags = append(flattenTags, tag.Name)
+		chooses = append(chooses, tag.Display())
 	}
-	return flattenTags
+	return chooses
+}
+
+func getTagID(r *http.Request) []int {
+	payload := map[string][]int{}
+	decoder := json.NewDecoder(r.Body)
+	decoder.Decode(&payload)
+	return payload["Tags"]
 }

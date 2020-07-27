@@ -5,25 +5,27 @@ import "gorm.io/gorm"
 type Club struct {
 	// Owners/Administrator
 	gorm.Model `json:"-"`
-	Name       string `validate:"required,max=50"`
+	Name       string `validate:"required,min=3,max=50"`
 	Email      string `validate:"required,email"`
 	Bio        string `validate:"required,max=300"`
-	Size       int    `validate:"required"`
+	Size       int    `validate:"required"` // Set > 0 as a restriction
 	Active     bool   `json:"-"`
 	Sets       []Tag  `gorm:"many2many:club_tag;foreignKey:id;References:Name;"`
 	//Hosts      []Event `gorm:"many2many:club_event;association_foreignkey:ID;foreignkey:ID"`
 }
 
 type ClubDisplay struct {
+	ID    uint
 	Name  string
 	Email string
 	Bio   string
 	Size  int
-	Tags  []string
+	Tags  []*TagDisplay
 }
 
 func (c *Club) Display() *ClubDisplay {
 	return &ClubDisplay{
+		ID:    c.ID,
 		Name:  c.Name,
 		Email: c.Email,
 		Bio:   c.Bio,
