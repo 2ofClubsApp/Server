@@ -94,22 +94,21 @@ func (app *App) setRoutes() {
 
 	// Tag Routes
 	app.Get("/tags", app.Handle(handler.GetTags, false))               // Done
-	app.Post("/tags/{tag}", app.Handle(handler.CreateTag, true))       // Done
-	//app.Delete("/tags/{tag}", app.Handle(handler.DeleteTag, true))     // (Change to a toggle action)
+	app.Post("/tags", app.Handle(handler.CreateTag, true))       // Done
 	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true)) // Done
-	app.Post("/tags/{tag}/toggle", app.Handle(handler.ToggleTag, true)) // Done
+	app.Post("/tags/{id:[0-9]+}/toggle", app.Handle(handler.ToggleTag, true)) // Done
 
 	// Club routes
 	app.Post("/clubs", app.Handle(handler.CreateClub, true))     // Done
-	app.Get("/clubs/{name}", app.Handle(handler.GetClub, false)) // Done
+	app.Get("/clubs/{id:[0-9]+}", app.Handle(handler.GetClub, false)) // Done
 
-	app.Delete("/clubs/{name}", app.Handle(handler.DeleteClub, true)) // Partially Done (The owner can delete the club and all associations will be removed?)
-	app.Post("/clubs/{clubname}/manages/{username}", app.Handle(handler.AddManager, true)) // Done (Adding managers/maintainers to club)
-	app.Delete("/clubs/{clubname}/manages/{username}", app.Handle(handler.RemoveManager, true)) // Partially done (Removing managers/maintainers) (If the current owner wants to leave, then they must appoint a new person)
-	app.Post("/clubs/{clubname}/tags", app.Handle(handler.UpdateClubTags, true)) // (Adding tags for clubs)
+	//app.Delete("/clubs/{name}", app.Handle(handler.DeleteClub, true)) // Partially Done (The owner can delete the club and all associations will be removed?) (Clubs can't be deleted, only deactivated)
+	app.Post("/clubs/{id:[0-9]+}/manages/{username}", app.Handle(handler.AddManager, true)) // Done (Adding managers/maintainers to club)
+	app.Delete("/clubs/{id:[0-9]+}/manages/{username}", app.Handle(handler.RemoveManager, true)) // Partially done (Removing managers/maintainers) (If the current owner wants to leave, then they must appoint a new person)
+	app.Post("/clubs/{id:[0-9]+}/tags", app.Handle(handler.UpdateClubTags, true)) // (Adding tags for clubs)
 	app.Get("/clubs", app.Handle(handler.GetClubs, false)) // In-Progress
+	//app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, false)) // Integrated into /clubs
 
-	app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, false))
 	app.Post("/clubs/{username}", app.Handle(handler.UpdateClub, true)) // POST
 	app.Get("/clubs/events", app.Handle(handler.GetEvents, true))
 	app.Get("/clubs/events/{username}", app.Handle(handler.GetEvent, true))

@@ -16,7 +16,7 @@ type User struct {
 
 type UserDisplay struct {
 	Manages []*ManagesDisplay
-	Tags    []string
+	Tags    []*TagDisplay
 }
 
 type ManagesDisplay struct {
