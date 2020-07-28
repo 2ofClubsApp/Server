@@ -46,7 +46,7 @@ func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
 		db.Table(model.UserTable).Preload(model.ChoosesColumn).Find(user)
 		userDisplay.Manages = getManages(db, user)
-		userDisplay.Tags = getTagDisplay(filterTags(user.Chooses))
+		userDisplay.Tags = flatten(filterTags(user.Chooses))
 		if !found {
 			status.Message = model.UserNotFound
 			status.Code = model.FailureCode
