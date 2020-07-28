@@ -117,6 +117,7 @@ func (app *App) setRoutes() {
 	app.Delete("/clubs/events/{username}", app.Handle(handler.DeleteEvent, true))
 
 	// Admin Route
+	app.Post("/users/{username}/toggle", app.Handle(handler.ToggleUser, true))
 	// Approve usernames
 	// 404 Route
 	app.router.NotFoundHandler = handler.NotFound() // Done

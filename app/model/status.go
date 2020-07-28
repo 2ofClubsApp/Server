@@ -6,9 +6,6 @@ const (
 	SuccessManagerRemove   = "Successfully removed manager"
 	SuccessManagerAddition = "Successfully added manager"
 
-	SuccessClubDelete = "Successfully deleted club"
-	FailureClubDelete = "Unable to delete club"
-
 	TagUpdateError = "Error Updating Tag"
 	TagUpdated     = "Tag Updated"
 	TagCreated     = "Successfully created tag"
@@ -16,7 +13,6 @@ const (
 	TagExists      = "Tag already exists"
 	TagsUpdated    = "Tags Updated"
 	TagsFound      = "Tags Found"
-	TagDelete      = "Tag Deleted"
 	TagNotFound    = "Tag doesn't exist"
 
 	UserFound     = "User Found"
@@ -35,6 +31,9 @@ const (
 	InvalidFile   = "Invalid File: A .txt file is required"
 	FailureCode   = -1
 	SuccessCode   = 1
+
+	NotApproved  = "Sorry, your account has not been approved yet"
+	LoginFailure = "Username or Password is Incorrect"
 )
 
 type T struct{}
