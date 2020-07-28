@@ -7,6 +7,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"gorm.io/gorm"
 	"net/http"
+	"strings"
 )
 
 const ErrGeneric = "an error occurred"
@@ -24,9 +25,11 @@ func NotFound() http.Handler {
 Extract the Token Claims from the HTTP Request Header
 */
 func GetTokenClaims(r *http.Request) jwt.MapClaims{
-	t := r.Header["Token"][0]
+	t := r.Header.Get("Authorization")
+	splitToken := strings.Split(t, "Bearer")
+	token := strings.TrimSpace(splitToken[1])
 	claims := jwt.MapClaims{}
-	jwt.ParseWithClaims(t, &claims, kf)
+	jwt.ParseWithClaims(token, &claims, kf)
 	return claims
 }
 
@@ -78,8 +81,10 @@ func Test(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 Note: Need to add more authentication checks later (This is temporary)
 */
 func IsValidJWT(w http.ResponseWriter, r *http.Request) bool {
-	if token := r.Header["Token"]; token != nil {
-		if t, err := jwt.Parse(token[0], kf); err == nil {
+	if bearerToken := r.Header.Get("Authorization"); bearerToken != "" {
+		splitToken := strings.Split(bearerToken, "Bearer ")
+		token := strings.TrimSpace(splitToken[1])
+		if t, err := jwt.Parse(token, kf); err == nil {
 			if t.Valid {
 				return true
 			}
@@ -101,7 +106,6 @@ func kf(token *jwt.Token) (interface{}, error) {
 /*
 Returning true if the record already exists in the table, false otherwise.
 */
-//You can put a check on Record Exists on the deleted column as long as it's null it'll exist then
 // When soft deleted, the record won't exist anymore
 func SingleRecordExists(db *gorm.DB, tableName string, column string, val string, t interface{}) bool {
 	result := db.Table(tableName).Where(column+"= ?", val).First(t)

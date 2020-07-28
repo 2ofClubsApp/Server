@@ -13,9 +13,8 @@ import (
 )
 
 const (
-	LoginFailure = "Username or Password is Incorrect"
-	HashErr      = "hashing Error"
-	ErrTokenGen  = "token generation error"
+	HashErr     = "hashing Error"
+	ErrTokenGen = "token generation error"
 )
 
 // TODO: Prevent login many times (if user tries to brute force this)
@@ -26,18 +25,27 @@ func Login(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	if isFound {
 		err = bcrypt.CompareHashAndPassword(hash, []byte(creds.Password))
 	}
+	s := model.NewStatus()
 	if err != nil {
-		s := model.NewStatus()
-		s.Message = LoginFailure
+		s.Message = model.LoginFailure
 		s.Code = model.FailureCode
-		WriteData(GetJSON(s), http.StatusOK, w)
 	} else {
-		if tp, err := GetTokenPair(creds.Username, 5, 60*24); err == nil {
+		if tp, err := GetTokenPair(creds.Username, 5, 60*24); err == nil && isApproved(db, creds.Username) {
 			c := GenerateCookie(model.RefreshToken, tp.RefreshToken)
 			http.SetCookie(w, c)
 			WriteData(tp.AccessToken, http.StatusOK, w)
+		} else {
+			s.Message = model.NotApproved
+			s.Code = model.FailureCode
 		}
 	}
+	WriteData(GetJSON(s), http.StatusOK, w)
+
+}
+func isApproved(db *gorm.DB, username string) bool {
+	u := model.NewUser()
+	SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, u)
+	return u.IsApproved
 }
 
 func getCredentials(r *http.Request) *model.Credentials {
@@ -49,7 +57,7 @@ func getCredentials(r *http.Request) *model.Credentials {
 }
 
 /*
-	Gets password hash for both clubs and users provided the username.
+	Gets password hash for a user given the username.
 */
 func getPasswordHash(db *gorm.DB, userName string) ([]byte, bool) {
 	type p struct {

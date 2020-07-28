@@ -51,6 +51,7 @@ const (
 	UserTable       = "user"
 	ManagesColumn   = "Manages"
 	IsAdminColumn   = "is_admin"
+	IsApprovedColumn = "is_approved"
 	IDColumn        = "id"
 	CreatedAtColumn = "created_at"
 	DeletedAtColumn = "deleted_at"
