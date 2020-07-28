@@ -42,7 +42,7 @@ func CreateTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		payload := map[string]string{}
 		decoder := json.NewDecoder(r.Body)
 		decoder.Decode(&payload)
-		tagName := payload["Tag"]
+		tagName := payload["Name"]
 		if tagExists(db, tagName) {
 			status.Message = model.TagExists
 			status.Code = model.FailureCode
