@@ -1,7 +1,6 @@
 package model
 
 type Credentials struct {
-	// Regex's not added in metadata since it can conflict with commas and other symbols
 	Username string `gorm:"UNIQUE" validate:"alpha,min=2,max=15,required"`
 	Email    string `gorm:"UNIQUE" validate:"required,email"`
 	Password string `validate:"required,min=3,max=45"`

@@ -10,7 +10,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"path/filepath"
-	"strconv"
 	"strings"
 )
 
@@ -95,19 +94,20 @@ func UploadTagsList(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 func GetTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status := model.NewStatus()
 	var allTags []model.Tag
-	var tagsList []model.TagDisplay
-	tagDisplays := model.TagDisplayCollection{}
+	var tagsList []string
+	type TagData struct {
+		Tags []string
+	}
 	result := db.Find(&allTags)
 	if result.Error != nil {
 		fmt.Errorf("unable to get tags: %v", result.Error)
 		return
 	}
-	for _, tag := range getTagDisplay(filterTags(allTags)) {
-		tagsList = append(tagsList, *tag)
+	for _, tag := range filterTags(allTags) {
+		tagsList = append(tagsList, tag.Name)
 	}
-	tagDisplays.Tags = tagsList
 	status.Message = model.TagsFound
-	status.Data = tagDisplays
+	status.Data = TagData{Tags: tagsList}
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
 
@@ -116,9 +116,9 @@ Extract all tags from payload and returns them as an array of model.Tag
 */
 func extractTags(db *gorm.DB, r *http.Request) []model.Tag {
 	var chooses []model.Tag
-	for _, tagID := range getTagID(r) {
+	for _, name := range getTagNames(r) {
 		tag := model.NewTag()
-		if SingleRecordExists(db, model.TagTable, model.IDColumn, strconv.Itoa(tagID), tag) {
+		if SingleRecordExists(db, model.TagTable, model.NameColumn, name, tag) {
 			chooses = append(chooses, *tag)
 		}
 	}
@@ -129,9 +129,10 @@ func ToggleTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status := model.NewStatus()
 	if isAdmin(db, r) {
 		vars := mux.Vars(r)
-		tagID := vars["id"]
+		tagName := vars["name"]
+		tagName = strings.TrimSpace(tagName)
 		tag := model.NewTag()
-		if SingleRecordExists(db, model.TagTable, model.IDColumn, tagID, tag) {
+		if SingleRecordExists(db, model.TagTable, model.NameColumn, tagName, tag) {
 			err := db.Model(tag).Update(model.IsActiveColumn, !tag.IsActive).Error
 			if err != nil {
 				status.Message = model.TagUpdateError
@@ -139,7 +140,6 @@ func ToggleTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 			} else {
 				status.Message = model.TagUpdated
 			}
-
 		} else {
 			status.Code = -1
 			status.Message = model.TagNotFound
@@ -157,19 +157,20 @@ func filterTags(tags []model.Tag) []model.Tag {
 			filteredTags = append(filteredTags, tag)
 		}
 	}
+	fmt.Println(filteredTags)
 	return filteredTags
 }
 
-func getTagDisplay(tags []model.Tag) []*model.TagDisplay {
-	chooses := []*model.TagDisplay{}
+func flatten(tags []model.Tag) []string {
+	flattenedTags := []string{}
 	for _, tag := range tags {
-		chooses = append(chooses, tag.Display())
+		flattenedTags = append(flattenedTags, tag.Name)
 	}
-	return chooses
+	return flattenedTags
 }
 
-func getTagID(r *http.Request) []int {
-	payload := map[string][]int{}
+func getTagNames(r *http.Request) []string {
+	payload := map[string][]string{"Tags": {}}
 	decoder := json.NewDecoder(r.Body)
 	decoder.Decode(&payload)
 	return payload["Tags"]

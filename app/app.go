@@ -60,8 +60,8 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 	app.router.Use(logger.LoggingMiddleware)
 	// Note: Set this as env var later
 	app.origin = handlers.AllowedOrigins([]string{"http://localhost:3000"})
-	app.methods = handlers.AllowedMethods([]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete})
-	app.headers = handlers.AllowedHeaders([]string{"Content-Type"})
+	app.methods = handlers.AllowedMethods([]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions})
+	app.headers = handlers.AllowedHeaders([]string{"Content-Type", "Token"})
 
 	app.setRoutes()
 	log.Println("Connected to Redis")
@@ -96,7 +96,7 @@ func (app *App) setRoutes() {
 	app.Get("/tags", app.Handle(handler.GetTags, false))               // Done
 	app.Post("/tags", app.Handle(handler.CreateTag, true))       // Done
 	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true)) // Done
-	app.Post("/tags/{id:[0-9]+}/toggle", app.Handle(handler.ToggleTag, true)) // Done
+	app.Post("/tags/{name}/toggle", app.Handle(handler.ToggleTag, true)) // Done
 
 	// Club routes
 	app.Post("/clubs", app.Handle(handler.CreateClub, true))     // Done

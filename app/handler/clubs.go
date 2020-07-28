@@ -97,7 +97,7 @@ func GetClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 
 func loadClubData(db *gorm.DB, club *model.Club, clubDisplay *model.ClubDisplay) {
 	db.Table(model.ClubTable).Preload(model.SetsColumn).Find(club)
-	clubDisplay.Tags = getTagDisplay(filterTags(club.Sets))
+	clubDisplay.Tags = flatten(filterTags(club.Sets))
 
 }
 func UpdateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
