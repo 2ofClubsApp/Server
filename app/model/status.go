@@ -15,6 +15,7 @@ const (
 	TagsFound      = "Tags Found"
 	TagNotFound    = "Tag doesn't exist"
 
+	UserUpdated   = "Updated User"
 	UserFound     = "User Found"
 	UserNotFound  = "User Not Found"
 	ClubsFound    = "Clubs Found"
