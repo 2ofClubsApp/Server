@@ -61,7 +61,7 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 	// Note: Set this as env var later
 	app.origin = handlers.AllowedOrigins([]string{"http://localhost:3000"})
 	app.methods = handlers.AllowedMethods([]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions})
-	app.headers = handlers.AllowedHeaders([]string{"Content-Type", "Token"})
+	app.headers = handlers.AllowedHeaders([]string{"Content-Type", "Authorization"})
 
 	app.setRoutes()
 	log.Println("Connected to Redis")

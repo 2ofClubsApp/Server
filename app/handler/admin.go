@@ -25,7 +25,7 @@ func ToggleUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	user := model.NewUser()
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
 	if userExists {
-
+		db.Model(user).Update(model.IsApprovedColumn, !user.IsApproved)
 	} else {
 		s.Message = model.UserNotFound
 		s.Code = model.FailureCode
