@@ -33,7 +33,11 @@ func Login(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		if tp, err := GetTokenPair(creds.Username, 5, 60*24); err == nil && isApproved(db, creds.Username) {
 			c := GenerateCookie(model.RefreshToken, tp.RefreshToken)
 			http.SetCookie(w, c)
-			WriteData(tp.AccessToken, http.StatusOK, w)
+			type login struct {
+				Token string
+			}
+			s.Message = model.LoginSuccess
+			s.Data = login{Token: tp.AccessToken}
 		} else {
 			s.Message = model.NotApproved
 			s.Code = model.FailureCode

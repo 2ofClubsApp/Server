@@ -33,6 +33,7 @@ const (
 	SuccessCode   = 1
 
 	NotApproved  = "Sorry, your account has not been approved yet"
+	LoginSuccess = "Successfully logged in"
 	LoginFailure = "Username or Password is Incorrect"
 )
 
