@@ -8,24 +8,8 @@ type Tag struct {
 	IsActive   bool   `json:"-"`
 }
 
-type TagDisplay struct {
-	ID   uint
-	Name string
-}
-
-type TagDisplayCollection struct {
-	Tags []TagDisplay
-}
-
 func NewTag() *Tag {
 	return &Tag{}
-}
-
-func (t *Tag) Display() *TagDisplay {
-	return &TagDisplay{
-		ID:   t.ID,
-		Name: t.Name,
-	}
 }
 
 const (
