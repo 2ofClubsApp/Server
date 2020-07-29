@@ -2,10 +2,8 @@ package handler
 
 import (
 	"../model"
-	"encoding/json"
 	"fmt"
 	"github.com/go-playground/validator"
-	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 	"net/http"
 )
@@ -47,7 +45,8 @@ func CreateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	user := model.NewUser()
 	uname := fmt.Sprintf("%v", claims["sub"])
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, uname, user)
-	club := getClubInfo(r)
+	club := model.NewClub()
+	extractBody(r, club)
 	validate := validator.New()
 	err := validate.Struct(club)
 	clubExists := SingleRecordExists(db, model.ClubTable, model.NameColumn, club.Name, model.NewClub())
@@ -66,27 +65,26 @@ func CreateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
 
-func getClubInfo(r *http.Request) *model.Club {
-	decoder := json.NewDecoder(r.Body)
-	club := model.NewClub()
-	decoder.Decode(club)
-	return club
-}
+//func getClubInfo(r *http.Request) *model.Club {
+//	decoder := json.NewDecoder(r.Body)
+//	club := model.NewClub()
+//	decoder.Decode(club)
+//	return club
+//}
 
 func GetClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	var statusCode int
 	var data string
-	vars := mux.Vars(r)
-	clubID := vars["id"]
+	clubID := getVar(r, "cid")
 	status := model.NewStatus()
 	club := model.NewClub()
 	found := SingleRecordExists(db, model.ClubTable, model.IDColumn, clubID, club)
-	clubDisplay := club.Display()
-	loadClubData(db, club, clubDisplay)
 	if !found {
 		status.Message = model.ClubNotFound
 		status.Code = model.FailureCode
 	} else {
+		clubDisplay := club.Display()
+		loadClubData(db, club, clubDisplay)
 		status.Data = clubDisplay
 		status.Message = model.ClubFound
 	}
@@ -97,9 +95,19 @@ func GetClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 
 func loadClubData(db *gorm.DB, club *model.Club, clubDisplay *model.ClubDisplay) {
 	db.Table(model.ClubTable).Preload(model.SetsColumn).Find(club)
+	db.Table(model.ClubTable).Preload(model.HostsColumn).Find(club)
 	clubDisplay.Tags = flatten(filterTags(club.Sets))
-
+	clubDisplay.Hosts = getHostDisplay(club.Hosts)
 }
+
+func getHostDisplay(events []model.Event) []model.EventDisplay {
+	eventDisplays := []model.EventDisplay{}
+	for _, e := range events {
+		eventDisplays = append(eventDisplays, e.Display())
+	}
+	return eventDisplays
+}
+
 func UpdateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Update Club")
 }
@@ -155,8 +163,7 @@ func AddManager(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 func UpdateClubTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	var httpStatus int
 	status := model.NewStatus()
-	vars := mux.Vars(r)
-	clubID := vars["id"]
+	clubID := getVar(r, "cid")
 	club := model.NewClub()
 	claims := GetTokenClaims(r)
 	username := fmt.Sprintf("%v", claims["sub"])
@@ -191,9 +198,8 @@ func editManagers(db *gorm.DB, w http.ResponseWriter, r *http.Request, op string
 	status := model.NewStatus()
 	claims := GetTokenClaims(r)
 	clubOwnerUsername := fmt.Sprintf("%v", claims["sub"])
-	vars := mux.Vars(r)
-	newManagerUname := vars["username"]
-	clubID := vars["id"]
+	newManagerUname := getVar(r, "username")
+	clubID := getVar(r, "cid")
 	owner := model.NewUser()
 	newManager := model.NewUser()
 	club := model.NewClub()

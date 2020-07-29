@@ -2,7 +2,6 @@ package handler
 
 import (
 	"../model"
-	"encoding/json"
 	"errors"
 	"github.com/go-playground/validator"
 	"golang.org/x/crypto/bcrypt"
@@ -66,9 +65,8 @@ func Hash(info string) (string, error) {
 Extracting JSON payload credentials and returning (model, true) if valid, otherwise (model, false).
 */
 func VerifyCredentials(r *http.Request) (*model.Credentials, bool) {
-	decoder := json.NewDecoder(r.Body)
 	c := model.NewCredentials()
-	decoder.Decode(c)
+	extractBody(r, c)
 	validate := validator.New()
 	validate.RegisterValidation("alpha", ValidateUsername)
 	err := validate.Struct(c)

@@ -2,8 +2,8 @@ package handler
 
 import (
 	"../model"
+	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 	"net/http"
 	"strings"
@@ -35,8 +35,7 @@ func IsValidRequest(username string, r *http.Request) bool {
 func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	var httpStatus int
 	var data string
-	vars := mux.Vars(r)
-	username := strings.ToLower(vars["username"])
+	username := strings.ToLower(getVar(r, "username"))
 	status := model.NewStatus()
 	user := model.NewUser()
 	userDisplay := user.Display()
@@ -64,20 +63,27 @@ func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	WriteData(data, httpStatus, w)
 }
 
-
+/*
+Extracts the JSON body payload into a given struct (i.e. User, Credentials, etc.)
+ */
+func extractBody(r *http.Request, s interface{}) {
+	decoder := json.NewDecoder(r.Body)
+	decoder.Decode(s)
+}
 
 func getManages(db *gorm.DB, user *model.User) []*model.ManagesDisplay{
 	manages := []*model.ManagesDisplay{}
 	for _, club := range user.Manages {
 		clubDisplay := club.Display()
 		managesDisplay := model.ManagesDisplay{}
-		loadClubData(db, club, clubDisplay)
+		loadClubData(db, &club, clubDisplay)
 		managesDisplay.ClubDisplay = clubDisplay
-		managesDisplay.IsOwner = isOwner(db, user, club)
+		managesDisplay.IsOwner = isOwner(db, user, &club)
 		manages = append(manages, &managesDisplay)
 	}
 	return manages
 }
+
 /*
 Updating the users choice of tags and attended events. Only valid tags will be extracted and added if it's not already.
 If an invalid format is provided where there aren't any valid tags to be extracted, the users tag preferences will be reset
@@ -85,8 +91,7 @@ If an invalid format is provided where there aren't any valid tags to be extract
 func UpdateUserTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	var httpStatus int
 	status := model.NewStatus()
-	vars := mux.Vars(r)
-	username := strings.ToLower(vars["username"])
+	username := strings.ToLower(getVar(r, "username"))
 	user := model.NewUser()
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
 	if userExists && IsValidRequest(username, r) {
