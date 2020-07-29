@@ -2,7 +2,6 @@ package handler
 
 import (
 	"../model"
-	"encoding/json"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
@@ -19,7 +18,9 @@ const (
 
 // TODO: Prevent login many times (if user tries to brute force this)
 func Login(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	creds := getCredentials(r)
+	creds := model.NewCredentials()
+	extractBody(r, creds)
+	creds.Username = strings.ToLower(creds.Username)
 	hash, isFound := getPasswordHash(db, creds.Username)
 	var err error
 	if isFound {
@@ -52,13 +53,14 @@ func isApproved(db *gorm.DB, username string) bool {
 	return u.IsApproved
 }
 
-func getCredentials(r *http.Request) *model.Credentials {
-	decoder := json.NewDecoder(r.Body)
-	cred := model.NewCredentials()
-	decoder.Decode(cred)
-	cred.Username = strings.ToLower(cred.Username)
-	return cred
-}
+//func getCredentials(r *http.Request) *model.Credentials {
+//	decoder := json.NewDecoder(r.Body)
+//	cred := model.NewCredentials()
+//	decoder.Decode(cred)
+//	cred.Username = strings.ToLower(cred.Username)
+//	return cred
+//}
+
 
 /*
 	Gets password hash for a user given the username.

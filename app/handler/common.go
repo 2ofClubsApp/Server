@@ -21,6 +21,7 @@ func NotFound() http.Handler {
 		WriteData(http.StatusText(http.StatusNotFound), http.StatusNotFound, w)
 	})
 }
+
 /*
 Extract the Token Claims from the HTTP Request Header
 */

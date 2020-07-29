@@ -3,7 +3,6 @@ package handler
 import (
 	"../model"
 	"fmt"
-	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 	"net/http"
 )
@@ -19,8 +18,7 @@ func isAdmin(db *gorm.DB, r *http.Request) bool {
 }
 
 func ToggleUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	username := vars["username"]
+	username := getVar(r, "username")
 	status := model.NewStatus()
 	user := model.NewUser()
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
@@ -33,4 +31,3 @@ func ToggleUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
-

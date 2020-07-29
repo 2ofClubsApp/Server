@@ -11,7 +11,7 @@ type Club struct {
 	Size       int    `validate:"required,gt=0"` // Set > 0 as a restriction
 	Active     bool   `json:"-"`
 	Sets       []Tag  `gorm:"many2many:club_tag;foreignKey:id;References:Name;"`
-	//Hosts      []Event `gorm:"many2many:club_event;association_foreignkey:ID;foreignkey:ID"`
+	Hosts      []Event `gorm:"many2many:club_event;"`
 }
 
 type ClubDisplay struct {
@@ -21,6 +21,7 @@ type ClubDisplay struct {
 	Bio   string
 	Size  int
 	Tags  []string
+	Hosts []EventDisplay
 }
 
 func (c *Club) Display() *ClubDisplay {
@@ -34,7 +35,7 @@ func (c *Club) Display() *ClubDisplay {
 }
 
 func NewClub() *Club {
-	return &Club{Sets: []Tag{}}
+	return &Club{Sets: []Tag{}, Hosts: []Event{}}
 }
 
 const (

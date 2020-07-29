@@ -66,7 +66,7 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 	app.setRoutes()
 	log.Println("Connected to Redis")
 	log.Println("Connected to Database")
-	db.Migrator().CreateTable(model.NewEvent(), model.NewTag(), model.NewUserClub())
+	db.Migrator().CreateTable(model.NewEvent(), model.NewTag(), model.NewUserClub(), model.NewEvent())
 	db.AutoMigrate(model.NewUser(), model.NewClub())
 	db.SetupJoinTable(&model.User{}, "Manages", &model.UserClub{})
 
@@ -100,19 +100,22 @@ func (app *App) setRoutes() {
 
 	// Club routes
 	app.Post("/clubs", app.Handle(handler.CreateClub, true))     // Done
-	app.Get("/clubs/{id:[0-9]+}", app.Handle(handler.GetClub, false)) // Done
+	app.Get("/clubs/{cid:[0-9]+}", app.Handle(handler.GetClub, false)) // Done
 
 	//app.Delete("/clubs/{name}", app.Handle(handler.DeleteClub, true)) // Partially Done (The owner can delete the club and all associations will be removed?) (Clubs can't be deleted, only deactivated)
-	app.Post("/clubs/{id:[0-9]+}/manages/{username}", app.Handle(handler.AddManager, true)) // Done (Adding managers/maintainers to club)
-	app.Delete("/clubs/{id:[0-9]+}/manages/{username}", app.Handle(handler.RemoveManager, true)) // Partially done (Removing managers/maintainers) (If the current owner wants to leave, then they must appoint a new person)
-	app.Post("/clubs/{id:[0-9]+}/tags", app.Handle(handler.UpdateClubTags, true)) // (Adding tags for clubs)
+	app.Post("/clubs/{cid:[0-9]+}/manages/{username}", app.Handle(handler.AddManager, true)) // Done (Adding managers/maintainers to club)
+	app.Delete("/clubs/{cid:[0-9]+}/manages/{username}", app.Handle(handler.RemoveManager, true)) // Partially done (Removing managers/maintainers) (If the current owner wants to leave, then they must appoint a new person)
+	app.Post("/clubs/{cid:[0-9]+}/tags", app.Handle(handler.UpdateClubTags, true)) // (Adding tags for clubs)
 	app.Get("/clubs", app.Handle(handler.GetClubs, false)) // In-Progress
 	//app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, false)) // Integrated into /clubs
 
-	app.Post("/clubs/{username}", app.Handle(handler.UpdateClub, true)) // POST
-	app.Get("/clubs/events", app.Handle(handler.GetEvents, true))
-	app.Get("/clubs/events/{username}", app.Handle(handler.GetEvent, true))
-	app.Post("/clubs/events/{username}", app.Handle(handler.CreateEvent, true)) // POST
+	app.Post("/clubs/{cid:[0-9]+}", app.Handle(handler.UpdateClub, true)) // POST
+
+	app.Get("/clubs/{cid:[0-9]+}/events", app.Handle(handler.GetEvents, true))
+	app.Get("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.GetEvent, true))
+
+	app.Post("/clubs/{cid:[0-9]+}/events", app.Handle(handler.CreateEvent, true)) // POST
+
 	app.Post("/clubs/events/{username}", app.Handle(handler.UpdateEvent, true)) // POST
 	app.Delete("/clubs/events/{username}", app.Handle(handler.DeleteEvent, true))
 

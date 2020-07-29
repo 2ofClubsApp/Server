@@ -116,7 +116,9 @@ Extract all tags from payload and returns them as an array of model.Tag
 */
 func extractTags(db *gorm.DB, r *http.Request) []model.Tag {
 	var chooses []model.Tag
-	for _, name := range getTagNames(r) {
+	payload := map[string][]string{"Tags": {}}
+	extractBody(r, payload)
+	for _, name := range payload["Tags"] {
 		tag := model.NewTag()
 		if SingleRecordExists(db, model.TagTable, model.NameColumn, name, tag) {
 			chooses = append(chooses, *tag)
@@ -150,6 +152,7 @@ func ToggleTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
+
 func filterTags(tags []model.Tag) []model.Tag {
 	filteredTags := []model.Tag{}
 	for _, tag := range tags {
@@ -157,7 +160,6 @@ func filterTags(tags []model.Tag) []model.Tag {
 			filteredTags = append(filteredTags, tag)
 		}
 	}
-	fmt.Println(filteredTags)
 	return filteredTags
 }
 
@@ -169,9 +171,9 @@ func flatten(tags []model.Tag) []string {
 	return flattenedTags
 }
 
-func getTagNames(r *http.Request) []string {
-	payload := map[string][]string{"Tags": {}}
-	decoder := json.NewDecoder(r.Body)
-	decoder.Decode(&payload)
-	return payload["Tags"]
-}
+//func getTagNames(r *http.Request) []string {
+//	payload := map[string][]string{"Tags": {}}
+//	decoder := json.NewDecoder(r.Body)
+//	decoder.Decode(&payload)
+//	return payload["Tags"]
+//}

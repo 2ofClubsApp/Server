@@ -36,6 +36,14 @@ const (
 	NotApproved  = "Sorry, your account has not been approved yet"
 	LoginSuccess = "Successfully logged in"
 	LoginFailure = "Username or Password is Incorrect"
+
+	CreateEventFailure = "Unable to create event"
+	CreateEventSuccess = " Successfully created event"
+
+	EventNameConstraint        = "Event name must be a maximum of 50 characters or less"
+	EventDescriptionConstraint = "Event description must be a maximum of 300 characters or less"
+	EventLocationConstraint    = "Event location must be a maximum of 100 characters or less"
+	EventFeeConstraint         = "Fee must be greater or equal to $0"
 )
 
 type T struct{}
@@ -49,6 +57,13 @@ type Status struct {
 type CredentialStatus struct {
 	Username string
 	Email    string
+}
+
+type EventStatus struct {
+	Name        string
+	Description string
+	Location    string
+	Fee         string
 }
 
 func NewStatus() *Status {
