@@ -17,6 +17,7 @@ type User struct {
 type UserDisplay struct {
 	Manages []*ManagesDisplay
 	Tags    []string
+	Attends []EventDisplay
 }
 
 type ManagesDisplay struct {
@@ -29,7 +30,7 @@ func (u *User) Display() *UserDisplay {
 }
 
 func NewUser() *User {
-	return &User{Credentials: NewCredentials(), Manages: []Club{}, Chooses: []Tag{}}
+	return &User{Credentials: NewCredentials(), Manages: []Club{}, Chooses: []Tag{}, Attends: []Event{}}
 }
 
 //func (u *User) AfterFind(db *gorm.DB) error {
