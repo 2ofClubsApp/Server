@@ -4,7 +4,6 @@ import (
 	"../model"
 	"fmt"
 	"github.com/go-playground/validator"
-	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 	"net/http"
 )
@@ -19,7 +18,7 @@ func GetEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 
 /*
 Creating an event for a particular club. The user creating the club must at least be a manager
- */
+*/
 func CreateEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	claims := GetTokenClaims(r)
 	uname := fmt.Sprintf("%v", claims["sub"])
@@ -33,7 +32,7 @@ func CreateEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	clubExists := SingleRecordExists(db, model.ClubTable, model.IDColumn, clubID, club)
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, uname, user)
 	status := model.NewStatus()
-	if userExists && isManager(db, user, club) && clubExists && err == nil{
+	if userExists && isManager(db, user, club) && clubExists && err == nil {
 		db.Model(club).Association(model.HostsColumn).Append(event)
 	} else if !clubExists {
 		status.Code = model.FailureCode
@@ -51,16 +50,32 @@ func CreateEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
 
-
-func getVar(r *http.Request, name string) string {
-	vars := mux.Vars(r)
-	return vars[name]
-}
-
 func UpdateEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Update Event")
 }
 
 func DeleteEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Delete Event")
+}
+
+func AttendEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	/*
+	Ensure that users can't add multi events
+	 */
+	status := model.NewStatus()
+	eventID := getVar(r, "eid")
+	claims := GetTokenClaims(r)
+	uname := fmt.Sprintf("%v", claims["sub"])
+	event := model.NewEvent()
+	user := model.NewUser()
+	eventExists := SingleRecordExists(db, model.EventTable, model.IDColumn, eventID, event)
+	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, uname, user)
+	if eventExists && userExists {
+		db.Model(user).Association(model.AttendsColumn).Append(event)
+		status.Message = model.EventFound
+	} else {
+		status.Code = model.FailureCode
+		status.Message = model.EventNotFound
+	}
+	WriteData(GetJSON(status), http.StatusOK, w)
 }

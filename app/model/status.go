@@ -44,6 +44,8 @@ const (
 	EventDescriptionConstraint = "Event description must be a maximum of 300 characters or less"
 	EventLocationConstraint    = "Event location must be a maximum of 100 characters or less"
 	EventFeeConstraint         = "Fee must be greater or equal to $0"
+	EventFound                 = "Event Found"
+	EventNotFound              = "Event not found"
 )
 
 type T struct{}

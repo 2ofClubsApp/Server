@@ -7,11 +7,11 @@ import (
 type User struct {
 	gorm.Model   `json:"-"`
 	*Credentials `json:"-"`
-	Manages      []*Club `gorm:"many2many:user_club;"`
+	Manages      []Club `gorm:"many2many:user_club;"`
 	Chooses      []Tag   `gorm:"many2many:user_tag;foreignKey:id;References:Name" json:"-"`
-	//Attends      []Event `gorm:"many2many:User_Event;`
-	IsAdmin    bool `json:"-"`
-	IsApproved bool `json:"-"`
+	Attends      []Event `gorm:"many2many:user_event;"`
+	IsAdmin      bool    `json:"-"`
+	IsApproved   bool    `json:"-"`
 }
 
 type UserDisplay struct {
@@ -29,7 +29,7 @@ func (u *User) Display() *UserDisplay {
 }
 
 func NewUser() *User {
-	return &User{Credentials: NewCredentials(), Manages: []*Club{}, Chooses: []Tag{}}
+	return &User{Credentials: NewCredentials(), Manages: []Club{}, Chooses: []Tag{}}
 }
 
 //func (u *User) AfterFind(db *gorm.DB) error {
@@ -44,15 +44,16 @@ func NewUser() *User {
 //}
 
 const (
-	ChoosesColumn   = "Chooses"
-	UserTagTable    = "user_tag"
-	UserClubTable   = "user_club"
-	IsHelpingColumn = "is_helping"
-	UserTable       = "user"
-	ManagesColumn   = "Manages"
-	IsAdminColumn   = "is_admin"
+	ChoosesColumn    = "Chooses"
+	AttendsColumn    = "Attends"
+	UserTagTable     = "user_tag"
+	UserClubTable    = "user_club"
+	IsHelpingColumn  = "is_helping"
+	UserTable        = "user"
+	ManagesColumn    = "Manages"
+	IsAdminColumn    = "is_admin"
 	IsApprovedColumn = "is_approved"
-	IDColumn        = "id"
-	CreatedAtColumn = "created_at"
-	DeletedAtColumn = "deleted_at"
+	IDColumn         = "id"
+	CreatedAtColumn  = "created_at"
+	DeletedAtColumn  = "deleted_at"
 )

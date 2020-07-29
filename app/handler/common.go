@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 	"net/http"
 	"strings"
@@ -20,6 +21,14 @@ func NotFound() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		WriteData(http.StatusText(http.StatusNotFound), http.StatusNotFound, w)
 	})
+}
+
+/*
+Extracting variables from request URL
+ */
+func getVar(r *http.Request, name string) string {
+	vars := mux.Vars(r)
+	return vars[name]
 }
 
 /*

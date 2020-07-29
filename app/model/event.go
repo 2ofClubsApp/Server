@@ -36,6 +36,7 @@ func (e *Event) Display() EventDisplay {
 }
 
 const (
+	EventTable        = "event"
 	DateTimeColumn    = "date_time"
 	DescriptionColumn = "description"
 	LocationColumn    = "location"
