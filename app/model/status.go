@@ -40,7 +40,7 @@ const (
 	CreateEventFailure = "Unable to create event"
 	CreateEventSuccess = " Successfully created event"
 
-	EventNameConstraint        = "Event name must be a maximum of 50 characters or less"
+	EventNameConstraint        = "Event name must be at least 1 character and a maximum of 50 characters"
 	EventDescriptionConstraint = "Event description must be a maximum of 300 characters or less"
 	EventLocationConstraint    = "Event location must be a maximum of 100 characters or less"
 	EventFeeConstraint         = "Fee must be greater or equal to $0"
