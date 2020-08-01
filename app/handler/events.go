@@ -34,6 +34,7 @@ func CreateEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status := model.NewStatus()
 	if userExists && isManager(db, user, club) && clubExists && err == nil {
 		db.Model(club).Association(model.HostsColumn).Append(event)
+		status.Message = model.CreateEventSuccess
 	} else if !clubExists {
 		status.Code = model.FailureCode
 		status.Message = model.ClubNotFound
