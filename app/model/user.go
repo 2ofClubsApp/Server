@@ -35,6 +35,9 @@ func NewUser() *User {
 }
 
 const (
+	AllUserInfo      = "all"
+	UserClubsManage  = "clubs"
+	UserEventsAttend = "events"
 	ChoosesColumn    = "Chooses"
 	AttendsColumn    = "Attends"
 	UserTagTable     = "user_tag"
