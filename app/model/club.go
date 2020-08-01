@@ -1,10 +1,8 @@
 package model
 
-import "gorm.io/gorm"
-
 type Club struct {
 	// Owners/Administrator
-	gorm.Model `json:"-"`
+	Base
 	Name       string  `validate:"required,min=3,max=50"`
 	Email      string  `validate:"required,email"`
 	Bio        string  `validate:"required,max=300"`
@@ -21,7 +19,7 @@ type ClubDisplay struct {
 	Bio   string
 	Size  int
 	Tags  []string
-	Hosts []EventDisplay
+	Hosts []Event
 }
 
 func (c *Club) Display() *ClubDisplay {

@@ -101,16 +101,16 @@ func loadClubData(db *gorm.DB, club *model.Club, clubDisplay *model.ClubDisplay)
 	db.Table(model.ClubTable).Preload(model.SetsColumn).Find(club)
 	db.Table(model.ClubTable).Preload(model.HostsColumn).Find(club)
 	clubDisplay.Tags = flatten(filterTags(club.Sets))
-	clubDisplay.Hosts = getHostDisplay(club.Hosts)
+	clubDisplay.Hosts = club.Hosts
 }
 
-func getHostDisplay(events []model.Event) []model.EventDisplay {
-	eventDisplays := []model.EventDisplay{}
-	for _, e := range events {
-		eventDisplays = append(eventDisplays, e.Display())
-	}
-	return eventDisplays
-}
+//func getHostDisplay(events []model.Event) []model.EventDisplay {
+//	eventDisplays := []model.EventDisplay{}
+//	for _, e := range events {
+//		eventDisplays = append(eventDisplays, e.Display())
+//	}
+//	return eventDisplays
+//}
 
 func UpdateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Update Club")

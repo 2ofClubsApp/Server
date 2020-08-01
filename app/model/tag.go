@@ -1,11 +1,16 @@
 package model
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+	"time"
+)
 
 type Tag struct {
-	gorm.Model `json:"-"`
-	Name       string `gorm:"UNIQUE" validate:"required,min=1,max=25"`
-	IsActive   bool   `json:"-"`
+	CreatedAt time.Time      `json:"-"`
+	UpdatedAt time.Time      `json:"-"`
+	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
+	Name      string         `gorm:"UNIQUE;primarykey" validate:"required,min=1,max=25"`
+	IsActive  bool           `json:"-"`
 }
 
 func NewTag() *Tag {

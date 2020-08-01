@@ -77,7 +77,7 @@ func getUserInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType s
 			db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
 			userDisplay.Manages = getManages(db, user)
 			userDisplay.Tags = flatten(filterTags(user.Chooses))
-			userDisplay.Attends = getHostDisplay(user.Attends)
+			userDisplay.Attends = user.Attends
 			status.Data = userDisplay
 		case model.UserClubsManage:
 			db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
@@ -86,8 +86,8 @@ func getUserInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType s
 			status.Data = response
 		case model.UserEventsAttend:
 			db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
-			response := make(map[string][]model.EventDisplay)
-			response["Attends"] = getHostDisplay(user.Attends)
+			response := make(map[string][]model.Event)
+			response["Attends"] = user.Attends
 			status.Data = response
 		}
 		if found {

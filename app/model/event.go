@@ -1,11 +1,7 @@
 package model
 
-import (
-	"gorm.io/gorm"
-)
-
 type Event struct {
-	gorm.Model `json:"-"`
+	Base
 	Name       string `validate:"required,max=50"`
 	//DateTime    time.Time  `validate:"required,gtetoday,datetime"`
 	Description string  `validate:"required,max=300"`
@@ -17,23 +13,23 @@ func NewEvent() *Event {
 	return &Event{}
 }
 
-type EventDisplay struct {
-	ID          uint
-	Name        string
-	Description string
-	Location    string
-	Fee         float64
-}
-
-func (e *Event) Display() EventDisplay {
-	return EventDisplay{
-		ID:          e.ID,
-		Name:        e.Name,
-		Description: e.Description,
-		Location:    e.Location,
-		Fee:         e.Fee,
-	}
-}
+//type EventDisplay struct {
+//	ID          uint
+//	Name        string
+//	Description string
+//	Location    string
+//	Fee         float64
+//}
+//
+//func (e *Event) Display() EventDisplay {
+//	return EventDisplay{
+//		ID:          e.ID,
+//		Name:        e.Name,
+//		Description: e.Description,
+//		Location:    e.Location,
+//		Fee:         e.Fee,
+//	}
+//}
 
 const (
 	EventTable        = "event"

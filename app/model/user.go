@@ -1,11 +1,7 @@
 package model
 
-import (
-	"gorm.io/gorm"
-)
-
 type User struct {
-	gorm.Model   `json:"-"`
+	Base
 	*Credentials `json:"-"`
 	Manages      []Club  `gorm:"many2many:user_club;"`
 	Chooses      []Tag   `gorm:"many2many:user_tag;foreignKey:id;References:Name" json:"-"`
@@ -18,7 +14,7 @@ type UserDisplay struct {
 	Email   string
 	Manages []*ManagesDisplay
 	Tags    []string
-	Attends []EventDisplay
+	Attends []Event
 }
 
 type ManagesDisplay struct {
