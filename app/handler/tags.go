@@ -117,7 +117,7 @@ Extract all tags from payload and returns them as an array of model.Tag
 func extractTags(db *gorm.DB, r *http.Request) []model.Tag {
 	var chooses []model.Tag
 	payload := map[string][]string{"Tags": {}}
-	extractBody(r, payload)
+	extractBody(r, &payload)
 	for _, name := range payload["Tags"] {
 		tag := model.NewTag()
 		if SingleRecordExists(db, model.TagTable, model.NameColumn, name, tag) {

@@ -56,7 +56,8 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 		log.Fatal("Unable to connect to database\n", err)
 	}
 	app.db = db
-	app.router = mux.NewRouter().StrictSlash(true)
+	app.router = mux.NewRouter()
+	//StrictSlash(true)
 	app.router.Use(logger.LoggingMiddleware)
 	// Note: Set this as env var later
 	app.origin = handlers.AllowedOrigins([]string{"http://localhost:3000"})
@@ -86,6 +87,8 @@ func (app *App) setRoutes() {
 	// User Routes
 	app.Get("/users/{username}", app.Handle(handler.GetUser, true))              // Done
 	app.Post("/users/{username}/tags", app.Handle(handler.UpdateUserTags, true)) // Done
+	app.Get("/users/{username}/manages", app.Handle(handler.GetUserClubsManage, true)) // Done
+	app.Get("/users/{username}/attends", app.Handle(handler.GetUserEventsAttend, true)) // Done
 
 	// Test Routes
 	app.Post("/test/{username}", app.Handle(handler.Test, false)) // Ignore

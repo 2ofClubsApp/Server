@@ -15,15 +15,19 @@ const (
 
 func GetClubs(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status := model.NewStatus()
-	clubs := []model.Club{}
-	status.Message = model.ClubsFound
-	activeTags := filterTags(extractTags(db, r))
-	for _, v := range activeTags {
-		fmt.Println(v.Name)
-	}
-	db.Table(model.ClubTable).Find(&clubs)
-	fmt.Println(clubs)
 
+	type Club struct {
+		club_id int
+	}
+	clubs := []Club{}
+	status.Message = model.ClubsFound
+	activeTags := flatten(filterTags(extractTags(db, r)))
+	//for _, v := range activeTags {
+		//fmt.Println(v.Name)
+	//}
+	fmt.Println(activeTags)
+	db.Table(model.ClubTagTable).Where("tag_name IN ?", activeTags).Find(&clubs)
+	fmt.Println(clubs)
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
 

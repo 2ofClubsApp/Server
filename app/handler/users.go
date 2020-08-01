@@ -33,27 +33,69 @@ func IsValidRequest(username string, r *http.Request) bool {
 }
 
 func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	getUserInfo(db, w, r, model.AllUserInfo)
+}
+
+/*
+Returns all of the Clubs that a User currently manages
+ */
+func GetUserClubsManage(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	getUserInfo(db, w, r, model.UserClubsManage)
+}
+
+/*
+Returns all Events that a User currently attends
+ */
+func GetUserEventsAttend(db *gorm.DB, w http.ResponseWriter, r *http.Request){
+	getUserInfo(db, w, r, model.UserEventsAttend)
+}
+
+/*
+Return partial of all of a users information
+Current Supported Information:
+	- Users clubs they manage
+	- Users events they attend
+	- All user info
+
+(See docs for more info and usage)
+*/
+
+func getUserInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType string) {
 	var httpStatus int
 	var data string
 	username := strings.ToLower(getVar(r, "username"))
 	status := model.NewStatus()
 	user := model.NewUser()
-	userDisplay := user.Display()
 	if IsValidRequest(username, r) {
 		// Defaults will be overridden when obtaining data and being inserted into struct except for null
 		found := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
-		db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
-		db.Table(model.UserTable).Preload(model.ChoosesColumn).Find(user)
-		db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
-		userDisplay.Manages = getManages(db, user)
-		userDisplay.Tags = flatten(filterTags(user.Chooses))
-		userDisplay.Attends = getHostDisplay(user.Attends)
-		if !found {
+		switch strings.ToLower(infoType) {
+		case model.AllUserInfo:
+			userDisplay := user.Display()
+			db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
+			db.Table(model.UserTable).Preload(model.ChoosesColumn).Find(user)
+			db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
+			userDisplay.Manages = getManages(db, user)
+			userDisplay.Tags = flatten(filterTags(user.Chooses))
+			userDisplay.Attends = getHostDisplay(user.Attends)
+			status.Data = userDisplay
+		case model.UserClubsManage:
+			db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
+			response := make(map[string][]*model.ManagesDisplay)
+			response["Manages"] = getManages(db, user)
+			status.Data = response
+		case model.UserEventsAttend:
+			db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
+			response := make(map[string][]model.EventDisplay)
+			response["Attends"] = getHostDisplay(user.Attends)
+			status.Data = response
+		}
+		if found {
+			status.Message = model.UserFound
+
+		} else {
 			status.Message = model.UserNotFound
 			status.Code = model.FailureCode
-		} else {
-			status.Data = userDisplay
-			status.Message = model.UserFound
 		}
 		httpStatus = http.StatusOK
 	} else {
@@ -67,13 +109,13 @@ func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 
 /*
 Extracts the JSON body payload into a given struct (i.e. User, Credentials, etc.)
- */
+*/
 func extractBody(r *http.Request, s interface{}) {
 	decoder := json.NewDecoder(r.Body)
 	decoder.Decode(s)
 }
 
-func getManages(db *gorm.DB, user *model.User) []*model.ManagesDisplay{
+func getManages(db *gorm.DB, user *model.User) []*model.ManagesDisplay {
 	manages := []*model.ManagesDisplay{}
 	for _, club := range user.Manages {
 		clubDisplay := club.Display()
@@ -109,5 +151,3 @@ func UpdateUserTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	}
 	WriteData(GetJSON(status), httpStatus, w)
 }
-
-
