@@ -7,7 +7,7 @@ import (
 type User struct {
 	gorm.Model   `json:"-"`
 	*Credentials `json:"-"`
-	Manages      []Club `gorm:"many2many:user_club;"`
+	Manages      []Club  `gorm:"many2many:user_club;"`
 	Chooses      []Tag   `gorm:"many2many:user_tag;foreignKey:id;References:Name" json:"-"`
 	Attends      []Event `gorm:"many2many:user_event;"`
 	IsAdmin      bool    `json:"-"`
@@ -15,6 +15,7 @@ type User struct {
 }
 
 type UserDisplay struct {
+	Email   string
 	Manages []*ManagesDisplay
 	Tags    []string
 	Attends []EventDisplay
@@ -26,23 +27,12 @@ type ManagesDisplay struct {
 }
 
 func (u *User) Display() *UserDisplay {
-	return &UserDisplay{}
+	return &UserDisplay{Email: u.Email}
 }
 
 func NewUser() *User {
 	return &User{Credentials: NewCredentials(), Manages: []Club{}, Chooses: []Tag{}, Attends: []Event{}}
 }
-
-//func (u *User) AfterFind(db *gorm.DB) error {
-//var clubsList []Club
-//for _, club := range u.Manages {
-//	db.Table(ClubTable).Preload(SetsColumn).Find(club)
-//	clubsList = append(clubsList, club)
-//}
-//u.Manages = clubsList
-//db.Table(UserTable).Preload(ChoosesColumn).Find(u)
-//return nil
-//}
 
 const (
 	ChoosesColumn    = "Chooses"

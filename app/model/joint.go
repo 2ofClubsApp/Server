@@ -9,6 +9,7 @@ const (
 	EventIDColumn   = "event_id"
 	TagIDColumn     = "tag_id"
 	StudentIDColumn = "student_id"
+	TagNameColumn    = "tag_name"
 )
 
 type UserClub struct {

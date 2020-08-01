@@ -5,12 +5,12 @@ import "gorm.io/gorm"
 type Club struct {
 	// Owners/Administrator
 	gorm.Model `json:"-"`
-	Name       string `validate:"required,min=3,max=50"`
-	Email      string `validate:"required,email"`
-	Bio        string `validate:"required,max=300"`
-	Size       int    `validate:"required,gt=0"` // Set > 0 as a restriction
-	Active     bool   `json:"-"`
-	Sets       []Tag  `gorm:"many2many:club_tag;foreignKey:id;References:Name;"`
+	Name       string  `validate:"required,min=3,max=50"`
+	Email      string  `validate:"required,email"`
+	Bio        string  `validate:"required,max=300"`
+	Size       int     `validate:"required,gt=0"` // Set > 0 as a restriction
+	Active     bool    `json:"-"`
+	Sets       []Tag   `gorm:"many2many:club_tag;foreignKey:id;References:Name;"`
 	Hosts      []Event `gorm:"many2many:club_event;"`
 }
 
@@ -39,6 +39,7 @@ func NewClub() *Club {
 }
 
 const (
+	ClubTagTable     = "club_tag"
 	SetsColumn       = "Sets"
 	TagsColumn       = "tags"
 	HostsColumn      = "Hosts"

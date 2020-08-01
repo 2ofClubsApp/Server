@@ -38,13 +38,14 @@ func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	username := strings.ToLower(getVar(r, "username"))
 	status := model.NewStatus()
 	user := model.NewUser()
-	userDisplay := user.Display()
 	if IsValidRequest(username, r) {
 		// Defaults will be overridden when obtaining data and being inserted into struct except for null
 		found := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
+		userDisplay := user.Display()
 		db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
 		db.Table(model.UserTable).Preload(model.ChoosesColumn).Find(user)
 		db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
+
 		userDisplay.Manages = getManages(db, user)
 		userDisplay.Tags = flatten(filterTags(user.Chooses))
 		userDisplay.Attends = getHostDisplay(user.Attends)
@@ -65,15 +66,44 @@ func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	WriteData(data, httpStatus, w)
 }
 
+func GetUserClubs(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	var httpStatus int
+	var data string
+	username := strings.ToLower(getVar(r, "username"))
+	status := model.NewStatus()
+	user := model.NewUser()
+	if IsValidRequest(username, r) {
+		// Defaults will be overridden when obtaining data and being inserted into struct except for null
+		found := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
+		db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
+		if !found {
+			status.Message = model.UserNotFound
+			status.Code = model.FailureCode
+		} else {
+			response := make(map[string][]model.Club)
+			response["Manages"] = user.Manages
+			status.Data = response
+			status.Message = model.UserFound
+		}
+		httpStatus = http.StatusOK
+	} else {
+		status.Message = http.StatusText(http.StatusForbidden)
+		httpStatus = http.StatusForbidden
+		status.Code = -1
+	}
+	data = GetJSON(status)
+	WriteData(data, httpStatus, w)
+}
+
 /*
 Extracts the JSON body payload into a given struct (i.e. User, Credentials, etc.)
- */
+*/
 func extractBody(r *http.Request, s interface{}) {
 	decoder := json.NewDecoder(r.Body)
 	decoder.Decode(s)
 }
 
-func getManages(db *gorm.DB, user *model.User) []*model.ManagesDisplay{
+func getManages(db *gorm.DB, user *model.User) []*model.ManagesDisplay {
 	manages := []*model.ManagesDisplay{}
 	for _, club := range user.Manages {
 		clubDisplay := club.Display()
@@ -109,5 +139,3 @@ func UpdateUserTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	}
 	WriteData(GetJSON(status), httpStatus, w)
 }
-
-
