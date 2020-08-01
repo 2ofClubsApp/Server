@@ -6,6 +6,7 @@ import (
 	"github.com/go-playground/validator"
 	"gorm.io/gorm"
 	"net/http"
+	"strings"
 )
 
 const (
@@ -23,7 +24,7 @@ func GetClubs(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status.Message = model.ClubsFound
 	activeTags := flatten(filterTags(extractTags(db, r)))
 	//for _, v := range activeTags {
-		//fmt.Println(v.Name)
+	//fmt.Println(v.Name)
 	//}
 	fmt.Println(activeTags)
 	db.Table(model.ClubTagTable).Where("tag_name IN ?", activeTags).Find(&clubs)
@@ -77,6 +78,9 @@ func CreateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 //}
 
 func GetClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	getClubInfo(db, w, r, model.AllClubInfo)
+}
+func getClubInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType string) {
 	var statusCode int
 	var data string
 	clubID := getVar(r, "cid")
@@ -87,9 +91,17 @@ func GetClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		status.Message = model.ClubNotFound
 		status.Code = model.FailureCode
 	} else {
-		clubDisplay := club.Display()
-		loadClubData(db, club, clubDisplay)
-		status.Data = clubDisplay
+		switch strings.ToLower(infoType) {
+		case model.AllClubInfo:
+			clubDisplay := club.Display()
+			loadClubData(db, club, clubDisplay)
+			status.Data = clubDisplay
+		case model.AllClubEventsHost:
+			clubEvents := make(map[string][]model.Event)
+			db.Table(model.ClubTable).Preload(model.HostsColumn).Find(club)
+			clubEvents["Hosts"] = club.Hosts
+			status.Data = clubEvents
+		}
 		status.Message = model.ClubFound
 	}
 	statusCode = http.StatusOK
@@ -97,6 +109,9 @@ func GetClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	WriteData(data, statusCode, w)
 }
 
+func GetClubEvents(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	getClubInfo(db, w, r, model.AllClubEventsHost)
+}
 func loadClubData(db *gorm.DB, club *model.Club, clubDisplay *model.ClubDisplay) {
 	db.Table(model.ClubTable).Preload(model.SetsColumn).Find(club)
 	db.Table(model.ClubTable).Preload(model.HostsColumn).Find(club)
