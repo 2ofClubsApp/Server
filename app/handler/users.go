@@ -38,16 +38,16 @@ func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 
 /*
 Returns all of the Clubs that a User currently manages
- */
+*/
 func GetUserClubsManage(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	getUserInfo(db, w, r, model.UserClubsManage)
+	getUserInfo(db, w, r, model.AllUserClubsManage)
 }
 
 /*
 Returns all Events that a User currently attends
- */
-func GetUserEventsAttend(db *gorm.DB, w http.ResponseWriter, r *http.Request){
-	getUserInfo(db, w, r, model.UserEventsAttend)
+*/
+func GetUserEventsAttend(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	getUserInfo(db, w, r, model.AllUserEventsAttend)
 }
 
 /*
@@ -69,30 +69,29 @@ func getUserInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType s
 	if IsValidRequest(username, r) {
 		// Defaults will be overridden when obtaining data and being inserted into struct except for null
 		found := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
-		switch strings.ToLower(infoType) {
-		case model.AllUserInfo:
-			userDisplay := user.Display()
-			db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
-			db.Table(model.UserTable).Preload(model.ChoosesColumn).Find(user)
-			db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
-			userDisplay.Manages = getManages(db, user)
-			userDisplay.Tags = flatten(filterTags(user.Chooses))
-			userDisplay.Attends = user.Attends
-			status.Data = userDisplay
-		case model.UserClubsManage:
-			db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
-			response := make(map[string][]*model.ManagesDisplay)
-			response["Manages"] = getManages(db, user)
-			status.Data = response
-		case model.UserEventsAttend:
-			db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
-			response := make(map[string][]model.Event)
-			response["Attends"] = user.Attends
-			status.Data = response
-		}
 		if found {
+			switch strings.ToLower(infoType) {
+			case model.AllUserInfo:
+				userDisplay := user.Display()
+				db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
+				db.Table(model.UserTable).Preload(model.ChoosesColumn).Find(user)
+				db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
+				userDisplay.Manages = getManages(db, user)
+				userDisplay.Tags = flatten(filterTags(user.Chooses))
+				userDisplay.Attends = user.Attends
+				status.Data = userDisplay
+			case model.AllUserClubsManage:
+				db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
+				response := make(map[string][]*model.ManagesDisplay)
+				response["Manages"] = getManages(db, user)
+				status.Data = response
+			case model.AllUserEventsAttend:
+				db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
+				response := make(map[string][]model.Event)
+				response["Attends"] = user.Attends
+				status.Data = response
+			}
 			status.Message = model.UserFound
-
 		} else {
 			status.Message = model.UserNotFound
 			status.Code = model.FailureCode

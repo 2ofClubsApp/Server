@@ -9,7 +9,7 @@ import (
 )
 
 func GetEvents(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Get Events")
+
 }
 
 func GetEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
