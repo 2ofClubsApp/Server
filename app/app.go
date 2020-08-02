@@ -1,11 +1,11 @@
 package app
 
 import (
-	"../config"
-	"./handler"
-	"./logger"
-	"./model"
 	"fmt"
+	"github.com/2-of-clubs/2ofclubs-server/app/handler"
+	"github.com/2-of-clubs/2ofclubs-server/app/logger"
+	"github.com/2-of-clubs/2ofclubs-server/app/model"
+	"github.com/2-of-clubs/2ofclubs-server/config"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"gorm.io/driver/postgres"
@@ -85,9 +85,9 @@ func (app *App) setRoutes() {
 	app.Post("/login", app.Handle(handler.Login, false)) // Done (Need to check for synchronous token (CSRF prevention))
 
 	// User Routes
-	app.Get("/users/{username}", app.Handle(handler.GetUser, true))              // Done
-	app.Post("/users/{username}/tags", app.Handle(handler.UpdateUserTags, true)) // Done
-	app.Get("/users/{username}/manages", app.Handle(handler.GetUserClubsManage, true)) // Done
+	app.Get("/users/{username}", app.Handle(handler.GetUser, true))                     // Done
+	app.Post("/users/{username}/tags", app.Handle(handler.UpdateUserTags, true))        // Done
+	app.Get("/users/{username}/manages", app.Handle(handler.GetUserClubsManage, true))  // Done
 	app.Get("/users/{username}/attends", app.Handle(handler.GetUserEventsAttend, true)) // Done
 
 	// Test Routes
@@ -96,20 +96,20 @@ func (app *App) setRoutes() {
 	// Potential code merger on /clubs/{name} and /users/{username}
 
 	// Tag Routes
-	app.Get("/tags", app.Handle(handler.GetTags, false))               // Done
-	app.Post("/tags", app.Handle(handler.CreateTag, true))       // Done
-	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true)) // Done
+	app.Get("/tags", app.Handle(handler.GetTags, false))                 // Done
+	app.Post("/tags", app.Handle(handler.CreateTag, true))               // Done
+	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true))   // Done
 	app.Post("/tags/{name}/toggle", app.Handle(handler.ToggleTag, true)) // Done
 
 	// Club routes
-	app.Post("/clubs", app.Handle(handler.CreateClub, true))     // Done
+	app.Post("/clubs", app.Handle(handler.CreateClub, true))           // Done
 	app.Get("/clubs/{cid:[0-9]+}", app.Handle(handler.GetClub, false)) // Done
 
 	//app.Delete("/clubs/{name}", app.Handle(handler.DeleteClub, true)) // Partially Done (The owner can delete the club and all associations will be removed?) (Clubs can't be deleted, only deactivated)
-	app.Post("/clubs/{cid:[0-9]+}/manages/{username}", app.Handle(handler.AddManager, true)) // Done (Adding managers/maintainers to club)
+	app.Post("/clubs/{cid:[0-9]+}/manages/{username}", app.Handle(handler.AddManager, true))      // Done (Adding managers/maintainers to club)
 	app.Delete("/clubs/{cid:[0-9]+}/manages/{username}", app.Handle(handler.RemoveManager, true)) // Partially done (Removing managers/maintainers) (If the current owner wants to leave, then they must appoint a new person)
-	app.Post("/clubs/{cid:[0-9]+}/tags", app.Handle(handler.UpdateClubTags, true)) // (Adding tags for clubs)
-	app.Get("/clubs", app.Handle(handler.GetClubs, false)) // In-Progress
+	app.Post("/clubs/{cid:[0-9]+}/tags", app.Handle(handler.UpdateClubTags, true))                // Done
+	app.Get("/clubs", app.Handle(handler.GetClubs, false))                                        // In-Progress
 	//app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, false)) // Integrated into /clubs
 
 	app.Post("/clubs/{cid:[0-9]+}", app.Handle(handler.UpdateClub, true)) // POST
@@ -122,11 +122,12 @@ func (app *App) setRoutes() {
 	app.Post("/clubs/{cid:[0-9]+}/events", app.Handle(handler.CreateEvent, true)) // POST
 
 	app.Post("/clubs/events/{username}", app.Handle(handler.UpdateEvent, true)) // POST
-	app.Delete("/clubs/events/{username}", app.Handle(handler.DeleteEvent, true))
+	app.Delete("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.DeleteClubEvent, true))
 
 	// Admin Route
-	app.Post("/users/{username}/toggle", app.Handle(handler.ToggleUser, true))
-	// Approve usernames
+	app.Post("/users/{username}/toggle", app.Handle(handler.ToggleUser, true)) // Done
+	//app.Post("/clubs/{cid}/toggle", app.Handle())
+
 	// 404 Route
 	app.router.NotFoundHandler = handler.NotFound() // Done
 }

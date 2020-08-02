@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"../model"
 	"encoding/json"
 	"fmt"
+	"github.com/2-of-clubs/2ofclubs-server/app/model"
 	"gorm.io/gorm"
 	"net/http"
 	"strings"
@@ -83,12 +83,12 @@ func getUserInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType s
 			case model.AllUserClubsManage:
 				db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
 				response := make(map[string][]*model.ManagesDisplay)
-				response["Manages"] = getManages(db, user)
+				response[model.ManagesColumn] = getManages(db, user)
 				status.Data = response
 			case model.AllUserEventsAttend:
 				db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
 				response := make(map[string][]model.Event)
-				response["Attends"] = user.Attends
+				response[model.AttendsColumn] = user.Attends
 				status.Data = response
 			}
 			status.Message = model.UserFound

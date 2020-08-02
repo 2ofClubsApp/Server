@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"../model"
 	"fmt"
+	"github.com/2-of-clubs/2ofclubs-server/app/model"
 	"github.com/go-playground/validator"
 	"gorm.io/gorm"
 	"net/http"
@@ -55,14 +55,10 @@ func UpdateEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Update Event")
 }
 
-func DeleteEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Delete Event")
-}
-
 func AttendEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	/*
-	Ensure that users can't add multi events
-	 */
+		Ensure that users can't add multi events
+	*/
 	status := model.NewStatus()
 	eventID := getVar(r, "eid")
 	claims := GetTokenClaims(r)

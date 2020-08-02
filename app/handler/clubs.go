@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"../model"
 	"fmt"
+	"github.com/2-of-clubs/2ofclubs-server/app/model"
 	"github.com/go-playground/validator"
 	"gorm.io/gorm"
 	"net/http"
@@ -99,7 +99,7 @@ func getClubInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType s
 		case model.AllClubEventsHost:
 			clubEvents := make(map[string][]model.Event)
 			db.Table(model.ClubTable).Preload(model.HostsColumn).Find(club)
-			clubEvents["Hosts"] = club.Hosts
+			clubEvents[model.HostsColumn] = club.Hosts
 			status.Data = clubEvents
 		}
 		status.Message = model.ClubFound
@@ -129,6 +129,11 @@ func loadClubData(db *gorm.DB, club *model.Club, clubDisplay *model.ClubDisplay)
 
 func UpdateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Update Club")
+}
+
+func DeleteClubEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	//clubID := getVar(r, "cid")
+	//uname := getVar(r, "eid")
 }
 
 //func DeleteClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {

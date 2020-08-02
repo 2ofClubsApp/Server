@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"../model"
 	"fmt"
+	"github.com/2-of-clubs/2ofclubs-server/app/model"
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"

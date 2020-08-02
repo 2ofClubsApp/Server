@@ -1,9 +1,9 @@
 package handler
 
 import (
-	"../model"
 	"encoding/json"
 	"fmt"
+	"github.com/2-of-clubs/2ofclubs-server/app/model"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"

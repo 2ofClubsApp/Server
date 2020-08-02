@@ -1,8 +1,8 @@
 package config
 
 import (
-	"../app/handler"
-	"../app/model"
+	"github.com/2-of-clubs/2ofclubs-server/app/handler"
+	"github.com/2-of-clubs/2ofclubs-server/app/model"
 )
 
 type DBConfig struct {

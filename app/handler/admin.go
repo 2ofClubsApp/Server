@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"../model"
 	"fmt"
+	"github.com/2-of-clubs/2ofclubs-server/app/model"
 	"gorm.io/gorm"
 	"net/http"
 )

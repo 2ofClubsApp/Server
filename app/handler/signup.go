@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"../model"
 	"errors"
+	"github.com/2-of-clubs/2ofclubs-server/app/model"
 	"github.com/go-playground/validator"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
