@@ -2,7 +2,7 @@ package model
 
 type Event struct {
 	Base
-	Name       string `validate:"required,min=1,max=50"`
+	Name string `validate:"required,min=1,max=50"`
 	//DateTime    time.Time  `validate:"required,gtetoday,datetime"`
 	Description string  `validate:"required,max=300"`
 	Location    string  `validate:"required,max=100"`
@@ -32,6 +32,7 @@ func NewEvent() *Event {
 //}
 
 const (
+	EventIDVar        = "eid"
 	EventTable        = "event"
 	DateTimeColumn    = "date_time"
 	DescriptionColumn = "description"

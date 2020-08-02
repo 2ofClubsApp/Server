@@ -9,7 +9,6 @@ import (
 )
 
 func GetEvents(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-
 }
 
 func GetEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
@@ -22,7 +21,7 @@ Creating an event for a particular club. The user creating the club must at leas
 func CreateEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	claims := GetTokenClaims(r)
 	uname := fmt.Sprintf("%v", claims["sub"])
-	clubID := getVar(r, "cid")
+	clubID := getVar(r, model.ClubIDVar)
 	club := model.NewClub()
 	user := model.NewUser()
 	event := model.NewEvent()
@@ -59,7 +58,7 @@ func AttendEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		Ensure that users can't add multi events
 	*/
 	status := model.NewStatus()
-	eventID := getVar(r, "eid")
+	eventID := getVar(r, model.EventIDVar)
 	claims := GetTokenClaims(r)
 	uname := fmt.Sprintf("%v", claims["sub"])
 	event := model.NewEvent()

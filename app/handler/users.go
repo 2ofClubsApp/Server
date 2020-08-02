@@ -64,7 +64,7 @@ Current Supported Information:
 func getUserInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType string) {
 	var httpStatus int
 	var data string
-	username := strings.ToLower(getVar(r, "username"))
+	username := strings.ToLower(getVar(r, model.UsernameVar))
 	status := model.NewStatus()
 	user := model.NewUser()
 	if IsValidRequest(username, r) {
@@ -134,7 +134,7 @@ If an invalid format is provided where there aren't any valid tags to be extract
 func UpdateUserTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	var httpStatus int
 	status := model.NewStatus()
-	username := strings.ToLower(getVar(r, "username"))
+	username := strings.ToLower(getVar(r, model.UsernameVar))
 	user := model.NewUser()
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
 	if userExists && IsValidRequest(username, r) {

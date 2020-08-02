@@ -6,7 +6,6 @@ type Credentials struct {
 	Password string `validate:"required,min=3,max=45"`
 	// Max 45 due to 50 length limitation of bcrypt
 
-
 }
 
 func NewCredentials() *Credentials {
@@ -14,8 +13,8 @@ func NewCredentials() *Credentials {
 }
 
 const (
-
-	UsernameColumn  = "username"
-	EmailColumn     = "email"
-	PasswordColumn  = "password"
+	UsernameVar    = "username"
+	UsernameColumn = "username"
+	EmailColumn    = "email"
+	PasswordColumn = "password"
 )

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
 	"github.com/go-playground/validator"
-	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 	"io/ioutil"
 	"net/http"
@@ -129,8 +128,7 @@ func extractTags(db *gorm.DB, r *http.Request) []model.Tag {
 func ToggleTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status := model.NewStatus()
 	if isAdmin(db, r) {
-		vars := mux.Vars(r)
-		tagName := vars["name"]
+		tagName := getVar(r, model.TagNameVar)
 		tagName = strings.TrimSpace(tagName)
 		tag := model.NewTag()
 		if SingleRecordExists(db, model.TagTable, model.NameColumn, tagName, tag) {

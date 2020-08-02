@@ -11,10 +11,6 @@ import (
 	"time"
 )
 
-const (
-	HashErr     = "hashing Error"
-	ErrTokenGen = "token generation error"
-)
 
 // TODO: Prevent login many times (if user tries to brute force this)
 func Login(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
@@ -113,5 +109,5 @@ func GetTokenPair(subject string, accessDuration time.Duration, refreshDuration 
 			return token, nil
 		}
 	}
-	return nil, fmt.Errorf(ErrTokenGen)
+	return nil, fmt.Errorf(model.ErrTokenGen)
 }

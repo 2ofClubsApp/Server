@@ -9,10 +9,6 @@ import (
 	"strings"
 )
 
-const (
-	SuccessClubCreation = "Club successfully created"
-	FailureClubCreation = "Unable to create the Club"
-)
 
 func GetClubs(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status := model.NewStatus()
@@ -62,10 +58,10 @@ func CreateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	if !emailExists && !clubExists && userExists && err == nil {
 		db.Model(user).Association(model.ManagesColumn).Append(club)
 		db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ? AND is_owner = ?", user.ID, club.ID, false).Update(model.IsOwnerColumn, true)
-		status.Message = SuccessClubCreation
+		status.Message = model.SuccessClubCreation
 		status.Code = model.SuccessCode
 	} else {
-		status.Message = FailureClubCreation
+		status.Message = model.FailureClubCreation
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
@@ -83,7 +79,7 @@ func GetClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 func getClubInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType string) {
 	var statusCode int
 	var data string
-	clubID := getVar(r, "cid")
+	clubID := getVar(r, model.ClubIDVar)
 	status := model.NewStatus()
 	club := model.NewClub()
 	found := SingleRecordExists(db, model.ClubTable, model.IDColumn, clubID, club)
@@ -133,8 +129,8 @@ func UpdateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 
 func DeleteClubEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	statusCode := http.StatusOK
-	clubID := getVar(r, "cid")
-	eid := getVar(r, "eid")
+	clubID := getVar(r, model.ClubIDVar)
+	eid := getVar(r, model.EventIDVar)
 	claims := GetTokenClaims(r)
 	uname := fmt.Sprintf("%v", claims["sub"])
 	club := model.NewClub()
@@ -212,7 +208,7 @@ func AddManager(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 func UpdateClubTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	var httpStatus int
 	status := model.NewStatus()
-	clubID := getVar(r, "cid")
+	clubID := getVar(r, model.ClubIDVar)
 	club := model.NewClub()
 	claims := GetTokenClaims(r)
 	username := fmt.Sprintf("%v", claims["sub"])
@@ -247,8 +243,8 @@ func editManagers(db *gorm.DB, w http.ResponseWriter, r *http.Request, op string
 	status := model.NewStatus()
 	claims := GetTokenClaims(r)
 	clubOwnerUsername := fmt.Sprintf("%v", claims["sub"])
-	newManagerUname := getVar(r, "username")
-	clubID := getVar(r, "cid")
+	newManagerUname := getVar(r, model.UsernameVar)
+	clubID := getVar(r, model.ClubIDVar)
 	owner := model.NewUser()
 	newManager := model.NewUser()
 	club := model.NewClub()

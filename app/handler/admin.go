@@ -18,7 +18,7 @@ func isAdmin(db *gorm.DB, r *http.Request) bool {
 }
 
 func ToggleUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	username := getVar(r, "username")
+	username := getVar(r, model.UsernameVar)
 	status := model.NewStatus()
 	user := model.NewUser()
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)

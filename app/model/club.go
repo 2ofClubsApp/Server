@@ -37,6 +37,7 @@ func NewClub() *Club {
 }
 
 const (
+	ClubIDVar         = "cid"
 	AllClubInfo       = "all"
 	AllClubEventsHost = "events"
 	ClubTagTable      = "club_tag"

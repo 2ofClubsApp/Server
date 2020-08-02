@@ -11,8 +11,6 @@ import (
 	"strings"
 )
 
-const ErrGeneric = "an error occurred"
-
 /*
 	Common methods shared amongst the different models
 */
@@ -107,7 +105,7 @@ func IsValidJWT(w http.ResponseWriter, r *http.Request) bool {
 func kf(token *jwt.Token) (interface{}, error) {
 	// Verifying that the signing method is the same before continuing any further
 	if _, accepted := token.Method.(*jwt.SigningMethodHMAC); !accepted {
-		return nil, fmt.Errorf(ErrGeneric)
+		return nil, fmt.Errorf(model.ErrGeneric)
 	}
 	// Note: This must be changed to an env variable later
 	return []byte("2ofClubs"), nil

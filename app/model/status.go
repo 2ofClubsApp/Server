@@ -22,6 +22,8 @@ const (
 	ClubsNotFound = "Clubs Not Found"
 	ClubFound     = "Club Found"
 	ClubNotFound  = "Club Not Found"
+	SuccessClubCreation = "Club successfully created"
+	FailureClubCreation = "Unable to create the Club"
 
 	UsernameExists   = "Username already exists"
 	UsernameAlphaNum = "Username must start with a letter and can only contain the following characters: a-zA-Z0-9_ and must be 50 characters or less"
@@ -30,8 +32,6 @@ const (
 
 	AdminRequired = "Please contact an administrator."
 	InvalidFile   = "Invalid File: A .txt file is required"
-	FailureCode   = -1
-	SuccessCode   = 1
 
 	NotApproved  = "Sorry, your account has not been approved yet"
 	LoginSuccess = "Successfully logged in"
@@ -47,6 +47,14 @@ const (
 	EventFound                 = "Event Found"
 	EventNotFound              = "Event not found"
 	EventDeleted               = "Event Deleted"
+
+	HashErr     = "hashing Error"
+	ErrTokenGen = "token generation error"
+
+	ErrGeneric = "an error occurred"
+	FailureCode   = -1
+	SuccessCode   = 1
+
 )
 
 type T struct{}
