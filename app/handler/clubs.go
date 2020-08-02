@@ -63,8 +63,8 @@ func CreateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		db.Model(user).Association(model.ManagesColumn).Append(club)
 		db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ? AND is_owner = ?", user.ID, club.ID, false).Update(model.IsOwnerColumn, true)
 		status.Message = SuccessClubCreation
+		status.Code = model.SuccessCode
 	} else {
-		status.Code = model.FailureCode
 		status.Message = FailureClubCreation
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)
@@ -89,7 +89,6 @@ func getClubInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType s
 	found := SingleRecordExists(db, model.ClubTable, model.IDColumn, clubID, club)
 	if !found {
 		status.Message = model.ClubNotFound
-		status.Code = model.FailureCode
 	} else {
 		switch strings.ToLower(infoType) {
 		case model.AllClubInfo:
@@ -103,6 +102,7 @@ func getClubInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType s
 			status.Data = clubEvents
 		}
 		status.Message = model.ClubFound
+		status.Code = model.SuccessCode
 	}
 	statusCode = http.StatusOK
 	data = GetJSON(status)
@@ -132,8 +132,20 @@ func UpdateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteClubEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	//clubID := getVar(r, "cid")
-	//uname := getVar(r, "eid")
+	clubID := getVar(r, "cid")
+	uname := getVar(r, "eid")
+	club := model.NewClub()
+	user := model.NewUser()
+	status := model.NewStatus()
+	clubFound := SingleRecordExists(db, model.ClubTable, model.NameColumn, clubID, club)
+	userFound := SingleRecordExists(db, model.UserTable, model.UsernameColumn, uname, user)
+	if userFound && clubFound && (isOwner(db, user, club) || isManager(db, user, club)) {
+		status.Code = model.SuccessCode
+	} else if !userFound {
+		status.Message = model.UserNotFound
+	} else if !clubFound {
+		status.Message = model.UserNotFound
+	}
 }
 
 //func DeleteClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
@@ -200,8 +212,8 @@ func UpdateClubTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		db.Model(club).Association(model.SetsColumn).Replace(tags)
 		status.Message = model.TagsUpdated
 		httpStatus = http.StatusOK
+		status.Code = model.SuccessCode
 	} else {
-		status.Code = model.FailureCode
 		status.Message = http.StatusText(http.StatusForbidden)
 		httpStatus = http.StatusForbidden
 	}
@@ -241,12 +253,11 @@ func editManagers(db *gorm.DB, w http.ResponseWriter, r *http.Request, op string
 				db.Model(newManager).Association(model.ManagesColumn).Delete(club)
 			}
 			status.Message = successMessage
+			status.Code = model.SuccessCode
 		} else {
 			status.Message = failureMessage
-			status.Code = model.FailureCode
 		}
 	} else {
-		status.Code = model.FailureCode
 		status.Message = failureMessage
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)

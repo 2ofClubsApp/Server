@@ -69,5 +69,5 @@ type EventStatus struct {
 }
 
 func NewStatus() *Status {
-	return &Status{Code: SuccessCode, Message: "", Data: T{}}
+	return &Status{Code: FailureCode, Message: "", Data: T{}}
 }

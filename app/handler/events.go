@@ -35,11 +35,10 @@ func CreateEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	if userExists && isManager(db, user, club) && clubExists && err == nil {
 		db.Model(club).Association(model.HostsColumn).Append(event)
 		status.Message = model.CreateEventSuccess
+		status.Code = model.SuccessCode
 	} else if !clubExists {
-		status.Code = model.FailureCode
 		status.Message = model.ClubNotFound
 	} else {
-		status.Code = model.FailureCode
 		status.Message = model.CreateEventFailure
 		status.Data = model.EventStatus{
 			Name:        model.EventNameConstraint,
@@ -70,8 +69,8 @@ func AttendEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	if eventExists && userExists {
 		db.Model(user).Association(model.AttendsColumn).Append(event)
 		status.Message = model.EventFound
+		status.Code = model.SuccessCode
 	} else {
-		status.Code = model.FailureCode
 		status.Message = model.EventNotFound
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)

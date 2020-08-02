@@ -44,12 +44,11 @@ func CreateTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		tagName := payload["Name"]
 		if tagExists(db, tagName) {
 			status.Message = model.TagExists
-			status.Code = model.FailureCode
 		} else {
+			status.Code = model.SuccessCode
 			status.Message = model.TagCreated
 		}
 	} else {
-		status.Code = model.FailureCode
 		status.Message = model.AdminRequired
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)
@@ -69,7 +68,6 @@ func UploadTagsList(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if filepath.Ext(handler.Filename) != ".txt" {
-			status.Code = model.FailureCode
 			status.Message = model.InvalidFile
 		} else {
 			fileContent, err := ioutil.ReadAll(file)
@@ -82,10 +80,10 @@ func UploadTagsList(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 				tagName = strings.TrimSpace(tagName)
 				tagExists(db, tagName)
 			}
+			status.Code = model.SuccessCode
 			status.Message = model.TagsCreated
 		}
 	} else {
-		status.Code = model.FailureCode
 		status.Message = model.AdminRequired
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)
@@ -106,6 +104,7 @@ func GetTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	for _, tag := range filterTags(allTags) {
 		tagsList = append(tagsList, tag.Name)
 	}
+	status.Code = model.SuccessCode
 	status.Message = model.TagsFound
 	status.Data = TagData{Tags: tagsList}
 	WriteData(GetJSON(status), http.StatusOK, w)
@@ -138,16 +137,14 @@ func ToggleTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 			err := db.Model(tag).Update(model.IsActiveColumn, !tag.IsActive).Error
 			if err != nil {
 				status.Message = model.TagUpdateError
-				status.Code = -1
 			} else {
+				status.Code = model.SuccessCode
 				status.Message = model.TagUpdated
 			}
 		} else {
-			status.Code = -1
 			status.Message = model.TagNotFound
 		}
 	} else {
-		status.Code = -1
 		status.Message = model.AdminRequired
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)

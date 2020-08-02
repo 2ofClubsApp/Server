@@ -26,10 +26,9 @@ func Login(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	if isFound {
 		err = bcrypt.CompareHashAndPassword(hash, []byte(creds.Password))
 	}
-	s := model.NewStatus()
+	status := model.NewStatus()
 	if err != nil {
-		s.Message = model.LoginFailure
-		s.Code = model.FailureCode
+		status.Message = model.LoginFailure
 	} else {
 		if tp, err := GetTokenPair(creds.Username, 5, 60*24); err == nil && isApproved(db, creds.Username) {
 			c := GenerateCookie(model.RefreshToken, tp.RefreshToken)
@@ -37,14 +36,14 @@ func Login(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 			type login struct {
 				Token string
 			}
-			s.Message = model.LoginSuccess
-			s.Data = login{Token: tp.AccessToken}
+			status.Code = model.SuccessCode
+			status.Message = model.LoginSuccess
+			status.Data = login{Token: tp.AccessToken}
 		} else {
-			s.Message = model.NotApproved
-			s.Code = model.FailureCode
+			status.Message = model.NotApproved
 		}
 	}
-	WriteData(GetJSON(s), http.StatusOK, w)
+	WriteData(GetJSON(status), http.StatusOK, w)
 
 }
 func isApproved(db *gorm.DB, username string) bool {

@@ -15,6 +15,7 @@ Create a User given a JSON payload. (See models.User for payload information).
 func CreateUser(db *gorm.DB, w http.ResponseWriter, c *model.Credentials, u *model.User) {
 	u.Credentials = c
 	status := model.NewStatus()
+	status.Code = model.SuccessCode
 	status.Message = SignupSuccess
 	db.Create(u)
 	WriteData(GetJSON(status), http.StatusOK, w)
@@ -91,16 +92,15 @@ func getUserInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType s
 				response[model.AttendsColumn] = user.Attends
 				status.Data = response
 			}
+			status.Code = model.SuccessCode
 			status.Message = model.UserFound
 		} else {
 			status.Message = model.UserNotFound
-			status.Code = model.FailureCode
 		}
 		httpStatus = http.StatusOK
 	} else {
 		status.Message = http.StatusText(http.StatusForbidden)
 		httpStatus = http.StatusForbidden
-		status.Code = -1
 	}
 	data = GetJSON(status)
 	WriteData(data, httpStatus, w)
@@ -142,9 +142,9 @@ func UpdateUserTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		// User is guaranteed to have an account (Verified JWT and request is verified)
 		chooses := filterTags(extractTags(db, r))
 		db.Model(user).Association(model.ChoosesColumn).Replace(chooses)
+		status.Code = model.SuccessCode
 		status.Message = model.TagsUpdated
 	} else {
-		status.Code = model.FailureCode
 		status.Message = http.StatusText(http.StatusForbidden)
 		httpStatus = http.StatusForbidden
 	}

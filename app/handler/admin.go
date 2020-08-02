@@ -25,9 +25,9 @@ func ToggleUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	if userExists {
 		db.Model(user).Update(model.IsApprovedColumn, !user.IsApproved)
 		status.Message = model.UserUpdated
+		status.Code = model.SuccessCode
 	} else {
 		status.Message = model.UserNotFound
-		status.Code = model.FailureCode
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)
 }

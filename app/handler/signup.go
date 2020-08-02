@@ -22,7 +22,6 @@ func SignUp(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	hashedPass, err := Hash(creds.Password)
 	creds.Password = hashedPass
 	status := model.NewStatus()
-	status.Code = model.FailureCode
 	status.Message = SignupFailure
 	credStatus := model.CredentialStatus{}
 	if isValid && (err == nil) {
