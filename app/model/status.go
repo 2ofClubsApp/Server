@@ -46,6 +46,7 @@ const (
 	EventFeeConstraint         = "Fee must be greater or equal to $0"
 	EventFound                 = "Event Found"
 	EventNotFound              = "Event not found"
+	EventDeleted               = "Event Deleted"
 )
 
 type T struct{}

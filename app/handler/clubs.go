@@ -132,20 +132,33 @@ func UpdateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteClubEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	statusCode := http.StatusOK
 	clubID := getVar(r, "cid")
-	uname := getVar(r, "eid")
+	eid := getVar(r, "eid")
+	claims := GetTokenClaims(r)
+	uname := fmt.Sprintf("%v", claims["sub"])
 	club := model.NewClub()
+	event := model.NewEvent()
 	user := model.NewUser()
 	status := model.NewStatus()
-	clubFound := SingleRecordExists(db, model.ClubTable, model.NameColumn, clubID, club)
-	userFound := SingleRecordExists(db, model.UserTable, model.UsernameColumn, uname, user)
-	if userFound && clubFound && (isOwner(db, user, club) || isManager(db, user, club)) {
+	clubExists := SingleRecordExists(db, model.ClubTable, model.IDColumn, clubID, club)
+	eventExists := SingleRecordExists(db, model.EventTable, model.IDColumn, eid, event)
+	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, uname, user)
+	if userExists && eventExists && clubExists && (isOwner(db, user, club) || isManager(db, user, club)) {
 		status.Code = model.SuccessCode
-	} else if !userFound {
+		status.Message = model.EventDeleted
+		db.Delete(event)
+	} else if !userExists {
 		status.Message = model.UserNotFound
-	} else if !clubFound {
-		status.Message = model.UserNotFound
+	} else if !clubExists {
+		status.Message = model.ClubNotFound
+	} else if !eventExists {
+		status.Message = model.EventNotFound
+	} else {
+		statusCode = http.StatusForbidden
+		status.Message = http.StatusText(http.StatusForbidden)
 	}
+	WriteData(GetJSON(status), statusCode, w)
 }
 
 //func DeleteClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
