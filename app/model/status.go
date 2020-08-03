@@ -15,13 +15,13 @@ const (
 	TagsFound      = "Tags Found"
 	TagNotFound    = "Tag doesn't exist"
 
-	UserUpdated   = "Updated User"
-	UserFound     = "User Found"
-	UserNotFound  = "User Not Found"
-	ClubsFound    = "Clubs Found"
-	ClubsNotFound = "Clubs Not Found"
-	ClubFound     = "Club Found"
-	ClubNotFound  = "Club Not Found"
+	UserUpdated         = "Updated User"
+	UserFound           = "User Found"
+	UserNotFound        = "User Not Found"
+	ClubsFound          = "Clubs Found"
+	ClubsNotFound       = "Clubs Not Found"
+	ClubFound           = "Club Found"
+	ClubNotFound        = "Club Not Found"
 	SuccessClubCreation = "Club successfully created"
 	FailureClubCreation = "Unable to create the Club"
 
@@ -30,6 +30,7 @@ const (
 	ValidEmail       = "Must be a valid email"
 	EmailExists      = "Email already exists"
 
+	ManagerOwnerRequired = "You must be a manager or owner of the club"
 	AdminRequired = "Please contact an administrator."
 	InvalidFile   = "Invalid File: A .txt file is required"
 
@@ -47,14 +48,16 @@ const (
 	EventFound                 = "Event Found"
 	EventNotFound              = "Event not found"
 	EventDeleted               = "Event Deleted"
+	GetAllEventsFailure        = "Unable to get all events"
+	AllEventsFound             = "All Events Found"
+
 
 	HashErr     = "hashing Error"
 	ErrTokenGen = "token generation error"
 
-	ErrGeneric = "an error occurred"
-	FailureCode   = -1
-	SuccessCode   = 1
-
+	ErrGeneric  = "an error occurred"
+	FailureCode = -1
+	SuccessCode = 1
 )
 
 type T struct{}
@@ -71,6 +74,7 @@ type CredentialStatus struct {
 }
 
 type EventStatus struct {
+	Admin       string
 	Name        string
 	Description string
 	Location    string

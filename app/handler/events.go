@@ -8,11 +8,36 @@ import (
 	"net/http"
 )
 
-func GetEvents(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+func GetAllEvents(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	status := model.NewStatus()
+	events := []model.Event{}
+	result := db.Find(&events)
+	if result.Error != nil {
+		status.Message = model.GetAllEventsFailure
+	} else {
+		allEvents := make(map[string][]model.Event)
+		allEvents["Events"] = events
+		status.Message = model.AllEventsFound
+		status.Code = model.SuccessCode
+		status.Data = allEvents
+	}
+	WriteData(GetJSON(status), http.StatusOK, w)
 }
 
 func GetEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Get Event")
+	eventID := getVar(r, model.EventIDVar)
+	event := model.NewEvent()
+	status := model.NewStatus()
+	eventExists := SingleRecordExists(db, model.EventTable, model.IDColumn, eventID, event)
+	if eventExists {
+		status.Code = model.SuccessCode
+		status.Message = model.EventFound
+		status.Data = event
+	} else {
+		status.Message = model.EventNotFound
+	}
+	WriteData(GetJSON(status), http.StatusOK, w)
+
 }
 
 /*
@@ -40,6 +65,7 @@ func CreateEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	} else {
 		status.Message = model.CreateEventFailure
 		status.Data = model.EventStatus{
+			Admin:       model.ManagerOwnerRequired,
 			Name:        model.EventNameConstraint,
 			Description: model.EventDescriptionConstraint,
 			Location:    model.EventLocationConstraint,
