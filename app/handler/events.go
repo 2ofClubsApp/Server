@@ -8,21 +8,23 @@ import (
 	"net/http"
 )
 
-func GetEvents(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+func GetAllEvents(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status := model.NewStatus()
 	events := []model.Event{}
 	result := db.Find(&events)
 	if result.Error != nil {
 		status.Message = model.GetAllEventsFailure
 	} else {
+		allEvents := make(map[string][]model.Event)
+		allEvents["Events"] = events
 		status.Message = model.AllEventsFound
 		status.Code = model.SuccessCode
-		status.Data = events
+		status.Data = allEvents
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
 
-func GetEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+func GetClubEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Get Event")
 }
 

@@ -116,9 +116,9 @@ func (app *App) setRoutes() {
 
 	app.Post("/events/{eid:[0-9]+}/attend", app.Handle(handler.AttendEvent, true)) // Done
 
-	app.Get("/events", app.Handle(handler.GetEvents, false))
+	app.Get("/events", app.Handle(handler.GetAllEvents, false))
 	app.Get("/clubs/{cid:[0-9]+}/events", app.Handle(handler.GetClubEvents, false)) // Done
-	app.Get("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.GetEvent, true))
+	app.Get("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.GetClubEvent, true))
 
 	app.Post("/clubs/{cid:[0-9]+}/events", app.Handle(handler.CreateEvent, true)) // POST
 
