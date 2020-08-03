@@ -55,7 +55,7 @@ func Hash(info string) (string, error) {
 	// Change cost to 10+ (try to find a way to scale it with hardware?)
 	saltedHashPass, err := bcrypt.GenerateFromPassword([]byte(info), bcrypt.DefaultCost)
 	if err != nil {
-		return "", errors.New(HashErr)
+		return "", errors.New(model.HashErr)
 	}
 	return string(saltedHashPass), nil
 }

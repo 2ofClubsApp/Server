@@ -9,6 +9,17 @@ import (
 )
 
 func GetEvents(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	status := model.NewStatus()
+	events := []model.Event{}
+	result := db.Find(&events)
+	if result.Error != nil {
+		status.Message = model.GetAllEventsFailure
+	} else {
+		status.Message = model.AllEventsFound
+		status.Code = model.SuccessCode
+		status.Data = events
+	}
+	WriteData(GetJSON(status), http.StatusOK, w)
 }
 
 func GetEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
@@ -40,6 +51,7 @@ func CreateEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	} else {
 		status.Message = model.CreateEventFailure
 		status.Data = model.EventStatus{
+			Admin:       model.ManagerOwnerRequired,
 			Name:        model.EventNameConstraint,
 			Description: model.EventDescriptionConstraint,
 			Location:    model.EventLocationConstraint,
