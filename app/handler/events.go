@@ -24,8 +24,20 @@ func GetAllEvents(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
 
-func GetClubEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Get Event")
+func GetEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	eventID := getVar(r, model.EventIDVar)
+	event := model.NewEvent()
+	status := model.NewStatus()
+	eventExists := SingleRecordExists(db, model.EventTable, model.IDColumn, eventID, event)
+	if eventExists {
+		status.Code = model.SuccessCode
+		status.Message = model.EventFound
+		status.Data = event
+	} else {
+		status.Message = model.EventNotFound
+	}
+	WriteData(GetJSON(status), http.StatusOK, w)
+
 }
 
 /*
