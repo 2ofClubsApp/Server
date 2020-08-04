@@ -89,8 +89,8 @@ func (app *App) setRoutes() {
 	app.Post("/users/{username}/tags", app.Handle(handler.UpdateUserTags, true))        // Done
 	app.Get("/users/{username}/manages", app.Handle(handler.GetUserClubsManage, true))  // Done
 	app.Get("/users/{username}/attends", app.Handle(handler.GetUserEventsAttend, true)) // Done
-	app.Post("/events/{eid:[0-9]+}/attend", app.Handle(handler.AttendEvent, true)) // Done
-	app.Delete("/events/{eid:[0-9]+}/attend", app.Handle(handler.RemoveEvent, true)) // In-Progress
+	app.Post("/events/{eid:[0-9]+}/attend", app.Handle(handler.AddUserAttendsEvent, true)) // Done
+	app.Delete("/events/{eid:[0-9]+}/attend", app.Handle(handler.RemoveUserAttendsEvent, true)) // Done
 	// Test Routes
 	app.Post("/test/{username}", app.Handle(handler.Test, false)) // Ignore
 
@@ -121,9 +121,9 @@ func (app *App) setRoutes() {
 	app.Get("/events/{eid:[0-9]+}", app.Handle(handler.GetEvent, false)) // Done
 	app.Get("/clubs/{cid:[0-9]+}/events", app.Handle(handler.GetClubEvents, false)) // Done
 
-	app.Post("/clubs/{cid:[0-9]+}/events", app.Handle(handler.CreateEvent, true)) // Done
+	app.Post("/clubs/{cid:[0-9]+}/events", app.Handle(handler.CreateClubEvent, true)) // Done
 
-	app.Post("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.UpdateEvent, true)) // In-Progress
+	app.Post("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.UpdateClubEvent, true)) // In-Progress
 	app.Delete("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.DeleteClubEvent, true)) // Done
 
 	// Admin Route

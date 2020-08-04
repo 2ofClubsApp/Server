@@ -38,13 +38,15 @@ const (
 	LoginSuccess = "Successfully logged in"
 	LoginFailure = "Username or Password is Incorrect"
 
+	CreateEventSuccess = "Successfully created event"
 	CreateEventFailure = "Unable to create event"
-	CreateEventSuccess = " Successfully created event"
+	UpdateEventSuccess = "Successfully updated event"
+	UpdateEventFailure = "Unable to update event"
 
 	EventNameConstraint        = "Event name must be at least 1 character and a maximum of 50 characters"
 	EventDescriptionConstraint = "Event description must be a maximum of 300 characters or less"
 	EventLocationConstraint    = "Event location must be a maximum of 100 characters or less"
-	EventFeeConstraint         = "Fee must be greater or equal to $0"
+	EventFeeConstraint         = "Fee must be greater or equal to 0"
 	EventFound                 = "Event Found"
 	EventNotFound              = "Event not found"
 	EventDeleted               = "Event Deleted"
@@ -72,13 +74,6 @@ type CredentialStatus struct {
 	Email    string
 }
 
-type EventStatus struct {
-	Admin       string
-	Name        string
-	Description string
-	Location    string
-	Fee         string
-}
 
 func NewStatus() *Status {
 	return &Status{Code: FailureCode, Message: "", Data: T{}}

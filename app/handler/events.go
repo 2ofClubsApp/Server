@@ -40,54 +40,110 @@ func GetEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 
 }
 
+func DeleteClubEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	statusCode := http.StatusOK
+	clubID := getVar(r, model.ClubIDVar)
+	eid := getVar(r, model.EventIDVar)
+	claims := GetTokenClaims(r)
+	uname := fmt.Sprintf("%v", claims["sub"])
+	club := model.NewClub()
+	event := model.NewEvent()
+	user := model.NewUser()
+	status := model.NewStatus()
+	clubExists := SingleRecordExists(db, model.ClubTable, model.IDColumn, clubID, club)
+	eventExists := SingleRecordExists(db, model.EventTable, model.IDColumn, eid, event)
+	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, uname, user)
+	if userExists && eventExists && clubExists && isManager(db, user, club) {
+		status.Code = model.SuccessCode
+		status.Message = model.EventDeleted
+		db.Delete(event)
+	} else if !userExists {
+		status.Message = model.UserNotFound
+	} else if !clubExists {
+		status.Message = model.ClubNotFound
+	} else if !eventExists {
+		status.Message = model.EventNotFound
+	} else {
+		statusCode = http.StatusForbidden
+		status.Message = http.StatusText(http.StatusForbidden)
+	}
+	WriteData(GetJSON(status), statusCode, w)
+}
+
 /*
 Creating an event for a particular club. The user creating the club must at least be a manager
 */
-func CreateEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+func CreateClubEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	manageClubEvent(db, w, r, model.OpCreate)
+}
+
+func UpdateClubEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	manageClubEvent(db, w, r, model.OpUpdate)
+}
+
+func manageClubEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request, operation string) {
 	claims := GetTokenClaims(r)
+	httpStatus := http.StatusOK
 	uname := fmt.Sprintf("%v", claims["sub"])
 	clubID := getVar(r, model.ClubIDVar)
 	club := model.NewClub()
 	user := model.NewUser()
 	event := model.NewEvent()
-	extractBody(r, event)
 	validate := validator.New()
-	err := validate.Struct(event)
+	status := model.NewStatus()
 	clubExists := SingleRecordExists(db, model.ClubTable, model.IDColumn, clubID, club)
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, uname, user)
-	status := model.NewStatus()
-	if userExists && isManager(db, user, club) && clubExists && err == nil {
-		db.Model(club).Association(model.HostsColumn).Append(event)
-		status.Message = model.CreateEventSuccess
-		status.Code = model.SuccessCode
-	} else if !clubExists {
-		status.Message = model.ClubNotFound
-	} else {
-		status.Message = model.CreateEventFailure
-		status.Data = model.EventStatus{
-			Admin:       model.ManagerOwnerRequired,
-			Name:        model.EventNameConstraint,
-			Description: model.EventDescriptionConstraint,
-			Location:    model.EventLocationConstraint,
-			Fee:         model.EventFeeConstraint,
+	switch operation {
+	case model.OpCreate:
+		if userExists && isManager(db, user, club) && clubExists {
+			extractBody(r, event)
+			err := validate.Struct(event)
+			if err == nil {
+				db.Model(club).Association(model.HostsColumn).Append(event)
+				status.Code = model.SuccessCode
+				status.Message = model.CreateEventSuccess
+			} else {
+				status.Message = model.CreateEventFailure
+				status.Data = model.NewEventRequirement()
+			}
+		}
+	case model.OpUpdate:
+		eventID := getVar(r, model.EventIDVar)
+		eventExists := SingleRecordExists(db, model.EventTable, model.IDColumn, eventID, event)
+		if eventExists && clubExists && userExists && isManager(db, user, club) {
+			updatedEvent := model.NewEvent()
+			extractBody(r, updatedEvent)
+			err := validate.Struct(updatedEvent)
+			if err == nil {
+				db.Model(event).Updates(updatedEvent)
+				status.Code = model.SuccessCode
+				status.Message = model.UpdateEventSuccess
+			} else {
+				status.Message = model.UpdateEventFailure
+				status.Data = model.NewEventRequirement()
+			}
+		} else if !eventExists {
+			status.Message = model.EventNotFound
 		}
 	}
-	WriteData(GetJSON(status), http.StatusOK, w)
+	if !clubExists {
+		status.Message = model.ClubNotFound
+	} else if !isManager(db, user, club) {
+		httpStatus = http.StatusForbidden
+		status.Message = http.StatusText(httpStatus)
+	}
+	WriteData(GetJSON(status), httpStatus, w)
 }
 
-func UpdateEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Update Event")
+func RemoveUserAttendsEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	manageUserAttends(db, w, r, model.OpRemove)
 }
 
-func RemoveEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	manageEvent(db, w, r, model.OpRemove)
+func AddUserAttendsEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	manageUserAttends(db, w, r, model.OpAdd)
 }
 
-func AttendEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	manageEvent(db, w, r, model.OpAdd)
-}
-
-func manageEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request, operation string) {
+func manageUserAttends(db *gorm.DB, w http.ResponseWriter, r *http.Request, operation string) {
 	status := model.NewStatus()
 	eventID := getVar(r, model.EventIDVar)
 	claims := GetTokenClaims(r)
