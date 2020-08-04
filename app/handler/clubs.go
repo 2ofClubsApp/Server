@@ -9,7 +9,6 @@ import (
 	"strings"
 )
 
-
 func GetClubs(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status := model.NewStatus()
 
@@ -26,6 +25,38 @@ func GetClubs(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	db.Table(model.ClubTagTable).Where("tag_name IN ?", activeTags).Find(&clubs)
 	fmt.Println(clubs)
 	WriteData(GetJSON(status), http.StatusOK, w)
+}
+
+func UpdateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	clubID := getVar(r, model.ClubIDVar)
+	httpStatusCode := http.StatusOK
+	club := model.NewClub()
+	user := model.NewUser()
+	status := model.NewStatus()
+	claims := GetTokenClaims(r)
+	uname := fmt.Sprintf("%v", claims["sub"])
+	clubExists := SingleRecordExists(db, model.ClubTable, model.IDColumn, clubID, club)
+	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, uname, user)
+	if clubExists && userExists && isManager(db, user, club){
+		updatedClub := model.NewClub()
+		extractBody(r, updatedClub)
+		validate := validator.New()
+		err := validate.Struct(updatedClub)
+		if err == nil {
+			db.Model(club).Select(model.BioColumn, model.SizeColumn).Updates(updatedClub)
+			status.Code = model.SuccessCode
+			status.Message = model.ClubUpdateSuccess
+		} else {
+			status.Message = model.ClubUpdateFailure
+		}
+	} else if !clubExists {
+		status.Message = model.ClubNotFound
+	} else {
+		status.Code = model.FailureCode
+		status.Message = http.StatusText(http.StatusForbidden)
+		httpStatusCode = http.StatusForbidden
+	}
+	WriteData(GetJSON(status), httpStatusCode, w)
 }
 
 /*
@@ -55,27 +86,46 @@ func CreateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status := model.NewStatus()
 	// Keeping userExists as a check even though the user should exist given the valid token because there's a chance that the user is deleted
 	// In this case the user will still exist in the database but will be inaccessible.
+
 	if !emailExists && !clubExists && userExists && err == nil {
 		db.Model(user).Association(model.ManagesColumn).Append(club)
 		db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ? AND is_owner = ?", user.ID, club.ID, false).Update(model.IsOwnerColumn, true)
-		status.Message = model.SuccessClubCreation
+		status.Message = model.ClubCreationSuccess
 		status.Code = model.SuccessCode
 	} else {
-		status.Message = model.FailureClubCreation
+		status.Message = model.ClubCreationFailure
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
 
-//func getClubInfo(r *http.Request) *model.Club {
-//	decoder := json.NewDecoder(r.Body)
-//	club := model.NewClub()
-//	decoder.Decode(club)
-//	return club
-//}
+func UpdateClubTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	var httpStatus int
+	status := model.NewStatus()
+	clubID := getVar(r, model.ClubIDVar)
+	club := model.NewClub()
+	claims := GetTokenClaims(r)
+	username := fmt.Sprintf("%v", claims["sub"])
+	user := model.NewUser()
+	clubExists := SingleRecordExists(db, model.ClubTable, model.IDColumn, clubID, club)
+	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
+	// Must check with both user and club existing in the event that a user gets deleted but you manage to get a hold of their access token
+	if userExists && clubExists && isManager(db, user, club) {
+		tags := filterTags(extractTags(db, r))
+		db.Model(club).Association(model.SetsColumn).Replace(tags)
+		status.Message = model.TagsUpdated
+		httpStatus = http.StatusOK
+		status.Code = model.SuccessCode
+	} else {
+		status.Message = http.StatusText(http.StatusForbidden)
+		httpStatus = http.StatusForbidden
+	}
+	WriteData(GetJSON(status), httpStatus, w)
+}
 
 func GetClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	getClubInfo(db, w, r, model.AllClubInfo)
 }
+
 func getClubInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType string) {
 	var statusCode int
 	var data string
@@ -115,11 +165,6 @@ func loadClubData(db *gorm.DB, club *model.Club, clubDisplay *model.ClubDisplay)
 	clubDisplay.Hosts = club.Hosts
 }
 
-
-func UpdateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Update Club")
-}
-
 /*
 Returns true if the user is an owner of the club, false otherwise
 */
@@ -143,40 +188,17 @@ func AddManager(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	editManagers(db, w, r, model.OpAdd)
 }
 
-func UpdateClubTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	var httpStatus int
-	status := model.NewStatus()
-	clubID := getVar(r, model.ClubIDVar)
-	club := model.NewClub()
-	claims := GetTokenClaims(r)
-	username := fmt.Sprintf("%v", claims["sub"])
-	user := model.NewUser()
-	clubExists := SingleRecordExists(db, model.ClubTable, model.IDColumn, clubID, club)
-	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
-	// Must check with both user and club existing in the event that a user gets deleted but you manage to get a hold of their access token
-	if userExists && clubExists && isManager(db, user, club) {
-		tags := filterTags(extractTags(db, r))
-		db.Model(club).Association(model.SetsColumn).Replace(tags)
-		status.Message = model.TagsUpdated
-		httpStatus = http.StatusOK
-		status.Code = model.SuccessCode
-	} else {
-		status.Message = http.StatusText(http.StatusForbidden)
-		httpStatus = http.StatusForbidden
-	}
-	WriteData(GetJSON(status), httpStatus, w)
-}
 
 /*
 Adding or removing managers and their associations to a particular club
 */
 func editManagers(db *gorm.DB, w http.ResponseWriter, r *http.Request, op string) {
 	// Default messages set to manager addition, otherwise manager removal
-	var successMessage = model.SuccessManagerAddition
-	var failureMessage = model.FailureManagerAddition
+	var successMessage = model.ManagerAdditionSuccess
+	var failureMessage = model.ManagerAdditionFailure
 	if op == model.OpRemove {
-		successMessage = model.SuccessManagerRemove
-		failureMessage = model.FailureManagerRemove
+		successMessage = model.ManagerRemoveSuccess
+		failureMessage = model.ManagerRemoveFailure
 	}
 	status := model.NewStatus()
 	claims := GetTokenClaims(r)

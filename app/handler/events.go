@@ -83,7 +83,7 @@ func UpdateClubEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 
 func manageClubEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request, operation string) {
 	claims := GetTokenClaims(r)
-	httpStatus := http.StatusOK
+	httpStatusCode := http.StatusOK
 	uname := fmt.Sprintf("%v", claims["sub"])
 	clubID := getVar(r, model.ClubIDVar)
 	club := model.NewClub()
@@ -129,10 +129,10 @@ func manageClubEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request, operat
 	if !clubExists {
 		status.Message = model.ClubNotFound
 	} else if !isManager(db, user, club) {
-		httpStatus = http.StatusForbidden
-		status.Message = http.StatusText(httpStatus)
+		httpStatusCode = http.StatusForbidden
+		status.Message = http.StatusText(httpStatusCode)
 	}
-	WriteData(GetJSON(status), httpStatus, w)
+	WriteData(GetJSON(status), httpStatusCode, w)
 }
 
 func RemoveUserAttendsEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {

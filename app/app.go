@@ -104,6 +104,7 @@ func (app *App) setRoutes() {
 
 	// Club routes
 	app.Post("/clubs", app.Handle(handler.CreateClub, true))           // Done
+	app.Post("/clubs/{cid:[0-9]+}", app.Handle(handler.UpdateClub, true)) // In-Progress
 	app.Get("/clubs/{cid:[0-9]+}", app.Handle(handler.GetClub, false)) // Done
 
 	//app.Delete("/clubs/{name}", app.Handle(handler.DeleteClub, true)) // Partially Done (The owner can delete the club and all associations will be removed?) (Clubs can't be deleted, only deactivated)
@@ -113,7 +114,6 @@ func (app *App) setRoutes() {
 	app.Get("/clubs", app.Handle(handler.GetClubs, false))                                        // In-Progress
 	//app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, false)) // Integrated into /clubs
 
-	app.Post("/clubs/{cid:[0-9]+}", app.Handle(handler.UpdateClub, true)) // In-Progress
 
 
 
