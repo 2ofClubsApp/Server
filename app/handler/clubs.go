@@ -37,7 +37,7 @@ func UpdateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	uname := fmt.Sprintf("%v", claims["sub"])
 	clubExists := SingleRecordExists(db, model.ClubTable, model.IDColumn, clubID, club)
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, uname, user)
-	if clubExists && userExists {
+	if clubExists && userExists && isManager(db, user, club){
 		updatedClub := model.NewClub()
 		extractBody(r, updatedClub)
 		validate := validator.New()
