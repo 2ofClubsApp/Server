@@ -47,9 +47,7 @@ const (
 	SizeColumn        = "size"
 	BioColumn         = "bio"
 	HelpNeededColumn  = "help_needed"
-
 	ClubTable  = "club"
 	NameColumn = "name"
-	OpAdd      = "ADD"
-	OpRemove   = "REMOVE"
+
 )
