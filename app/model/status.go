@@ -31,8 +31,8 @@ const (
 	EmailExists      = "Email already exists"
 
 	ManagerOwnerRequired = "You must be a manager or owner of the club"
-	AdminRequired = "Please contact an administrator."
-	InvalidFile   = "Invalid File: A .txt file is required"
+	AdminRequired        = "Please contact an administrator."
+	InvalidFile          = "Invalid File: A .txt file is required"
 
 	NotApproved  = "Sorry, your account has not been approved yet"
 	LoginSuccess = "Successfully logged in"
@@ -50,7 +50,6 @@ const (
 	EventDeleted               = "Event Deleted"
 	GetAllEventsFailure        = "Unable to get all events"
 	AllEventsFound             = "All Events Found"
-
 
 	HashErr     = "hashing Error"
 	ErrTokenGen = "token generation error"

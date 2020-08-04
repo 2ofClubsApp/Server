@@ -89,7 +89,8 @@ func (app *App) setRoutes() {
 	app.Post("/users/{username}/tags", app.Handle(handler.UpdateUserTags, true))        // Done
 	app.Get("/users/{username}/manages", app.Handle(handler.GetUserClubsManage, true))  // Done
 	app.Get("/users/{username}/attends", app.Handle(handler.GetUserEventsAttend, true)) // Done
-
+	app.Post("/events/{eid:[0-9]+}/attend", app.Handle(handler.AttendEvent, true)) // Done
+	app.Delete("/events/{eid:[0-9]+}/attend", app.Handle(handler.RemoveEvent, true)) // In-Progress
 	// Test Routes
 	app.Post("/test/{username}", app.Handle(handler.Test, false)) // Ignore
 
@@ -112,22 +113,22 @@ func (app *App) setRoutes() {
 	app.Get("/clubs", app.Handle(handler.GetClubs, false))                                        // In-Progress
 	//app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, false)) // Integrated into /clubs
 
-	app.Post("/clubs/{cid:[0-9]+}", app.Handle(handler.UpdateClub, true)) // POST
+	app.Post("/clubs/{cid:[0-9]+}", app.Handle(handler.UpdateClub, true)) // In-Progress
 
-	app.Post("/events/{eid:[0-9]+}/attend", app.Handle(handler.AttendEvent, true)) // Done
+
 
 	app.Get("/events", app.Handle(handler.GetAllEvents, false)) // Done
-	app.Get("/events/{eid:[0-9]+}", app.Handle(handler.GetEvent, false))
+	app.Get("/events/{eid:[0-9]+}", app.Handle(handler.GetEvent, false)) // Done
 	app.Get("/clubs/{cid:[0-9]+}/events", app.Handle(handler.GetClubEvents, false)) // Done
 
-	app.Post("/clubs/{cid:[0-9]+}/events", app.Handle(handler.CreateEvent, true)) // POST
+	app.Post("/clubs/{cid:[0-9]+}/events", app.Handle(handler.CreateEvent, true)) // Done
 
-	app.Post("/clubs/events/{username}", app.Handle(handler.UpdateEvent, true)) // POST
-	app.Delete("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.DeleteClubEvent, true))
+	app.Post("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.UpdateEvent, true)) // In-Progress
+	app.Delete("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.DeleteClubEvent, true)) // Done
 
 	// Admin Route
 	app.Post("/users/{username}/toggle", app.Handle(handler.ToggleUser, true)) // Done
-	//app.Post("/clubs/{cid}/toggle", app.Handle())
+	//app.Post("/clubs/{cid}/toggle", app.Handle()) // In-Progress
 
 	// 404 Route
 	app.router.NotFoundHandler = handler.NotFound() // Done

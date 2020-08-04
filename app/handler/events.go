@@ -79,10 +79,15 @@ func UpdateEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Update Event")
 }
 
+func RemoveEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	manageEvent(db, w, r, model.OpRemove)
+}
+
 func AttendEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	/*
-		Ensure that users can't add multi events
-	*/
+	manageEvent(db, w, r, model.OpAdd)
+}
+
+func manageEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request, operation string) {
 	status := model.NewStatus()
 	eventID := getVar(r, model.EventIDVar)
 	claims := GetTokenClaims(r)
@@ -92,9 +97,16 @@ func AttendEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	eventExists := SingleRecordExists(db, model.EventTable, model.IDColumn, eventID, event)
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, uname, user)
 	if eventExists && userExists {
-		db.Model(user).Association(model.AttendsColumn).Append(event)
-		status.Message = model.EventFound
-		status.Code = model.SuccessCode
+		switch operation {
+		case model.OpAdd:
+			db.Model(user).Association(model.AttendsColumn).Append(event)
+			status.Code = model.SuccessCode
+			status.Message = model.EventFound
+		case model.OpRemove:
+			db.Model(user).Association(model.AttendsColumn).Delete(event)
+			status.Code = model.SuccessCode
+			status.Message = model.EventFound
+		}
 	} else {
 		status.Message = model.EventNotFound
 	}
