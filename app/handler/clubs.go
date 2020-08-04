@@ -115,72 +115,10 @@ func loadClubData(db *gorm.DB, club *model.Club, clubDisplay *model.ClubDisplay)
 	clubDisplay.Hosts = club.Hosts
 }
 
-//func getHostDisplay(events []model.Event) []model.EventDisplay {
-//	eventDisplays := []model.EventDisplay{}
-//	for _, e := range events {
-//		eventDisplays = append(eventDisplays, e.Display())
-//	}
-//	return eventDisplays
-//}
 
 func UpdateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Update Club")
 }
-
-func DeleteClubEvent(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	statusCode := http.StatusOK
-	clubID := getVar(r, model.ClubIDVar)
-	eid := getVar(r, model.EventIDVar)
-	claims := GetTokenClaims(r)
-	uname := fmt.Sprintf("%v", claims["sub"])
-	club := model.NewClub()
-	event := model.NewEvent()
-	user := model.NewUser()
-	status := model.NewStatus()
-	clubExists := SingleRecordExists(db, model.ClubTable, model.IDColumn, clubID, club)
-	eventExists := SingleRecordExists(db, model.EventTable, model.IDColumn, eid, event)
-	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, uname, user)
-	if userExists && eventExists && clubExists && (isOwner(db, user, club) || isManager(db, user, club)) {
-		status.Code = model.SuccessCode
-		status.Message = model.EventDeleted
-		db.Delete(event)
-	} else if !userExists {
-		status.Message = model.UserNotFound
-	} else if !clubExists {
-		status.Message = model.ClubNotFound
-	} else if !eventExists {
-		status.Message = model.EventNotFound
-	} else {
-		statusCode = http.StatusForbidden
-		status.Message = http.StatusText(http.StatusForbidden)
-	}
-	WriteData(GetJSON(status), statusCode, w)
-}
-
-//func DeleteClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-//	status := model.NewStatus()
-//	vars := mux.Vars(r)
-//	clubName := vars["name"]
-//	club := model.NewClub()
-//	if SingleRecordExists(db, model.ClubTable, model.NameColumn, clubName, club) {
-//		claims := GetTokenClaims(r)
-//		uname := fmt.Sprintf("%v", claims["sub"])
-//		user := model.NewUser()
-//		userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, uname, user)
-//		if userExists && isOwner(db, user, club) || isAdmin(db, r) {
-//			db.Model(user).Association(model.ManagesColumn).Delete(club)
-//			db.Delete(club)
-//			status.Message = model.SuccessClubDelete
-//		} else {
-//			status.Code = -1
-//			status.Message = model.FailureClubDelete
-//		}
-//	} else {
-//		status.Code = -1
-//		status.Message = model.FailureClubDelete
-//	}
-//	WriteData(GetJSON(status), http.StatusOK, w)
-//}
 
 /*
 Returns true if the user is an owner of the club, false otherwise

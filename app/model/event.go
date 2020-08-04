@@ -6,11 +6,29 @@ type Event struct {
 	//DateTime    time.Time  `validate:"required,gtetoday,datetime"`
 	Description string  `validate:"required,max=300"`
 	Location    string  `validate:"required,max=100"`
-	Fee         float64 `validate:"required,gte=0.0"`
+	Fee         float64 `validate:"required,gte=0"`
 }
 
 func NewEvent() *Event {
 	return &Event{}
+}
+
+type EventRequirement struct {
+	Admin       string
+	Name        string
+	Description string
+	Location    string
+	Fee         string
+}
+
+func NewEventRequirement() *EventRequirement {
+	return &EventRequirement{
+		Admin:       ManagerOwnerRequired,
+		Name:        EventNameConstraint,
+		Description: EventDescriptionConstraint,
+		Location:    EventLocationConstraint,
+		Fee:         EventFeeConstraint,
+	}
 }
 
 //type EventDisplay struct {
