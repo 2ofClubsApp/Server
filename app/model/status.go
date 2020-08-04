@@ -1,10 +1,10 @@
 package model
 
 const (
-	FailureManagerRemove   = "Unable to remove manager"
-	FailureManagerAddition = "Unable to add manager"
-	SuccessManagerRemove   = "Successfully removed manager"
-	SuccessManagerAddition = "Successfully added manager"
+	ManagerRemoveFailure   = "Unable to remove manager"
+	ManagerAdditionFailure = "Unable to add manager"
+	ManagerRemoveSuccess   = "Successfully removed manager"
+	ManagerAdditionSuccess = "Successfully added manager"
 
 	TagUpdateError = "Error Updating Tag"
 	TagUpdated     = "Tag Updated"
@@ -22,8 +22,10 @@ const (
 	ClubsNotFound       = "Clubs Not Found"
 	ClubFound           = "Club Found"
 	ClubNotFound        = "Club Not Found"
-	SuccessClubCreation = "Club successfully created"
-	FailureClubCreation = "Unable to create the Club"
+	ClubCreationSuccess = "Club successfully created"
+	ClubCreationFailure = "Unable to create the Club"
+	ClubUpdateSuccess   = "Successfully updated club"
+	ClubUpdateFailure   = "Unable to update club"
 
 	UsernameExists   = "Username already exists"
 	UsernameAlphaNum = "Username must start with a letter and can only contain the following characters: a-zA-Z0-9_ and must be 50 characters or less"
@@ -73,7 +75,6 @@ type CredentialStatus struct {
 	Username string
 	Email    string
 }
-
 
 func NewStatus() *Status {
 	return &Status{Code: FailureCode, Message: "", Data: T{}}
