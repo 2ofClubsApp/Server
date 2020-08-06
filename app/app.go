@@ -30,7 +30,7 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 	//ctx := context.Background()
 	dbFormat :=
 		fmt.Sprintf(
-			"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+			"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 			dbConfig.Host,
 			dbConfig.Port,
 			dbConfig.User,
@@ -104,7 +104,7 @@ func (app *App) setRoutes() {
 
 	// Club routes
 	app.Post("/clubs", app.Handle(handler.CreateClub, true))           // Done
-	app.Post("/clubs/{cid:[0-9]+}", app.Handle(handler.UpdateClub, true)) // In-Progress
+	app.Post("/clubs/{cid:[0-9]+}", app.Handle(handler.UpdateClub, true)) // Done
 	app.Get("/clubs/{cid:[0-9]+}", app.Handle(handler.GetClub, false)) // Done
 
 	//app.Delete("/clubs/{name}", app.Handle(handler.DeleteClub, true)) // Partially Done (The owner can delete the club and all associations will be removed?) (Clubs can't be deleted, only deactivated)

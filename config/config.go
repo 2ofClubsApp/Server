@@ -3,11 +3,12 @@ package config
 import (
 	"github.com/2-of-clubs/2ofclubs-server/app/handler"
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
+	"os"
 )
 
 type DBConfig struct {
 	Host     string
-	Port     int
+	Port     string
 	Name     string
 	User     string
 	Password string
@@ -20,18 +21,18 @@ type RedisConfig struct {
 }
 
 func GetDBConfig() *DBConfig {
-	return &DBConfig{
-		Host:     "localhost",
-		Port:     5432,
-		Name:     "cdb",
-		User:     "postgres",
-		Password: "postgres",
-	}
+		return &DBConfig{
+			Host:     os.Getenv("DB_HOST"),
+			Port:     os.Getenv("DB_PORT"),
+			Name:     os.Getenv("DB_NAME"),
+			User:     os.Getenv("DB_USER"),
+			Password: os.Getenv("DB_PASSWORD"),
+		}
 }
 
 func GetRedisConfig() *RedisConfig {
 	return &RedisConfig{
-		Addr:     "localhost:2345",
+		Addr:     os.Getenv("REDIS_ADDR"),
 		Password: "",
 		DB:       0,
 	}
@@ -39,9 +40,9 @@ func GetRedisConfig() *RedisConfig {
 
 func GetAdminConfig() *model.User {
 	credentials := model.NewCredentials()
-	credentials.Username = "admin"
-	credentials.Email = "admin@utmsu.ca"
-	hashedPass, err := handler.Hash("password")
+	credentials.Username = os.Getenv("ADMIN_USERNAME")
+	credentials.Email = os.Getenv("ADMIN_EMAIL")
+	hashedPass, err := handler.Hash(os.Getenv("ADMIN_PASSWORD"))
 	if err != nil {
 		return nil
 	}

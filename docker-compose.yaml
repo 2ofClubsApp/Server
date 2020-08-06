@@ -3,24 +3,34 @@ services:
   db:
     image: postgres
     container_name: 2ofClubsDB
-      # Building on DockerFile
-      #        build:
-      #            context: ./db
-      # If using default filename then no need to put line below
-    # dockerfile: Dockerfile
+    restart: unless-stopped
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=cdb # Default would be POSTGRES_USER
+      - db.env
+    networks:
+      - backend
     volumes:
       - 2ofClubsVolume:/var/lib/postgresql/data
-      # networks: later too
-      # - bridge?
+  app:
+    container_name: 2ofClubsServer
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - db
+    networks:
+      - backend
+    env_file:
+      - app.env
+    ports:
+      - "8080:8080"
+    command: go run main.go
 volumes:
-  # db:
   2ofClubsVolume:
-# networks: Later
+networks:
+  backend:
+    driver: "bridge"
 
 

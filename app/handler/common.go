@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 	"net/http"
+	"os"
 	"strings"
 )
 
@@ -108,7 +109,7 @@ func kf(token *jwt.Token) (interface{}, error) {
 		return nil, fmt.Errorf(model.ErrGeneric)
 	}
 	// Note: This must be changed to an env variable later
-	return []byte("2ofClubs"), nil
+	return []byte(os.Getenv("JWT_SECRET")), nil
 }
 
 /*
