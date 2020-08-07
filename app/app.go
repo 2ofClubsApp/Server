@@ -90,7 +90,7 @@ func (app *App) setRoutes() {
 	app.Get("/users/{username}/manages", app.Handle(handler.GetUserClubsManage, true))  // Done
 	app.Get("/users/{username}/attends", app.Handle(handler.GetUserEventsAttend, true)) // Done
 	app.Post("/events/{eid:[0-9]+}/attend", app.Handle(handler.AddUserAttendsEvent, true)) // Done
-	app.Delete("/events/{eid:[0-9]+}/attend", app.Handle(handler.RemoveUserAttendsEvent, true)) // Done
+	app.Post("/events/{eid:[0-9]+}/unattend", app.Handle(handler.RemoveUserAttendsEvent, true)) // Done
 	// Test Routes
 	app.Post("/test/{username}", app.Handle(handler.Test, false)) // Ignore
 
