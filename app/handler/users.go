@@ -244,12 +244,12 @@ func generateEmailTemplate(user *model.User, h hermes.Hermes, outputFileName str
 					Button: hermes.Button{
 						Color: "#DC4D2F",
 						Text:  "Reset your password",
-						Link:  fmt.Sprintf("https://localhost:8080/resetpassword/%s/%s", user.Username, token),
+						Link:  fmt.Sprintf("http://localhost:8080/resetpassword/%s/%s", user.Username, token),
 					},
 				},
 			},
 			Signature: os.Getenv("EMAIL_BODY_SIGNATURE"),
-			Outros:    []string{"If you did not request a password reset, please ignore this email."},
+			Outros:    []string{"This link expires in 5 minutes. If you did not request a password reset, please ignore this email."},
 			Title:     fmt.Sprintf("Hi %s,", user.Username),
 		},
 	}
