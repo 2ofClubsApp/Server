@@ -13,6 +13,7 @@ const (
 	TagExists      = "Tag already exists"
 	TagsUpdated    = "Tags Updated"
 	TagsFound      = "Tags Found"
+	TagsGetFailure = "Unable to get tags"
 	TagNotFound    = "Tag doesn't exist"
 
 	UserUpdated         = "Updated User"
@@ -35,10 +36,14 @@ const (
 	ManagerOwnerRequired = "You must be a manager or owner of the club"
 	AdminRequired        = "Please contact an administrator."
 	InvalidFile          = "Invalid File: A .txt file is required"
+	UnableToReadFile     = "Unable to read file"
+	FileNotFound         = "File doesn't exist"
 
 	NotApproved  = "Sorry, your account has not been approved yet"
 	LoginSuccess = "Successfully logged in"
 	LoginFailure = "Username or Password is Incorrect"
+	PasswordUpdateSuccess = "Successfully updated password"
+	PasswordUpdateFailure = "Unable to update password"
 
 	CreateEventSuccess = "Successfully created event"
 	CreateEventFailure = "Unable to create event"
@@ -57,6 +62,9 @@ const (
 
 	HashErr     = "hashing Error"
 	ErrTokenGen = "token generation error"
+
+	EmailSendFailure = "Unable to send email"
+	EmailSendSuccess = "Successfully sent email if user exists"
 
 	ErrGeneric  = "an error occurred"
 	FailureCode = -1

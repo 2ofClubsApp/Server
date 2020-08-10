@@ -24,7 +24,7 @@ func NotFound() http.Handler {
 
 /*
 Extracting variables from request URL
- */
+*/
 func getVar(r *http.Request, name string) string {
 	vars := mux.Vars(r)
 	return vars[name]
@@ -33,83 +33,46 @@ func getVar(r *http.Request, name string) string {
 /*
 Extract the Token Claims from the HTTP Request Header
 */
-func GetTokenClaims(r *http.Request) jwt.MapClaims{
+func GetTokenClaims(r *http.Request) jwt.MapClaims {
 	t := r.Header.Get("Authorization")
 	splitToken := strings.Split(t, "Bearer")
 	token := strings.TrimSpace(splitToken[1])
 	claims := jwt.MapClaims{}
-	jwt.ParseWithClaims(token, &claims, kf)
+	jwt.ParseWithClaims(token, &claims, KF(os.Getenv("JWT_SECRET")))
 	return claims
 }
 
-func Test(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	//c := model.NewClub()
-	//t := model.NewTag()
-	//t.Name = "Computer Science"
-
-	//t1 := model.NewTag()
-	//t1.Name = "Banana"
-
-	//e := model.NewEvent()
-	//e.DateTime = "now"
-	//e.Description = "So fun much wow"
-	//e.Fee = 0.99
-
-	//e1 := model.NewEvent()
-	//e1.DateTime = "tmrw"
-	//e1.Description = "wow much fun so"
-	//e1.Fee = 99.0
-	//////////////////////
-	u := model.NewUser()
-	//u.Username="Hiimchrislim"
-	//u.Password = "password"
-	//u.Email = "hello@hiimchrislim.co"
-	cc := model.NewClub()
-	cc.Bio = "We are ACS!"
-	cc.Size = 123456789
-	cc.Email = "acs@utm.com"
-	//u.Manages = []model.Club{*cc}
-	///////////////////////////
-	db.Table("user").Where("username = ?", "Hiimchrislim").First(&u)
-
-	//db.Model(u).Association("Manages").Append([]model.Club{*cc})
-	uc := model.UserClub{}
-	db.Table("user_club").Where("user_id = ?", string(u.ID)).First(&uc)
-	db.Table("user_club").Where("user_id = ? AND club_id = ?", u.ID).Update("is_owner", true)
-
-	//cc.HelpNeeded = true
-	//e := model.NewEvent()
-	//var club [] model.Club
-	//db.Preload(model.HostsColumn).Find(&club)
-	//a := db.Model(c).Association("Hosts").Count()
-	//fmt.Println(a)
-	//db.Model(c).Table(model.ClubTable).Where("Username = ?", "Hacklab").Updates(*cc)
-}
+// Note: Need to add more authentication checks later (This is temporary)
 
 /*
-Note: Need to add more authentication checks later (This is temporary)
+Return true if the JWT is valid, false otherwise
 */
-func IsValidJWT(w http.ResponseWriter, r *http.Request) bool {
+func VerifyJWT(r *http.Request) bool {
 	if bearerToken := r.Header.Get("Authorization"); bearerToken != "" {
 		splitToken := strings.Split(bearerToken, "Bearer ")
 		token := strings.TrimSpace(splitToken[1])
-		if t, err := jwt.Parse(token, kf); err == nil {
-			if t.Valid {
-				return true
-			}
-		}
+		return IsValidJWT(token, KF(os.Getenv("JWT_SECRET")))
 	}
-	WriteData(http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized, w)
 	return false
 }
 
-func kf(token *jwt.Token) (interface{}, error) {
-	// Verifying that the signing method is the same before continuing any further
-	if _, accepted := token.Method.(*jwt.SigningMethodHMAC); !accepted {
-		return nil, fmt.Errorf(model.ErrGeneric)
+func IsValidJWT(token string, kf jwt.Keyfunc) bool {
+	if t, err := jwt.Parse(token, kf); err == nil {
+		if _, ok := t.Claims.(jwt.MapClaims); ok && t.Valid {
+			return true
+		}
 	}
-	// Note: This must be changed to an env variable later
-	return []byte(os.Getenv("JWT_SECRET")), nil
+	return false
+}
+
+func KF(secret string) jwt.Keyfunc {
+	return func(token *jwt.Token) (interface{}, error) {
+		// Verifying that the signing method is the same before continuing any further
+		if _, accepted := token.Method.(*jwt.SigningMethodHMAC); !accepted {
+			return nil, fmt.Errorf(model.ErrGeneric)
+		}
+		return []byte(secret), nil
+	}
 }
 
 /*

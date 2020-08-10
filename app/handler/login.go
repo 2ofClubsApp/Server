@@ -7,6 +7,7 @@ import (
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
@@ -85,7 +86,7 @@ func GenerateCookie(name string, value string) *http.Cookie {
 	}
 }
 
-func GenerateJWT(subject string, duration time.Duration) (string, error) {
+func GenerateJWT(subject string, duration time.Duration, jwtSecret string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	sysTime := time.Now()
@@ -93,7 +94,7 @@ func GenerateJWT(subject string, duration time.Duration) (string, error) {
 	claims["exp"] = sysTime.Add(time.Minute * duration).Unix()
 	claims["sub"] = subject // Subject usually as a number (unique value?)
 	// Note: This must be changed to an env variable later
-	tokenString, err := token.SignedString([]byte("2ofClubs"))
+	tokenString, err := token.SignedString([]byte(jwtSecret))
 	if err != nil {
 		return "", err
 	}
@@ -101,8 +102,8 @@ func GenerateJWT(subject string, duration time.Duration) (string, error) {
 }
 
 func GetTokenPair(subject string, accessDuration time.Duration, refreshDuration time.Duration) (*model.TokenInfo, error) {
-	if accessToken, atErr := GenerateJWT(subject, accessDuration); atErr == nil {
-		if refreshToken, rtErr := GenerateJWT(subject, refreshDuration); rtErr == nil {
+	if accessToken, atErr := GenerateJWT(subject, accessDuration, os.Getenv("JWT_SECRET")); atErr == nil {
+		if refreshToken, rtErr := GenerateJWT(subject, refreshDuration, os.Getenv("JWT_SECRET")); rtErr == nil {
 			token := model.NewTokenInfo()
 			token.AccessToken = accessToken
 			token.RefreshToken = refreshToken
