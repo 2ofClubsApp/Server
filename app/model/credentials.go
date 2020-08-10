@@ -13,6 +13,7 @@ func NewCredentials() *Credentials {
 }
 
 const (
+	EmailVar       = "email"
 	UsernameVar    = "username"
 	UsernameColumn = "username"
 	EmailColumn    = "email"

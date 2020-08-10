@@ -64,23 +64,25 @@ func UploadTagsList(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		file, handler, err := r.FormFile("file")
 		if err != nil {
 			fmt.Errorf("file doesn't exist: %v", err)
-			return
-		}
-		if filepath.Ext(handler.Filename) != ".txt" {
-			status.Message = model.InvalidFile
+			status.Message = model.FileNotFound
 		} else {
-			fileContent, err := ioutil.ReadAll(file)
-			defer file.Close()
-			if err != nil {
-				fmt.Errorf("cannot read file: %v", err)
-				return
+			if filepath.Ext(handler.Filename) != ".txt" {
+				status.Message = model.InvalidFile
+			} else {
+				fileContent, err := ioutil.ReadAll(file)
+				defer file.Close()
+				if err != nil {
+					fmt.Errorf("cannot read file: %v", err)
+					status.Message = model.UnableToReadFile
+				} else {
+					for _, tagName := range strings.Split(string(fileContent), "\n") {
+						tagName = strings.TrimSpace(tagName)
+						tagExists(db, tagName)
+					}
+					status.Code = model.SuccessCode
+					status.Message = model.TagsCreated
+				}
 			}
-			for _, tagName := range strings.Split(string(fileContent), "\n") {
-				tagName = strings.TrimSpace(tagName)
-				tagExists(db, tagName)
-			}
-			status.Code = model.SuccessCode
-			status.Message = model.TagsCreated
 		}
 	} else {
 		status.Message = model.AdminRequired
@@ -91,21 +93,21 @@ func UploadTagsList(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 func GetTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status := model.NewStatus()
 	var allTags []model.Tag
-	var tagsList []string
+	tagsList := []string{}
 	type TagData struct {
 		Tags []string
 	}
 	result := db.Find(&allTags)
 	if result.Error != nil {
-		fmt.Errorf("unable to get tags: %v", result.Error)
-		return
+		status.Message = model.TagsGetFailure
+	} else {
+		for _, tag := range filterTags(allTags) {
+			tagsList = append(tagsList, tag.Name)
+		}
+		status.Code = model.SuccessCode
+		status.Message = model.TagsFound
+		status.Data = TagData{Tags: tagsList}
 	}
-	for _, tag := range filterTags(allTags) {
-		tagsList = append(tagsList, tag.Name)
-	}
-	status.Code = model.SuccessCode
-	status.Message = model.TagsFound
-	status.Data = TagData{Tags: tagsList}
 	WriteData(GetJSON(status), http.StatusOK, w)
 }
 

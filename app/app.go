@@ -91,8 +91,8 @@ func (app *App) setRoutes() {
 	app.Get("/users/{username}/attends", app.Handle(handler.GetUserEventsAttend, true)) // Done
 	app.Post("/events/{eid:[0-9]+}/attend", app.Handle(handler.AddUserAttendsEvent, true)) // Done
 	app.Post("/events/{eid:[0-9]+}/unattend", app.Handle(handler.RemoveUserAttendsEvent, true)) // Done
-	// Test Routes
-	app.Post("/test/{username}", app.Handle(handler.Test, false)) // Ignore
+	app.Post("/resetpassword/{username}", app.Handle(handler.RequestResetUserPassword, false))
+	app.Post("/resetpassword/{username}/{token}", app.Handle(handler.ResetUserPassword, false))
 
 	// Potential code merger on /clubs/{name} and /users/{username}
 
@@ -113,7 +113,6 @@ func (app *App) setRoutes() {
 	app.Post("/clubs/{cid:[0-9]+}/tags", app.Handle(handler.UpdateClubTags, true))                // Done
 	app.Get("/clubs", app.Handle(handler.GetClubs, false))                                        // In-Progress
 	//app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, false)) // Integrated into /clubs
-
 
 
 
@@ -154,8 +153,10 @@ func (app *App) Handle(h hdlr, verifyRequest bool) func(w http.ResponseWriter, r
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Must verify for sensitive information
 		if verifyRequest {
-			if isValid := handler.IsValidJWT(w, r); isValid {
+			if isValid := handler.VerifyJWT(r); isValid {
 				h(app.db, w, r)
+			} else {
+				handler.WriteData(http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized, w)
 			}
 		} else {
 			h(app.db, w, r)

@@ -4,8 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
+	"github.com/go-playground/validator"
+	"github.com/matcornic/hermes/v2"
+	"gopkg.in/gomail.v2"
 	"gorm.io/gorm"
+	"io/ioutil"
 	"net/http"
+	"os"
+	"strconv"
 	"strings"
 )
 
@@ -149,4 +155,111 @@ func UpdateUserTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		httpStatus = http.StatusForbidden
 	}
 	WriteData(GetJSON(status), httpStatus, w)
+}
+
+func ResetUserPassword(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	creds := model.NewCredentials()
+	token := getVar(r, model.TokenVar)
+	username := getVar(r, model.UsernameVar)
+	user := model.NewUser()
+	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
+	status := model.NewStatus()
+	status.Message = model.PasswordUpdateFailure
+	if userExists {
+		hash, obtainedHash := getPasswordHash(db, username)
+		if obtainedHash {
+			if IsValidJWT(token, KF(string(hash))) {
+				extractBody(r, creds)
+				validate := validator.New()
+				creds.Username = user.Username
+				creds.Email = user.Email
+				credErr := validate.Struct(creds)
+				if newPass, hashErr := Hash(creds.Password); credErr == nil && hashErr == nil {
+					db.Model(user).Update(model.PasswordColumn, newPass)
+					status.Code = model.SuccessCode
+					status.Message = model.PasswordUpdateSuccess
+				}
+			}
+		}
+	}
+	WriteData(GetJSON(status), http.StatusOK, w)
+}
+
+func RequestResetUserPassword(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	username := strings.ToLower(getVar(r, model.UsernameVar))
+	user := model.NewUser()
+	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
+	status := model.NewStatus()
+	status.Message = model.EmailSendFailure
+	outputFileName := "template.html"
+	if userExists {
+		h := hermes.Hermes{
+			Product: hermes.Product{
+				Name:      os.Getenv("COMPANY_NAME"),
+				Link:      os.Getenv("COMPANY_LINK"),
+				Logo:      os.Getenv("COMPANY_LOGO"),
+				Copyright: os.Getenv("COMPANY_COPYRIGHT"),
+			},
+		}
+
+		token, jwtErr := GenerateJWT(user.Username, 10, user.Password)
+		generateErr := generateEmailTemplate(user, h, outputFileName, token)
+		body, fileReadErr := ioutil.ReadFile(outputFileName)
+		sendErr := sendEmail(os.Getenv("EMAIL_FROM_HEADER"), user.Email, "Password Reset Request", body)
+		if generateErr == nil && fileReadErr == nil && sendErr == nil && jwtErr == nil {
+			status.Code = model.SuccessCode
+			status.Message = model.EmailSendSuccess
+		}
+	} else {
+		status.Code = model.SuccessCode
+		status.Message = model.EmailSendSuccess
+	}
+	WriteData(GetJSON(status), http.StatusOK, w)
+}
+
+func sendEmail(fromEmail string, toEmail string, subject string, body []byte) error {
+	m := gomail.NewMessage()
+	m.SetHeader("From", fromEmail)
+	m.SetHeader("To", toEmail)
+	m.SetHeader("Subject", subject)
+	m.SetBody("text/html", string(body))
+	port, err := strconv.Atoi(os.Getenv("EMAIL_PORT"))
+	if err != nil {
+		return fmt.Errorf("port error")
+	} else {
+		d := gomail.NewDialer(os.Getenv("EMAIL_HOST"), port, os.Getenv("EMAIL_USERNAME"), os.Getenv("EMAIL_PASSWORD"))
+		if err := d.DialAndSend(m); err != nil {
+			return fmt.Errorf("unable to send email")
+		}
+	}
+	return nil
+}
+func generateEmailTemplate(user *model.User, h hermes.Hermes, outputFileName string, token string) error {
+	email := hermes.Email{
+		Body: hermes.Body{
+			Intros: []string{"You are receiving this message because you requested to reset your password"},
+			Actions: []hermes.Action{
+				{
+					Instructions: "Click on button below to reset your password:",
+					Button: hermes.Button{
+						Color: "#DC4D2F",
+						Text:  "Reset your password",
+						Link:  fmt.Sprintf("http://localhost:8080/resetpassword/%s/%s", user.Username, token),
+					},
+				},
+			},
+			Signature: os.Getenv("EMAIL_BODY_SIGNATURE"),
+			Outros:    []string{"This link expires in 5 minutes. If you did not request a password reset, please ignore this email."},
+			Title:     fmt.Sprintf("Hi %s,", user.Username),
+		},
+	}
+	emailBody, err := h.GenerateHTML(email)
+	if err != nil {
+		return fmt.Errorf("unable to generate email")
+	}
+	err = ioutil.WriteFile(outputFileName, []byte(emailBody), 0644)
+	if err != nil {
+		return fmt.Errorf("unable to write email")
+	}
+	return nil
 }
