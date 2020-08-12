@@ -33,15 +33,19 @@ const (
 	ValidEmail       = "Must be a valid email"
 	EmailExists      = "Email already exists"
 
+	GetNonToggledUsersFailure = "Unable to retrieve non toggled users"
+	GetNonToggledUsersSuccess = "Retrieved all non toggled users"
+
 	ManagerOwnerRequired = "You must be a manager or owner of the club"
 	AdminRequired        = "Please contact an administrator."
 	InvalidFile          = "Invalid File: A .txt file is required"
 	UnableToReadFile     = "Unable to read file"
 	FileNotFound         = "File doesn't exist"
 
-	NotApproved  = "Sorry, your account has not been approved yet"
-	LoginSuccess = "Successfully logged in"
-	LoginFailure = "Username or Password is Incorrect"
+	UserNotApproved       = "Sorry, your account has not been approved yet"
+	ClubNotActive         = "Sorry, this club isn't active yet. Please wait until an administrator activates the club."
+	LoginSuccess          = "Successfully logged in"
+	LoginFailure          = "Username or Password is Incorrect"
 	PasswordUpdateSuccess = "Successfully updated password"
 	PasswordUpdateFailure = "Unable to update password"
 

@@ -6,6 +6,7 @@ import (
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
 	"github.com/go-playground/validator"
 	"github.com/matcornic/hermes/v2"
+	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/gomail.v2"
 	"gorm.io/gorm"
 	"io/ioutil"
@@ -34,8 +35,6 @@ True if the requested user has the same username identifier as the token usernam
 func IsValidRequest(username string, r *http.Request) bool {
 	claims := GetTokenClaims(r)
 	sub := fmt.Sprintf("%v", claims["sub"])
-	//fmt.Println(username)
-	//fmt.Println(sub)
 	return sub == username
 }
 
@@ -157,6 +156,40 @@ func UpdateUserTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	WriteData(GetJSON(status), httpStatus, w)
 }
 
+func UpdateUserPassword(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	newCreds := model.NewPasswordChange()
+	extractBody(r, newCreds)
+	creds := model.NewCredentials()
+	username := strings.ToLower(getVar(r, model.UsernameVar))
+	user := model.NewUser()
+	status := model.NewStatus()
+	status.Message = model.PasswordUpdateFailure
+	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
+	if userExists {
+		if IsValidRequest(user.Username, r) {
+			currentPass, ok := getPasswordHash(db, user.Username)
+			if bcrypt.CompareHashAndPassword(currentPass, []byte(newCreds.OldPassword)) == nil && ok {
+				validate := validator.New()
+				creds.Username = user.Username
+				creds.Password = newCreds.NewPassword
+				creds.Email = user.Email
+				validUser := validate.Struct(creds)
+				hashedNewPass, hashErr := Hash(newCreds.NewPassword)
+				if hashErr == nil && validUser == nil {
+					res := db.Model(user).Update(model.PasswordColumn, hashedNewPass)
+					if res.Error == nil {
+						status.Message = model.PasswordUpdateSuccess
+						status.Code = model.SuccessCode
+					}
+				}
+			}
+		}
+	} else {
+		status.Message = model.UserNotFound
+	}
+	WriteData(GetJSON(status), http.StatusOK, w)
+}
+
 func ResetUserPassword(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	creds := model.NewCredentials()
 	token := getVar(r, model.TokenVar)
@@ -171,13 +204,16 @@ func ResetUserPassword(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 			if IsValidJWT(token, KF(string(hash))) {
 				extractBody(r, creds)
 				validate := validator.New()
+				// Populate creds struct to validate
 				creds.Username = user.Username
 				creds.Email = user.Email
 				credErr := validate.Struct(creds)
 				if newPass, hashErr := Hash(creds.Password); credErr == nil && hashErr == nil {
-					db.Model(user).Update(model.PasswordColumn, newPass)
-					status.Code = model.SuccessCode
-					status.Message = model.PasswordUpdateSuccess
+					res := db.Model(user).Update(model.PasswordColumn, newPass)
+					if res.Error == nil {
+						status.Code = model.SuccessCode
+						status.Message = model.PasswordUpdateSuccess
+					}
 				}
 			}
 		}

@@ -37,7 +37,7 @@ func Login(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 			status.Message = model.LoginSuccess
 			status.Data = login{Token: tp.AccessToken}
 		} else {
-			status.Message = model.NotApproved
+			status.Message = model.UserNotApproved
 		}
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)
@@ -45,8 +45,10 @@ func Login(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 }
 func isApproved(db *gorm.DB, username string) bool {
 	u := model.NewUser()
-	SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, u)
-	return u.IsApproved
+	if SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, u){
+		return u.IsApproved
+	}
+	return false
 }
 
 //func getCredentials(r *http.Request) *model.Credentials {

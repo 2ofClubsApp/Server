@@ -6,9 +6,11 @@ import (
 	"github.com/go-playground/validator"
 	"gorm.io/gorm"
 	"net/http"
+	"strconv"
 	"strings"
 )
 
+// In-Progress
 func GetClubs(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	status := model.NewStatus()
 
@@ -18,9 +20,6 @@ func GetClubs(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	clubs := []Club{}
 	status.Message = model.ClubsFound
 	activeTags := flatten(filterTags(extractTags(db, r)))
-	//for _, v := range activeTags {
-	//fmt.Println(v.Name)
-	//}
 	fmt.Println(activeTags)
 	db.Table(model.ClubTagTable).Where("tag_name IN ?", activeTags).Find(&clubs)
 	fmt.Println(clubs)
@@ -37,7 +36,7 @@ func UpdateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	uname := fmt.Sprintf("%v", claims["sub"])
 	clubExists := SingleRecordExists(db, model.ClubTable, model.IDColumn, clubID, club)
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, uname, user)
-	if clubExists && userExists && isManager(db, user, club){
+	if clubExists && userExists && isManager(db, user, club) {
 		updatedClub := model.NewClub()
 		extractBody(r, updatedClub)
 		validate := validator.New()
@@ -110,11 +109,15 @@ func UpdateClubTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
 	// Must check with both user and club existing in the event that a user gets deleted but you manage to get a hold of their access token
 	if userExists && clubExists && isManager(db, user, club) {
-		tags := filterTags(extractTags(db, r))
-		db.Model(club).Association(model.SetsColumn).Replace(tags)
-		status.Message = model.TagsUpdated
+		if isActive(db, club.ID) {
+			tags := filterTags(extractTags(db, r))
+			db.Model(club).Association(model.SetsColumn).Replace(tags)
+			status.Message = model.TagsUpdated
+			status.Code = model.SuccessCode
+		} else {
+			status.Message = model.ClubNotActive
+		}
 		httpStatus = http.StatusOK
-		status.Code = model.SuccessCode
 	} else {
 		status.Message = http.StatusText(http.StatusForbidden)
 		httpStatus = http.StatusForbidden
@@ -136,19 +139,23 @@ func getClubInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType s
 	if !found {
 		status.Message = model.ClubNotFound
 	} else {
-		switch strings.ToLower(infoType) {
-		case model.AllClubInfo:
-			clubDisplay := club.Display()
-			loadClubData(db, club, clubDisplay)
-			status.Data = clubDisplay
-		case model.AllClubEventsHost:
-			clubEvents := make(map[string][]model.Event)
-			db.Table(model.ClubTable).Preload(model.HostsColumn).Find(club)
-			clubEvents[model.HostsColumn] = club.Hosts
-			status.Data = clubEvents
+		if isActive(db, club.ID) {
+			switch strings.ToLower(infoType) {
+			case model.AllClubInfo:
+				clubDisplay := club.Display()
+				loadClubData(db, club, clubDisplay)
+				status.Data = clubDisplay
+			case model.AllClubEventsHost:
+				clubEvents := make(map[string][]model.Event)
+				db.Table(model.ClubTable).Preload(model.HostsColumn).Find(club)
+				clubEvents[model.HostsColumn] = club.Hosts
+				status.Data = clubEvents
+			}
+			status.Message = model.ClubFound
+			status.Code = model.SuccessCode
+		} else {
+			status.Message = model.ClubNotActive
 		}
-		status.Message = model.ClubFound
-		status.Code = model.SuccessCode
 	}
 	statusCode = http.StatusOK
 	data = GetJSON(status)
@@ -188,7 +195,6 @@ func AddManager(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	editManagers(db, w, r, model.OpAdd)
 }
 
-
 /*
 Adding or removing managers and their associations to a particular club
 */
@@ -215,14 +221,18 @@ func editManagers(db *gorm.DB, w http.ResponseWriter, r *http.Request, op string
 	clubExists := SingleRecordExists(db, model.ClubTable, model.IDColumn, clubID, club)
 	if ownerExists && managerExists && clubExists {
 		if isOwner(db, owner, club) && owner.Username != newManager.Username {
-			switch op {
-			case model.OpAdd:
-				db.Model(newManager).Association(model.ManagesColumn).Append(club)
-			case model.OpRemove:
-				db.Model(newManager).Association(model.ManagesColumn).Delete(club)
+			if isActive(db, club.ID) {
+				switch op {
+				case model.OpAdd:
+					db.Model(newManager).Association(model.ManagesColumn).Append(club)
+				case model.OpRemove:
+					db.Model(newManager).Association(model.ManagesColumn).Delete(club)
+				}
+				status.Message = successMessage
+				status.Code = model.SuccessCode
+			} else {
+				status.Message = model.ClubNotActive
 			}
-			status.Message = successMessage
-			status.Code = model.SuccessCode
 		} else {
 			status.Message = failureMessage
 		}
@@ -230,4 +240,13 @@ func editManagers(db *gorm.DB, w http.ResponseWriter, r *http.Request, op string
 		status.Message = failureMessage
 	}
 	WriteData(GetJSON(status), http.StatusOK, w)
+}
+
+func isActive(db *gorm.DB, clubID uint) bool {
+	c := model.NewClub()
+	clubExists := SingleRecordExists(db, model.ClubTable, model.IDColumn, strconv.FormatUint(uint64(clubID), 10), c)
+	if clubExists {
+		return c.Active
+	}
+	return false
 }
