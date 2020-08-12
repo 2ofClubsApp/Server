@@ -209,9 +209,11 @@ func ResetUserPassword(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 				creds.Email = user.Email
 				credErr := validate.Struct(creds)
 				if newPass, hashErr := Hash(creds.Password); credErr == nil && hashErr == nil {
-					db.Model(user).Update(model.PasswordColumn, newPass)
-					status.Code = model.SuccessCode
-					status.Message = model.PasswordUpdateSuccess
+					res := db.Model(user).Update(model.PasswordColumn, newPass)
+					if res.Error == nil {
+						status.Code = model.SuccessCode
+						status.Message = model.PasswordUpdateSuccess
+					}
 				}
 			}
 		}
