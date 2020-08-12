@@ -33,7 +33,7 @@ func (c *Club) Display() *ClubDisplay {
 }
 
 func NewClub() *Club {
-	return &Club{Sets: []Tag{}, Hosts: []Event{}}
+	return &Club{Sets: []Tag{}, Hosts: []Event{}, Active: false}
 }
 
 const (

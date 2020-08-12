@@ -84,6 +84,11 @@ func (app *App) setRoutes() {
 	// Login Routes
 	app.Post("/login", app.Handle(handler.Login, false)) // Done (Need to check for synchronous token (CSRF prevention))
 
+	// Admin Route
+	app.Post("/toggle/users/{username}", app.Handle(handler.ToggleUser, true)) // Done
+	app.Post("/toggle/clubs/{cid:[0-9]+}", app.Handle(handler.ToggleClub, true)) // Done
+	app.Get("/users/toggle", app.Handle(handler.GetToggleUser, true)) // Done
+
 	// User Routes
 	app.Get("/users/{username}", app.Handle(handler.GetUser, true))                     // Done
 	app.Post("/users/{username}/tags", app.Handle(handler.UpdateUserTags, true))        // Done
@@ -93,14 +98,14 @@ func (app *App) setRoutes() {
 	app.Post("/events/{eid:[0-9]+}/unattend", app.Handle(handler.RemoveUserAttendsEvent, true)) // Done
 	app.Post("/resetpassword/{username}", app.Handle(handler.RequestResetUserPassword, false))
 	app.Post("/resetpassword/{username}/{token}", app.Handle(handler.ResetUserPassword, false))
-
+	app.Post("/users/{username}", app.Handle(handler.UpdateUserPassword, true))
 	// Potential code merger on /clubs/{name} and /users/{username}
 
 	// Tag Routes
 	app.Get("/tags", app.Handle(handler.GetTags, false))                 // Done
 	app.Post("/tags", app.Handle(handler.CreateTag, true))               // Done
 	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true))   // Done
-	app.Post("/tags/{tagName}/toggle", app.Handle(handler.ToggleTag, true)) // Done
+	app.Post("/toggle/tags/{tagName}", app.Handle(handler.ToggleTag, true)) // Done
 
 	// Club routes
 	app.Post("/clubs", app.Handle(handler.CreateClub, true))           // Done
@@ -125,8 +130,6 @@ func (app *App) setRoutes() {
 	app.Post("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.UpdateClubEvent, true)) // In-Progress
 	app.Delete("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.DeleteClubEvent, true)) // Done
 
-	// Admin Route
-	app.Post("/users/{username}/toggle", app.Handle(handler.ToggleUser, true)) // Done
 	//app.Post("/clubs/{cid}/toggle", app.Handle()) // In-Progress
 
 	// 404 Route
