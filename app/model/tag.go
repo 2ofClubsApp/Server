@@ -20,5 +20,5 @@ func NewTag() *Tag {
 const (
 	TagNameVar     = "tagName"
 	TagTable       = "tag"
-	IsActiveColumn = "is_active"
+	IsActiveColumn = "IsActive"
 )

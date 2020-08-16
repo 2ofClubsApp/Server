@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
+	"github.com/2-of-clubs/2ofclubs-server/app/status"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
@@ -69,10 +70,23 @@ func KF(secret string) jwt.Keyfunc {
 	return func(token *jwt.Token) (interface{}, error) {
 		// Verifying that the signing method is the same before continuing any further
 		if _, accepted := token.Method.(*jwt.SigningMethodHMAC); !accepted {
-			return nil, fmt.Errorf(model.ErrGeneric)
+			return nil, fmt.Errorf(status.ErrGeneric)
 		}
 		return []byte(secret), nil
 	}
+}
+
+func IsSingleRecordActive(db *gorm.DB, tableName string, column string, val string, t interface{}) bool {
+	exists := SingleRecordExists(db, tableName, column, val, t)
+	if exists {
+		switch model := t.(type) {
+		case *model.Club:
+			return model.Active
+		case *model.User:
+			return model.IsApproved
+		}
+	}
+	return false
 }
 
 /*
@@ -106,4 +120,15 @@ func WriteData(data string, code int, w http.ResponseWriter) int {
 		return -1
 	}
 	return n
+}
+
+func isAdmin(db *gorm.DB, r *http.Request) bool {
+	claims := GetTokenClaims(r)
+	subject := fmt.Sprintf("%v", claims["sub"])
+	user := model.NewUser()
+	// If the user is an admin, it would already be active by default (No need to check for it's active state)
+	if SingleRecordExists(db, model.UserTable, model.UsernameColumn, subject, user) {
+		return user.IsAdmin
+	}
+	return false
 }

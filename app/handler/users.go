@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
+	"github.com/2-of-clubs/2ofclubs-server/app/status"
 	"github.com/go-playground/validator"
 	"github.com/matcornic/hermes/v2"
 	"golang.org/x/crypto/bcrypt"
@@ -19,13 +20,13 @@ import (
 /*
 Create a User given a JSON payload. (See models.User for payload information).
 */
-func CreateUser(db *gorm.DB, w http.ResponseWriter, c *model.Credentials, u *model.User) {
+func createUser(db *gorm.DB, w http.ResponseWriter, c *model.Credentials, u *model.User) error {
 	u.Credentials = c
-	status := model.NewStatus()
-	status.Code = model.SuccessCode
-	status.Message = SignupSuccess
-	db.Create(u)
-	WriteData(GetJSON(status), http.StatusOK, w)
+	res := db.Create(u)
+	if res.Error != nil {
+		fmt.Errorf("unable to create user")
+	}
+	return nil
 }
 
 /*
@@ -70,12 +71,12 @@ func getUserInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType s
 	var httpStatus int
 	var data string
 	username := strings.ToLower(getVar(r, model.UsernameVar))
-	status := model.NewStatus()
+	s := status.New()
 	user := model.NewUser()
 	if IsValidRequest(username, r) {
 		// Defaults will be overridden when obtaining data and being inserted into struct except for null
-		found := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
-		if found {
+		userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
+		if userExists {
 			switch strings.ToLower(infoType) {
 			case model.AllUserInfo:
 				userDisplay := user.Display()
@@ -85,38 +86,43 @@ func getUserInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType s
 				userDisplay.Manages = getManages(db, user)
 				userDisplay.Tags = flatten(filterTags(user.Chooses))
 				userDisplay.Attends = user.Attends
-				status.Data = userDisplay
+				s.Data = userDisplay
 			case model.AllUserClubsManage:
 				db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
 				response := make(map[string][]*model.ManagesDisplay)
 				response[model.ManagesColumn] = getManages(db, user)
-				status.Data = response
+				s.Data = response
 			case model.AllUserEventsAttend:
 				db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
 				response := make(map[string][]model.Event)
 				response[model.AttendsColumn] = user.Attends
-				status.Data = response
+				s.Data = response
 			}
-			status.Code = model.SuccessCode
-			status.Message = model.UserFound
+			s.Code = status.SuccessCode
+			s.Message = status.UserFound
 		} else {
-			status.Message = model.UserNotFound
+			s.Message = status.UserNotFound
 		}
 		httpStatus = http.StatusOK
 	} else {
-		status.Message = http.StatusText(http.StatusForbidden)
+		s.Message = http.StatusText(http.StatusForbidden)
 		httpStatus = http.StatusForbidden
 	}
-	data = GetJSON(status)
+	data = GetJSON(s)
 	WriteData(data, httpStatus, w)
 }
 
 /*
 Extracts the JSON body payload into a given struct (i.e. User, Credentials, etc.)
 */
-func extractBody(r *http.Request, s interface{}) {
+func extractBody(r *http.Request, s interface{}) error {
 	decoder := json.NewDecoder(r.Body)
-	decoder.Decode(s)
+	err := decoder.Decode(s)
+	if err != nil {
+		fmt.Errorf("unable to extract JSON payload")
+	}
+	return nil
+
 }
 
 func getManages(db *gorm.DB, user *model.User) []*model.ManagesDisplay {
@@ -138,22 +144,22 @@ If an invalid format is provided where there aren't any valid tags to be extract
 */
 func UpdateUserTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	var httpStatus int
-	status := model.NewStatus()
+	s := status.New()
 	username := strings.ToLower(getVar(r, model.UsernameVar))
 	user := model.NewUser()
-	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
+	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
 	if userExists && IsValidRequest(username, r) {
 		httpStatus = http.StatusOK
 		// User is guaranteed to have an account (Verified JWT and request is verified)
 		chooses := filterTags(extractTags(db, r))
 		db.Model(user).Association(model.ChoosesColumn).Replace(chooses)
-		status.Code = model.SuccessCode
-		status.Message = model.TagsUpdated
+		s.Code = status.SuccessCode
+		s.Message = status.TagsUpdated
 	} else {
-		status.Message = http.StatusText(http.StatusForbidden)
+		s.Message = http.StatusText(http.StatusForbidden)
 		httpStatus = http.StatusForbidden
 	}
-	WriteData(GetJSON(status), httpStatus, w)
+	WriteData(GetJSON(s), httpStatus, w)
 }
 
 func UpdateUserPassword(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
@@ -162,9 +168,9 @@ func UpdateUserPassword(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	creds := model.NewCredentials()
 	username := strings.ToLower(getVar(r, model.UsernameVar))
 	user := model.NewUser()
-	status := model.NewStatus()
-	status.Message = model.PasswordUpdateFailure
-	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
+	s := status.New()
+	s.Message = status.PasswordUpdateFailure
+	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
 	if userExists {
 		if IsValidRequest(user.Username, r) {
 			currentPass, ok := getPasswordHash(db, user.Username)
@@ -178,16 +184,16 @@ func UpdateUserPassword(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 				if hashErr == nil && validUser == nil {
 					res := db.Model(user).Update(model.PasswordColumn, hashedNewPass)
 					if res.Error == nil {
-						status.Message = model.PasswordUpdateSuccess
-						status.Code = model.SuccessCode
+						s.Message = status.PasswordUpdateSuccess
+						s.Code = status.SuccessCode
 					}
 				}
 			}
 		}
 	} else {
-		status.Message = model.UserNotFound
+		s.Message = status.UserNotFound
 	}
-	WriteData(GetJSON(status), http.StatusOK, w)
+	WriteData(GetJSON(s), http.StatusOK, w)
 }
 
 func ResetUserPassword(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
@@ -195,9 +201,9 @@ func ResetUserPassword(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	token := getVar(r, model.TokenVar)
 	username := getVar(r, model.UsernameVar)
 	user := model.NewUser()
-	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
-	status := model.NewStatus()
-	status.Message = model.PasswordUpdateFailure
+	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
+	s := status.New()
+	s.Message = status.PasswordUpdateFailure
 	if userExists {
 		hash, obtainedHash := getPasswordHash(db, username)
 		if obtainedHash {
@@ -211,22 +217,22 @@ func ResetUserPassword(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 				if newPass, hashErr := Hash(creds.Password); credErr == nil && hashErr == nil {
 					res := db.Model(user).Update(model.PasswordColumn, newPass)
 					if res.Error == nil {
-						status.Code = model.SuccessCode
-						status.Message = model.PasswordUpdateSuccess
+						s.Code = status.SuccessCode
+						s.Message = status.PasswordUpdateSuccess
 					}
 				}
 			}
 		}
 	}
-	WriteData(GetJSON(status), http.StatusOK, w)
+	WriteData(GetJSON(s), http.StatusOK, w)
 }
 
 func RequestResetUserPassword(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	username := strings.ToLower(getVar(r, model.UsernameVar))
 	user := model.NewUser()
-	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
-	status := model.NewStatus()
-	status.Message = model.EmailSendFailure
+	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
+	s := status.New()
+	s.Message = status.EmailSendFailure
 	outputFileName := "template.html"
 	if userExists {
 		h := hermes.Hermes{
@@ -243,14 +249,14 @@ func RequestResetUserPassword(db *gorm.DB, w http.ResponseWriter, r *http.Reques
 		body, fileReadErr := ioutil.ReadFile(outputFileName)
 		sendErr := sendEmail(os.Getenv("EMAIL_FROM_HEADER"), user.Email, "Password Reset Request", body)
 		if generateErr == nil && fileReadErr == nil && sendErr == nil && jwtErr == nil {
-			status.Code = model.SuccessCode
-			status.Message = model.EmailSendSuccess
+			s.Code = status.SuccessCode
+			s.Message = status.EmailSendSuccess
 		}
 	} else {
-		status.Code = model.SuccessCode
-		status.Message = model.EmailSendSuccess
+		s.Code = status.SuccessCode
+		s.Message = status.EmailSendSuccess
 	}
-	WriteData(GetJSON(status), http.StatusOK, w)
+	WriteData(GetJSON(s), http.StatusOK, w)
 }
 
 func sendEmail(fromEmail string, toEmail string, subject string, body []byte) error {

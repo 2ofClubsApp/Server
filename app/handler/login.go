@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
+	"github.com/2-of-clubs/2ofclubs-server/app/status"
 	"github.com/dgrijalva/jwt-go"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -15,50 +16,37 @@ import (
 
 // TODO: Prevent login many times (if user tries to brute force this)
 func Login(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	var httpStatus int
 	creds := model.NewCredentials()
 	extractBody(r, creds)
 	creds.Username = strings.ToLower(creds.Username)
 	hash, isFound := getPasswordHash(db, creds.Username)
 	var err error
+	s := status.New()
 	if isFound {
 		err = bcrypt.CompareHashAndPassword(hash, []byte(creds.Password))
 	}
-	status := model.NewStatus()
 	if err != nil {
-		status.Message = model.LoginFailure
+		s.Message = status.LoginFailure
+		httpStatus = http.StatusUnauthorized
 	} else {
-		if tp, err := GetTokenPair(creds.Username, 5, 60*24); err == nil && isApproved(db, creds.Username) {
+		userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, creds.Username, model.NewUser())
+		if tp, err := GetTokenPair(creds.Username, 5, 60*24); err == nil && userExists {
 			c := GenerateCookie(model.RefreshToken, tp.RefreshToken)
 			http.SetCookie(w, c)
 			type login struct {
 				Token string
 			}
-			status.Code = model.SuccessCode
-			status.Message = model.LoginSuccess
-			status.Data = login{Token: tp.AccessToken}
+			s.Code = status.SuccessCode
+			s.Message = status.LoginSuccess
+			s.Data = login{Token: tp.AccessToken}
 		} else {
-			status.Message = model.UserNotApproved
+			s.Message = status.UserNotApproved
 		}
+		httpStatus = http.StatusOK
 	}
-	WriteData(GetJSON(status), http.StatusOK, w)
-
+	WriteData(GetJSON(s), httpStatus, w)
 }
-func isApproved(db *gorm.DB, username string) bool {
-	u := model.NewUser()
-	if SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, u){
-		return u.IsApproved
-	}
-	return false
-}
-
-//func getCredentials(r *http.Request) *model.Credentials {
-//	decoder := json.NewDecoder(r.Body)
-//	cred := model.NewCredentials()
-//	decoder.Decode(cred)
-//	cred.Username = strings.ToLower(cred.Username)
-//	return cred
-//}
-
 
 /*
 	Gets password hash for a user given the username.
@@ -112,5 +100,5 @@ func GetTokenPair(subject string, accessDuration time.Duration, refreshDuration 
 			return token, nil
 		}
 	}
-	return nil, fmt.Errorf(model.ErrTokenGen)
+	return nil, fmt.Errorf(status.ErrTokenGen)
 }

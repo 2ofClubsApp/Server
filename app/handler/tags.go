@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
+	"github.com/2-of-clubs/2ofclubs-server/app/status"
 	"github.com/go-playground/validator"
 	"gorm.io/gorm"
 	"io/ioutil"
@@ -35,22 +36,22 @@ func tagExists(db *gorm.DB, tagName string) bool {
 Create a single tag provided the proper JSON request (See the docs for more info)
 */
 func CreateTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	status := model.NewStatus()
+	s := status.New()
 	if isAdmin(db, r) {
 		payload := map[string]string{}
 		decoder := json.NewDecoder(r.Body)
 		decoder.Decode(&payload)
 		tagName := payload["Name"]
 		if tagExists(db, tagName) {
-			status.Message = model.TagExists
+			s.Message = status.TagExists
 		} else {
-			status.Code = model.SuccessCode
-			status.Message = model.TagCreated
+			s.Code = status.SuccessCode
+			s.Message = status.TagCreated
 		}
 	} else {
-		status.Message = model.AdminRequired
+		s.Message = status.AdminRequired
 	}
-	WriteData(GetJSON(status), http.StatusOK, w)
+	WriteData(GetJSON(s), http.StatusOK, w)
 }
 
 /*
@@ -59,39 +60,39 @@ Create tags based on a new line separated list
 Refer to docs for file specifications.
 */
 func UploadTagsList(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	status := model.NewStatus()
+	s := status.New()
 	if isAdmin(db, r) {
 		file, handler, err := r.FormFile("file")
 		if err != nil {
 			fmt.Errorf("file doesn't exist: %v", err)
-			status.Message = model.FileNotFound
+			s.Message = status.FileNotFound
 		} else {
 			if filepath.Ext(handler.Filename) != ".txt" {
-				status.Message = model.InvalidFile
+				s.Message = status.InvalidFile
 			} else {
 				fileContent, err := ioutil.ReadAll(file)
 				defer file.Close()
 				if err != nil {
 					fmt.Errorf("cannot read file: %v", err)
-					status.Message = model.UnableToReadFile
+					s.Message = status.UnableToReadFile
 				} else {
 					for _, tagName := range strings.Split(string(fileContent), "\n") {
 						tagName = strings.TrimSpace(tagName)
 						tagExists(db, tagName)
 					}
-					status.Code = model.SuccessCode
-					status.Message = model.TagsCreated
+					s.Code = status.SuccessCode
+					s.Message = status.TagsCreated
 				}
 			}
 		}
 	} else {
-		status.Message = model.AdminRequired
+		s.Message = status.AdminRequired
 	}
-	WriteData(GetJSON(status), http.StatusOK, w)
+	WriteData(GetJSON(s), http.StatusOK, w)
 }
 
 func GetTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	status := model.NewStatus()
+	s := status.New()
 	var allTags []model.Tag
 	tagsList := []string{}
 	type TagData struct {
@@ -99,16 +100,16 @@ func GetTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	}
 	result := db.Find(&allTags)
 	if result.Error != nil {
-		status.Message = model.TagsGetFailure
+		s.Message = status.TagsGetFailure
 	} else {
 		for _, tag := range filterTags(allTags) {
 			tagsList = append(tagsList, tag.Name)
 		}
-		status.Code = model.SuccessCode
-		status.Message = model.TagsFound
-		status.Data = TagData{Tags: tagsList}
+		s.Code = status.SuccessCode
+		s.Message = status.TagsFound
+		s.Data = TagData{Tags: tagsList}
 	}
-	WriteData(GetJSON(status), http.StatusOK, w)
+	WriteData(GetJSON(s), http.StatusOK, w)
 }
 
 /*
@@ -128,7 +129,7 @@ func extractTags(db *gorm.DB, r *http.Request) []model.Tag {
 }
 
 func ToggleTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	status := model.NewStatus()
+	s := status.New()
 	if isAdmin(db, r) {
 		tagName := getVar(r, model.TagNameVar)
 		tagName = strings.TrimSpace(tagName)
@@ -136,18 +137,18 @@ func ToggleTag(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		if SingleRecordExists(db, model.TagTable, model.NameColumn, tagName, tag) {
 			err := db.Model(tag).Update(model.IsActiveColumn, !tag.IsActive).Error
 			if err != nil {
-				status.Message = model.TagUpdateError
+				s.Message = status.TagUpdateError
 			} else {
-				status.Code = model.SuccessCode
-				status.Message = model.TagUpdated
+				s.Code = status.SuccessCode
+				s.Message = status.TagUpdated
 			}
 		} else {
-			status.Message = model.TagNotFound
+			s.Message = status.TagNotFound
 		}
 	} else {
-		status.Message = model.AdminRequired
+		s.Message = status.AdminRequired
 	}
-	WriteData(GetJSON(status), http.StatusOK, w)
+	WriteData(GetJSON(s), http.StatusOK, w)
 }
 
 func filterTags(tags []model.Tag) []model.Tag {
@@ -167,10 +168,3 @@ func flatten(tags []model.Tag) []string {
 	}
 	return flattenedTags
 }
-
-//func getTagNames(r *http.Request) []string {
-//	payload := map[string][]string{"Tags": {}}
-//	decoder := json.NewDecoder(r.Body)
-//	decoder.Decode(&payload)
-//	return payload["Tags"]
-//}

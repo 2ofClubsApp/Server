@@ -11,15 +11,15 @@ type User struct {
 }
 
 type UserDisplay struct {
-	Email   string
-	Manages []*ManagesDisplay
-	Tags    []string
-	Attends []Event
+	Email   string `json:"email"`
+	Manages []*ManagesDisplay `json:"manages"`
+	Tags    []string `json: "tags"`
+	Attends []Event `json: "attends"`
 }
 
 type ManagesDisplay struct {
 	*ClubDisplay
-	IsOwner bool
+	IsOwner bool `json:"isOwner"`
 }
 
 func (u *User) Display() *UserDisplay {

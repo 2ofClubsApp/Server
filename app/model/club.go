@@ -13,13 +13,13 @@ type Club struct {
 }
 
 type ClubDisplay struct {
-	ID    uint
-	Name  string
-	Email string
-	Bio   string
-	Size  int
-	Tags  []string
-	Hosts []Event
+	ID    uint     `json:"id"`
+	Name  string   `json:"name"`
+	Email string   `json:"email"`
+	Bio   string   `json:"bio"`
+	Size  int      `json:"size"`
+	Tags  []string `json:"tags"`
+	Hosts []Event  `json:"hosts"`
 }
 
 func (c *Club) Display() *ClubDisplay {
@@ -47,7 +47,7 @@ const (
 	SizeColumn        = "size"
 	BioColumn         = "bio"
 	HelpNeededColumn  = "help_needed"
-	ClubTable  = "club"
-	NameColumn = "name"
-
+	ClubTable         = "club"
+	NameColumn        = "name"
+	ActiveColumn      = "active"
 )

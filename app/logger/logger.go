@@ -11,7 +11,7 @@ func LoggingMiddleware(next http.Handler) http.Handler {
 			w.Header().Add("Content-Type", "application/json")
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Access-Control-Request-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-			w.Header().Set("Access-Control-Allow-Headers", "Accept, Accept-Language, Content-Type, YourOwnHeader")
+			w.Header().Set("Access-Control-Allow-Headers", "Accept, Accept-Language, Content-Type")
 
 		}
 		log.Println(r.RequestURI)
