@@ -96,8 +96,8 @@ func (app *App) setRoutes() {
 	app.Get("/users/{username}/attends", app.Handle(handler.GetUserEventsAttend, true)) // Done
 	app.Post("/events/{eid:[0-9]+}/attend", app.Handle(handler.AddUserAttendsEvent, true)) // Done
 	app.Post("/events/{eid:[0-9]+}/unattend", app.Handle(handler.RemoveUserAttendsEvent, true)) // Done
-	app.Post("/resetpassword/{username}", app.Handle(handler.RequestResetUserPassword, false))
-	app.Post("/resetpassword/{username}/{token}", app.Handle(handler.ResetUserPassword, false))
+	app.Post("/resetpassword/{username}", app.Handle(handler.RequestResetUserPassword, false)) // Done
+	app.Post("/resetpassword/{username}/{token}", app.Handle(handler.ResetUserPassword, false)) // Done
 	app.Post("/users/{username}", app.Handle(handler.UpdateUserPassword, true))
 	// Potential code merger on /clubs/{name} and /users/{username}
 
@@ -108,9 +108,9 @@ func (app *App) setRoutes() {
 	app.Post("/toggle/tags/{tagName}", app.Handle(handler.ToggleTag, true)) // Done
 
 	// Club routes
-	app.Post("/clubs", app.Handle(handler.CreateClub, true))           // Done
+	app.Post("/clubs", app.Handle(handler.CreateClub, true))              // Done
 	app.Post("/clubs/{cid:[0-9]+}", app.Handle(handler.UpdateClub, true)) // Done
-	app.Get("/clubs/{cid:[0-9]+}", app.Handle(handler.GetClub, false)) // Done
+	app.Get("/clubs/{cid:[0-9]+}", app.Handle(handler.GetClub, false))    // Done
 
 	//app.Delete("/clubs/{name}", app.Handle(handler.DeleteClub, true)) // Partially Done (The owner can delete the club and all associations will be removed?) (Clubs can't be deleted, only deactivated)
 	app.Post("/clubs/{cid:[0-9]+}/manages/{username}", app.Handle(handler.AddManager, true))      // Done (Adding managers/maintainers to club)
@@ -121,10 +121,9 @@ func (app *App) setRoutes() {
 
 
 
-	app.Get("/events", app.Handle(handler.GetAllEvents, false)) // Done
-	app.Get("/events/{eid:[0-9]+}", app.Handle(handler.GetEvent, false)) // Done
+	app.Get("/events", app.Handle(handler.GetAllEvents, false))                     // Done
+	app.Get("/events/{eid:[0-9]+}", app.Handle(handler.GetEvent, false))            // Done
 	app.Get("/clubs/{cid:[0-9]+}/events", app.Handle(handler.GetClubEvents, false)) // Done
-
 	app.Post("/clubs/{cid:[0-9]+}/events", app.Handle(handler.CreateClubEvent, true)) // Done
 
 	app.Post("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.UpdateClubEvent, true)) // In-Progress

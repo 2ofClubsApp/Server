@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
+	"github.com/2-of-clubs/2ofclubs-server/app/status"
 	"github.com/go-playground/validator"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
@@ -11,40 +12,43 @@ import (
 	"strings"
 )
 
-const (
-	SignupSuccess = "Signup Successful"
-	SignupFailure = "Unable to Sign Up User"
-)
-
 func SignUp(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	s := status.New()
+	s.Message = status.SignupFailure
+	credStatus := status.CredentialStatus{}
 	// Check if content type is application/json?
-	creds, isValid := VerifyCredentials(r)
-	hashedPass, err := Hash(creds.Password)
-	creds.Password = hashedPass
-	status := model.NewStatus()
-	status.Message = SignupFailure
-	credStatus := model.CredentialStatus{}
-	if isValid && (err == nil) {
+	creds, isValidCred := verifyCredentials(r)
+	hashedPass, hashErr := Hash(creds.Password)
+	if isValidCred && hashErr == nil {
+		creds.Password = hashedPass
 		user := model.NewUser()
-		unameAvailable := !SingleRecordExists(db, model.UserTable, model.UsernameColumn, creds.Username, user)
-		emailAvailable := !SingleRecordExists(db, model.UserTable, model.EmailColumn, creds.Email, user)
+		unameAvailable := !IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, creds.Username, user)
+		emailAvailable := !IsSingleRecordActive(db, model.UserTable, model.EmailColumn, creds.Email, user)
 		if unameAvailable && emailAvailable {
-			CreateUser(db, w, creds, user)
+			err := createUser(db, w, creds, user)
+			if err != nil {
+				s.Message = status.SignupFailure
+				WriteData(GetJSON(s), http.StatusInternalServerError, w)
+			} else {
+				s.Code = status.SuccessCode
+				s.Message = status.SignupSuccess
+				WriteData(GetJSON(s), http.StatusCreated, w)
+			}
 		} else {
 			if !unameAvailable {
-				credStatus.Username = model.UsernameExists
+				credStatus.Username = status.UsernameExists
 			}
 			if !emailAvailable {
-				credStatus.Email = model.EmailExists
+				credStatus.Email = status.EmailExists
 			}
-			status.Data = credStatus
-			WriteData(GetJSON(status), http.StatusOK, w)
+			s.Data = credStatus
+			WriteData(GetJSON(s), http.StatusConflict, w)
 		}
 	} else {
-		credStatus.Username = model.UsernameAlphaNum
-		credStatus.Email = model.ValidEmail
-		status.Data = credStatus
-		WriteData(GetJSON(status), http.StatusOK, w)
+		credStatus.Username = status.UsernameAlphaNum
+		credStatus.Email = status.ValidEmail
+		s.Data = credStatus
+		WriteData(GetJSON(s), http.StatusUnprocessableEntity, w)
 	}
 }
 
@@ -55,7 +59,7 @@ func Hash(info string) (string, error) {
 	// Change cost to 10+ (try to find a way to scale it with hardware?)
 	saltedHashPass, err := bcrypt.GenerateFromPassword([]byte(info), bcrypt.DefaultCost)
 	if err != nil {
-		return "", errors.New(model.HashErr)
+		return "", errors.New(status.HashErr)
 	}
 	return string(saltedHashPass), nil
 }
@@ -63,12 +67,15 @@ func Hash(info string) (string, error) {
 /*
 Extracting JSON payload credentials and returning (model, true) if valid, otherwise (model, false).
 */
-func VerifyCredentials(r *http.Request) (*model.Credentials, bool) {
+func verifyCredentials(r *http.Request) (*model.Credentials, bool) {
 	c := model.NewCredentials()
-	extractBody(r, c)
+	err := extractBody(r, c)
+	if err != nil {
+		return c, false
+	}
 	validate := validator.New()
-	validate.RegisterValidation("alpha", ValidateUsername)
-	err := validate.Struct(c)
+	validate.RegisterValidation("alpha", validateUsername)
+	err = validate.Struct(c)
 	if err != nil {
 		return c, false
 	}
@@ -80,7 +87,7 @@ func VerifyCredentials(r *http.Request) (*model.Credentials, bool) {
 /*
 Validate username against Regex pattern of being alphanumeric.
 */
-func ValidateUsername(fl validator.FieldLevel) bool {
+func validateUsername(fl validator.FieldLevel) bool {
 	matched, _ := regexp.Match("^[a-zA-Z][a-zA-Z0-9_]*$", []byte(fl.Field().String()))
 	return matched
 }

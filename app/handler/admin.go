@@ -3,75 +3,71 @@ package handler
 import (
 	"fmt"
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
+	"github.com/2-of-clubs/2ofclubs-server/app/status"
 	"gorm.io/gorm"
 	"net/http"
 )
 
-func isAdmin(db *gorm.DB, r *http.Request) bool {
-	claims := GetTokenClaims(r)
-	subject := fmt.Sprintf("%v", claims["sub"])
-	user := model.NewUser()
-	if SingleRecordExists(db, model.UserTable, model.UsernameColumn, subject, user) {
-		return user.IsAdmin
-	}
-	return false
-}
-
 func ToggleUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	username := getVar(r, model.UsernameVar)
-	status := model.NewStatus()
+	s := status.New()
 	user := model.NewUser()
+	username := getVar(r, model.UsernameVar)
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
+	httpStatus := http.StatusForbidden
 	if userExists {
 		if isAdmin(db, r) {
 			db.Model(user).Update(model.IsApprovedColumn, !user.IsApproved)
-			status.Message = model.UserUpdated
-			status.Code = model.SuccessCode
+			httpStatus = http.StatusOK
+			s.Code = status.SuccessCode
+			s.Message = status.UserUpdated
 		} else {
-			status.Message = model.AdminRequired
+			s.Message = status.AdminRequired
 		}
 	} else {
-		status.Message = model.UserNotFound
+		s.Message = status.UserNotFound
 	}
-	WriteData(GetJSON(status), http.StatusOK, w)
+	WriteData(GetJSON(s), httpStatus, w)
 }
 
 func ToggleClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	clubID := getVar(r, model.ClubIDVar)
-	status := model.NewStatus()
+	s := status.New()
 	club := model.NewClub()
+	clubID := getVar(r, model.ClubIDVar)
 	clubExists := SingleRecordExists(db, model.ClubTable, model.IDColumn, clubID, club)
+	httpStatus := http.StatusForbidden
 	if clubExists {
 		if isAdmin(db, r) {
-			db.Model(club).Update(model.IsActiveColumn, !club.Active)
-			status.Message = model.ClubUpdateSuccess
-			status.Code = model.SuccessCode
+			db.Model(club).Update(model.ActiveColumn, !club.Active)
+			httpStatus = http.StatusOK
+			s.Code = status.SuccessCode
+			s.Message = status.ClubUpdateSuccess
 		} else {
-			status.Message = model.AdminRequired
+			s.Message = status.AdminRequired
 		}
 	} else {
-		status.Message = model.ClubNotFound
+		s.Message = status.ClubNotFound
 	}
-	WriteData(GetJSON(status), http.StatusOK, w)
+	WriteData(GetJSON(s), httpStatus, w)
 }
 
+// In-Progress
 func GetToggleUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	s := status.New()
 	users := []*model.User{}
 	result := db.Where(model.IsApprovedColumn+"= ?", false).Find(&users)
-	status := model.NewStatus()
 	if isAdmin(db, r) {
 		if result.Error != nil {
-			status.Message = model.GetNonToggledUsersFailure
+			s.Message = status.GetNonToggledUsersFailure
 		} else {
-			status.Code = model.SuccessCode
-			status.Message = model.GetNonToggledUsersSuccess
-			status.Data = users
+			s.Code = status.SuccessCode
+			s.Message = status.GetNonToggledUsersSuccess
+			s.Data = users
 			for _, v := range users {
 				fmt.Println(v)
 			}
 		}
 	} else {
-		status.Message = model.AdminRequired
+		s.Message = status.AdminRequired
 	}
-	WriteData(GetJSON(status), http.StatusOK, w)
+	WriteData(GetJSON(s), http.StatusOK, w)
 }

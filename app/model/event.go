@@ -1,12 +1,14 @@
 package model
 
+import "github.com/2-of-clubs/2ofclubs-server/app/status"
+
 type Event struct {
 	Base
-	Name string `validate:"required,min=1,max=50"`
+	Name string `validate:"required,min=1,max=50" json:"name"`
 	//DateTime    time.Time  `validate:"required,gtetoday,datetime"`
-	Description string  `validate:"required,max=300"`
-	Location    string  `validate:"required,max=100"`
-	Fee         float64 `validate:"required,gte=0"`
+	Description string  `validate:"required,max=300" json:"description"`
+	Location    string  `validate:"required,max=100" json:"location"`
+	Fee         float64 `validate:"required,gte=0" json:"fee"`
 }
 
 func NewEvent() *Event {
@@ -23,11 +25,11 @@ type EventRequirement struct {
 
 func NewEventRequirement() *EventRequirement {
 	return &EventRequirement{
-		Admin:       ManagerOwnerRequired,
-		Name:        EventNameConstraint,
-		Description: EventDescriptionConstraint,
-		Location:    EventLocationConstraint,
-		Fee:         EventFeeConstraint,
+		Admin:       status.ManagerOwnerRequired,
+		Name:        status.EventNameConstraint,
+		Description: status.EventDescriptionConstraint,
+		Location:    status.EventLocationConstraint,
+		Fee:         status.EventFeeConstraint,
 	}
 }
 
