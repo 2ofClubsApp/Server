@@ -205,14 +205,19 @@ func editManagers(db *gorm.DB, w http.ResponseWriter, r *http.Request, op string
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
 	if ownerExists && managerExists && clubExists {
 		if isOwner(db, owner, club) && owner.Username != newManager.Username {
+			var err error
 			switch op {
 			case model.OpAdd:
-				db.Model(newManager).Association(model.ManagesColumn).Append(club)
+				err = db.Model(newManager).Association(model.ManagesColumn).Append(club)
 			case model.OpRemove:
-				db.Model(newManager).Association(model.ManagesColumn).Delete(club)
+				err = db.Model(newManager).Association(model.ManagesColumn).Delete(club)
 			}
-			s.Message = successMessage
-			s.Code = status.SuccessCode
+			if err != nil {
+				s.Message = failureMessage
+			} else {
+				s.Message = successMessage
+				s.Code = status.SuccessCode
+			}
 		} else {
 			s.Message = failureMessage
 		}
