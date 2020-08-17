@@ -4,19 +4,19 @@ package model
 type User struct {
 	Base
 	*Credentials
-	Manages      []Club  `gorm:"many2many:user_club;" json:"-"`
-	Chooses      []Tag   `gorm:"many2many:user_tag;foreignKey:id;References:Name" json:"-"`
-	Attends      []Event `gorm:"many2many:user_event;" json:"-"`
-	IsAdmin      bool    `json:"-"`
-	IsApproved   bool    `json:"-"`
+	Manages    []Club  `gorm:"many2many:user_club;" json:"-"`
+	Chooses    []Tag   `gorm:"many2many:user_tag;foreignKey:id;References:Name" json:"-"`
+	Attends    []Event `gorm:"many2many:user_event;" json:"-"`
+	IsAdmin    bool    `json:"-"`
+	IsApproved bool    `json:"-"`
 }
 
 // Displaying public user data
 type UserDisplay struct {
-	Email   string `json:"email"`
+	Email   string            `json:"email"`
 	Manages []*ManagesDisplay `json:"manages"`
-	Tags    []string `json: "tags"`
-	Attends []Event `json: "attends"`
+	Tags    []string          `json: "tags"`
+	Attends []Event           `json: "attends"`
 }
 
 // ManagesDisplay is used as a display wrapper for the ClubDisplay

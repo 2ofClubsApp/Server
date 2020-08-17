@@ -13,7 +13,6 @@ import (
 	"time"
 )
 
-
 // TODO: Prevent login many times (if user tries to brute force this)
 func Login(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	var httpStatus int

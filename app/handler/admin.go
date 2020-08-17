@@ -15,7 +15,7 @@ func ToggleUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
 	httpStatus := http.StatusForbidden
 	if userExists {
-		if isAdmin(db, r) && !user.IsAdmin{
+		if isAdmin(db, r) && !user.IsAdmin {
 			db.Model(user).Update(model.IsApprovedColumn, !user.IsApproved)
 			httpStatus = http.StatusOK
 			s.Code = status.SuccessCode

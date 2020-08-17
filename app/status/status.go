@@ -81,7 +81,7 @@ const (
 	HashErr     = "hashing Error"
 	ErrTokenGen = "token generation error"
 
-	ErrGeneric  = "an error occurred"
+	ErrGeneric = "an error occurred"
 )
 
 //

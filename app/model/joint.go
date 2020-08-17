@@ -9,7 +9,7 @@ const (
 	EventIDColumn   = "event_id"
 	TagIDColumn     = "tag_id"
 	StudentIDColumn = "student_id"
-	TagNameColumn    = "tag_name"
+	TagNameColumn   = "tag_name"
 )
 
 // Database format for many to many relation with User and Club

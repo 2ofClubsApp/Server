@@ -7,7 +7,6 @@ type Credentials struct {
 
 	// Max 45 due to 50 length limitation of bcrypt
 	Password string `validate:"required,min=3,max=45" json:"password"`
-
 }
 
 // Resetting a user password given the old and new passwords
