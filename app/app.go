@@ -139,14 +139,17 @@ func (app *App) Run(port string) {
 	http.ListenAndServe(port, handlers.CORS(app.origin, app.methods, app.headers)(app.router))
 }
 
+// Setting a POST route and its associated handler
 func (app *App) Post(path string, f routeHandler) {
 	app.router.HandleFunc(path, f).Methods(http.MethodPost)
 }
 
+// Setting a GET route and its associated handler
 func (app *App) Get(path string, f routeHandler) {
 	app.router.HandleFunc(path, f).Methods(http.MethodGet)
 }
 
+// Setting a Delete route and its associated handler
 func (app *App) Delete(path string, f routeHandler) {
 	app.router.HandleFunc(path, f).Methods(http.MethodDelete)
 }

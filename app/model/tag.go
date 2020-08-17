@@ -5,6 +5,7 @@ import (
 	"time"
 )
 
+// Basic Tag Struct
 type Tag struct {
 	CreatedAt time.Time      `json:"-"`
 	UpdatedAt time.Time      `json:"-"`

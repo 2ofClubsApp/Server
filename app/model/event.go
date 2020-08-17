@@ -2,6 +2,7 @@ package model
 
 import "github.com/2-of-clubs/2ofclubs-server/app/status"
 
+// Basic Event Struct
 type Event struct {
 	Base
 	Name string `validate:"required,min=1,max=50" json:"name"`
@@ -15,6 +16,7 @@ func NewEvent() *Event {
 	return &Event{}
 }
 
+// Listing out requirements for an event to be successfully created
 type EventRequirement struct {
 	Admin       string
 	Name        string
