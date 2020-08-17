@@ -85,26 +85,26 @@ func (app *App) setRoutes() {
 	app.Post("/login", app.Handle(handler.Login, false)) // Done (Need to check for synchronous token (CSRF prevention))
 
 	// Admin Route
-	app.Post("/toggle/users/{username}", app.Handle(handler.ToggleUser, true)) // Done
+	app.Post("/toggle/users/{username}", app.Handle(handler.ToggleUser, true))   // Done
 	app.Post("/toggle/clubs/{cid:[0-9]+}", app.Handle(handler.ToggleClub, true)) // Done
-	app.Get("/users/toggle", app.Handle(handler.GetToggleUser, true)) // Done
+	app.Get("/users/toggle", app.Handle(handler.GetToggleUser, true))            // Done
 
 	// User Routes
-	app.Get("/users/{username}", app.Handle(handler.GetUser, true))                     // Done
-	app.Post("/users/{username}/tags", app.Handle(handler.UpdateUserTags, true))        // Done
-	app.Get("/users/{username}/manages", app.Handle(handler.GetUserClubsManage, true))  // Done
-	app.Get("/users/{username}/attends", app.Handle(handler.GetUserEventsAttend, true)) // Done
-	app.Post("/events/{eid:[0-9]+}/attend", app.Handle(handler.AddUserAttendsEvent, true)) // Done
+	app.Get("/users/{username}", app.Handle(handler.GetUser, true))                             // Done
+	app.Post("/users/{username}/tags", app.Handle(handler.UpdateUserTags, true))                // Done
+	app.Get("/users/{username}/manages", app.Handle(handler.GetUserClubsManage, true))          // Done
+	app.Get("/users/{username}/attends", app.Handle(handler.GetUserEventsAttend, true))         // Done
+	app.Post("/events/{eid:[0-9]+}/attend", app.Handle(handler.AddUserAttendsEvent, true))      // Done
 	app.Post("/events/{eid:[0-9]+}/unattend", app.Handle(handler.RemoveUserAttendsEvent, true)) // Done
-	app.Post("/resetpassword/{username}", app.Handle(handler.RequestResetUserPassword, false)) // Done
+	app.Post("/resetpassword/{username}", app.Handle(handler.RequestResetUserPassword, false))  // Done
 	app.Post("/resetpassword/{username}/{token}", app.Handle(handler.ResetUserPassword, false)) // Done
 	app.Post("/users/{username}", app.Handle(handler.UpdateUserPassword, true))
 	// Potential code merger on /clubs/{name} and /users/{username}
 
 	// Tag Routes
-	app.Get("/tags", app.Handle(handler.GetTags, false))                 // Done
-	app.Post("/tags", app.Handle(handler.CreateTag, true))               // Done
-	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true))   // Done
+	app.Get("/tags", app.Handle(handler.GetTags, false))                    // Done
+	app.Post("/tags", app.Handle(handler.CreateTag, true))                  // Done
+	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true))      // Done
 	app.Post("/toggle/tags/{tagName}", app.Handle(handler.ToggleTag, true)) // Done
 
 	// Club routes
@@ -119,14 +119,12 @@ func (app *App) setRoutes() {
 	app.Get("/clubs", app.Handle(handler.GetClubs, false))                                        // In-Progress
 	//app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, false)) // Integrated into /clubs
 
-
-
-	app.Get("/events", app.Handle(handler.GetAllEvents, false))                     // Done
-	app.Get("/events/{eid:[0-9]+}", app.Handle(handler.GetEvent, false))            // Done
-	app.Get("/clubs/{cid:[0-9]+}/events", app.Handle(handler.GetClubEvents, false)) // Done
+	app.Get("/events", app.Handle(handler.GetAllEvents, false))                       // Done
+	app.Get("/events/{eid:[0-9]+}", app.Handle(handler.GetEvent, false))              // Done
+	app.Get("/clubs/{cid:[0-9]+}/events", app.Handle(handler.GetClubEvents, false))   // Done
 	app.Post("/clubs/{cid:[0-9]+}/events", app.Handle(handler.CreateClubEvent, true)) // Done
 
-	app.Post("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.UpdateClubEvent, true)) // In-Progress
+	app.Post("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.UpdateClubEvent, true))   // In-Progress
 	app.Delete("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.DeleteClubEvent, true)) // Done
 
 	//app.Post("/clubs/{cid}/toggle", app.Handle()) // In-Progress
