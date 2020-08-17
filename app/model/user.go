@@ -1,5 +1,6 @@
 package model
 
+// Base User struct
 type User struct {
 	Base
 	*Credentials
@@ -10,6 +11,7 @@ type User struct {
 	IsApproved   bool    `json:"-"`
 }
 
+// Displaying public user data
 type UserDisplay struct {
 	Email   string `json:"email"`
 	Manages []*ManagesDisplay `json:"manages"`
@@ -17,6 +19,8 @@ type UserDisplay struct {
 	Attends []Event `json: "attends"`
 }
 
+// ManagesDisplay is used as a display wrapper for the ClubDisplay
+// For a users managed club, whether they're an owner or not is also displayed
 type ManagesDisplay struct {
 	*ClubDisplay
 	IsOwner bool `json:"isOwner"`

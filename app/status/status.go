@@ -84,14 +84,20 @@ const (
 	ErrGeneric  = "an error occurred"
 )
 
+//
 type T struct{}
 
+// Status Struct used as the standard response when querying the API
 type Status struct {
+	// Codes will either be returned as 1 or -1
+	// 1 - Success
+	// -1 - Failure
 	Code    int         `json:"code"`
 	Message string      `json:"message"`
 	Data    interface{} `json:"data"`
 }
 
+// Listing out requirements for a signup to be successfully created
 type CredentialStatus struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`

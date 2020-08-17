@@ -1,7 +1,7 @@
 package model
 
+// Base Club struct
 type Club struct {
-	// Owners/Administrator
 	Base
 	Name   string  `validate:"required,min=3,max=50"`
 	Email  string  `validate:"required,email"`
@@ -12,6 +12,7 @@ type Club struct {
 	Hosts  []Event `gorm:"many2many:club_event;"`
 }
 
+// Displaying public club data
 type ClubDisplay struct {
 	ID    uint     `json:"id"`
 	Name  string   `json:"name"`
