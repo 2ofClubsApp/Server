@@ -1,5 +1,5 @@
 # 2ofClubs Server
-  <a href="https://goreportcard.com/badge/github.com/2-of-clubs/2ofClubs-server">
+  <a href="https://goreportcard.com/report/github.com/2-of-clubs/2ofclubs-server">
     <img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/2-of-clubs/2ofClubs-server">
   </a>
   
