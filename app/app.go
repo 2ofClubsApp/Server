@@ -111,7 +111,8 @@ func (app *App) setRoutes() {
 	// Potential code merger on /clubs/{name} and /users/{username}
 
 	// Tag Routes
-	app.Get("/tags", app.Handle(handler.GetTags, false))                    // Done
+	app.Get("/tags", app.Handle(handler.GetTags, false))
+	app.Get("/tags/active", app.Handle(handler.GetActiveTags, false))       // Done
 	app.Post("/tags", app.Handle(handler.CreateTag, true))                  // Done
 	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true))      // Done
 	app.Post("/toggle/tags/{tagName}", app.Handle(handler.ToggleTag, true)) // Done

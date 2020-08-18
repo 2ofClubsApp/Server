@@ -84,7 +84,7 @@ func getUserInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType s
 				db.Table(model.UserTable).Preload(model.ChoosesColumn).Find(user)
 				db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
 				userDisplay.Manages = getManages(db, user)
-				userDisplay.Tags = flatten(filterTags(user.Chooses))
+				userDisplay.Tags = filterTags(user.Chooses)
 				userDisplay.Attends = user.Attends
 				s.Data = userDisplay
 			case model.AllUserClubsManage:
@@ -128,10 +128,9 @@ func extractBody(r *http.Request, s interface{}) error {
 func getManages(db *gorm.DB, user *model.User) []*model.ManagesDisplay {
 	manages := []*model.ManagesDisplay{}
 	for _, club := range user.Manages {
-		clubDisplay := club.Display()
 		managesDisplay := model.ManagesDisplay{}
-		loadClubData(db, &club, clubDisplay)
-		managesDisplay.ClubDisplay = clubDisplay
+		loadClubData(db, &club)
+		managesDisplay.Club = club
 		managesDisplay.IsOwner = isOwner(db, user, &club)
 		manages = append(manages, &managesDisplay)
 	}

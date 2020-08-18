@@ -7,11 +7,12 @@ import (
 
 // Basic Tag Struct
 type Tag struct {
+	ID        uint           `gorm:"autoIncrement" json:"id"`
 	CreatedAt time.Time      `json:"-"`
 	UpdatedAt time.Time      `json:"-"`
 	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
-	Name      string         `gorm:"primarykey" validate:"required,min=1,max=25"`
-	IsActive  bool           `json:"-"`
+	Name      string         `gorm:"primarykey" validate:"required,min=1,max=25" json:"name"`
+	IsActive  bool           `json:"isActive"`
 }
 
 func NewTag() *Tag {
