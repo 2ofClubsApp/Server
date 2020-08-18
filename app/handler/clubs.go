@@ -113,7 +113,9 @@ func UpdateClubTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
 	// Must check with both user and club existing in the event that a user gets deleted but you manage to get a hold of their access token
+	fmt.Println("Checkpoint 1")
 	if userExists && clubExists && isManager(db, user, club) {
+		fmt.Println("Checkpoint 2")
 		tags := filterTags(extractTags(db, r))
 		db.Model(club).Association(model.SetsColumn).Replace(tags)
 		s.Message = status.TagsUpdated
@@ -121,7 +123,9 @@ func UpdateClubTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		httpStatus = http.StatusOK
 	} else if !clubExists {
 		s.Message = status.ClubNotFound
+		httpStatus = http.StatusOK
 	} else {
+		fmt.Println("Checkpoint 4")
 		s.Message = http.StatusText(http.StatusForbidden)
 		httpStatus = http.StatusForbidden
 	}
@@ -144,9 +148,8 @@ func getClubInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType s
 	} else {
 		switch strings.ToLower(infoType) {
 		case model.AllClubInfo:
-			clubDisplay := club.Display()
-			loadClubData(db, club, clubDisplay)
-			s.Data = clubDisplay
+			loadClubData(db, club)
+			s.Data = club
 		case model.AllClubEventsHost:
 			clubEvents := make(map[string][]model.Event)
 			db.Table(model.ClubTable).Preload(model.HostsColumn).Find(club)
@@ -164,11 +167,11 @@ func getClubInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType s
 func GetClubEvents(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	getClubInfo(db, w, r, model.AllClubEventsHost)
 }
-func loadClubData(db *gorm.DB, club *model.Club, clubDisplay *model.ClubDisplay) {
+func loadClubData(db *gorm.DB, club *model.Club) {
 	db.Table(model.ClubTable).Preload(model.SetsColumn).Find(club)
 	db.Table(model.ClubTable).Preload(model.HostsColumn).Find(club)
-	clubDisplay.Tags = flatten(filterTags(club.Sets))
-	clubDisplay.Hosts = club.Hosts
+	club.Sets = filterTags(club.Sets)
+	club.Hosts = club.Hosts
 }
 
 /*

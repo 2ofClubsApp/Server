@@ -91,23 +91,37 @@ func UploadTagsList(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	WriteData(GetJSON(s), http.StatusOK, w)
 }
 
-func GetTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+func GetTags(db *gorm.DB, w http.ResponseWriter, _ *http.Request) {
 	s := status.New()
-	var allTags []model.Tag
-	tagsList := []string{}
-	type TagData struct {
-		Tags []string
-	}
-	result := db.Find(&allTags)
-	if result.Error != nil {
+	tags, err := getAllTags(db)
+	if err != nil {
 		s.Message = status.TagsGetFailure
 	} else {
-		for _, tag := range filterTags(allTags) {
-			tagsList = append(tagsList, tag.Name)
-		}
 		s.Code = status.SuccessCode
 		s.Message = status.TagsFound
-		s.Data = TagData{Tags: tagsList}
+		s.Data = tags
+	}
+	WriteData(GetJSON(s), http.StatusOK, w)
+}
+
+func getAllTags(db *gorm.DB) ([]model.Tag, error) {
+	var allTags []model.Tag
+	result := db.Find(&allTags)
+	if result.Error != nil {
+		return allTags, fmt.Errorf("unable to get tags")
+	}
+	return allTags, nil
+}
+
+func GetActiveTags(db *gorm.DB, w http.ResponseWriter, _ *http.Request) {
+	s := status.New()
+	tags, err := getAllTags(db)
+	if err != nil {
+		s.Message = status.TagsGetFailure
+	} else {
+		s.Code = status.SuccessCode
+		s.Message = status.TagsFound
+		s.Data = filterTags(tags)
 	}
 	WriteData(GetJSON(s), http.StatusOK, w)
 }

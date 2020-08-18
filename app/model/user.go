@@ -15,14 +15,14 @@ type User struct {
 type UserDisplay struct {
 	Email   string            `json:"email"`
 	Manages []*ManagesDisplay `json:"manages"`
-	Tags    []string          `json:"tags"`
+	Tags    []Tag             `json:"tags"`
 	Attends []Event           `json:"attends"`
 }
 
 // ManagesDisplay is used as a display wrapper for the ClubDisplay
 // For a users managed club, whether they're an owner or not is also displayed
 type ManagesDisplay struct {
-	*ClubDisplay
+	Club
 	IsOwner bool `json:"isOwner"`
 }
 
