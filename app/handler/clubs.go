@@ -17,12 +17,25 @@ func GetClubs(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	type Club struct {
 		club_id int
 	}
-	clubs := []Club{}
-	s.Message = status.ClubsFound
+	var clubs []model.Club
+	//clubs := []model.Club{}
+	//s.Message = status.ClubsFound
 	activeTags := flatten(filterTags(extractTags(db, r)))
 	fmt.Println(activeTags)
-	db.Table(model.ClubTagTable).Where("tag_name IN ?", activeTags).Find(&clubs)
-	fmt.Println(clubs)
+	//db.Table(model.ClubTagTable).Where("tag_name IN ?", activeTags).Find(&clubs)
+	db.Joins("JOIN club_tag ON club_tag.club_id=club.id").
+		Joins("JOIN tag ON club_tag.tag_name=tag.name").
+		Where("tag.name IN ?", activeTags).
+		Distinct("club.name").
+		Find(&clubs)
+	//db.Raw("SELECT DISTINCT club.name FROM club, club_tag JOIN tag ON club_tag.tag_name=tag.name JOIN club_tag ON club_tag.club_id=club.id WHERE tag.name IN ?", activeTags).Scan(&clubs)
+	//res := db.Raw("Select club.id From club NATURAL JOIN club_tag Where club_tag.tag_name IN ?", activeTags).Find(&clubs)
+	//fmt.Println(res.RowsAffected)
+	//fmt.Println(res.Error)
+	//fmt.Println(clubs)
+	for _, r := range clubs {
+		fmt.Println(r.Name)
+	}
 	WriteData(GetJSON(s), http.StatusOK, w)
 }
 
@@ -106,6 +119,8 @@ func UpdateClubTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		s.Message = status.TagsUpdated
 		s.Code = status.SuccessCode
 		httpStatus = http.StatusOK
+	} else if !clubExists {
+		s.Message = status.ClubNotFound
 	} else {
 		s.Message = http.StatusText(http.StatusForbidden)
 		httpStatus = http.StatusForbidden
@@ -208,7 +223,12 @@ func editManagers(db *gorm.DB, w http.ResponseWriter, r *http.Request, op string
 			var err error
 			switch op {
 			case model.OpAdd:
-				err = db.Model(newManager).Association(model.ManagesColumn).Append(club)
+				res := db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ?", newManager.ID, club.ID).First(model.NewUserClub())
+				if res.Error != nil { // Record not existing, then add the new manager
+					err = db.Model(newManager).Association(model.ManagesColumn).Append(club)
+				} else {
+					err = fmt.Errorf("unable to add manager")
+				}
 			case model.OpRemove:
 				err = db.Model(newManager).Association(model.ManagesColumn).Delete(club)
 			}

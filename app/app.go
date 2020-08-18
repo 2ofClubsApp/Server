@@ -67,12 +67,21 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 	app.setRoutes()
 	log.Println("Connected to Redis")
 	log.Println("Connected to Database")
-	db.Migrator().CreateTable(model.NewEvent(), model.NewTag(), model.NewUserClub(), model.NewEvent())
-	db.AutoMigrate(model.NewUser(), model.NewClub())
-	db.SetupJoinTable(&model.User{}, "Manages", &model.UserClub{})
+	if db.Migrator().CreateTable(model.NewEvent(), model.NewTag(), model.NewUserClub(), model.NewEvent()) != nil {
+		log.Println("Base tables not created")
+	}
+	if db.AutoMigrate(model.NewUser(), model.NewClub()) != nil {
+		log.Println("User and Club join tables not created")
+	}
+	if db.SetupJoinTable(&model.User{}, "Manages", &model.UserClub{}) != nil {
+		log.Println("User Club join table not created")
+	}
 
 	// GORM already ensures the uniqueness of the username and email, thus we don't need to check if the admin already exists or not
-	db.Create(adminConfig)
+	if db.Create(adminConfig).Error != nil {
+		log.Println("Unable to create admin account. Account already exists")
+	}
+
 }
 
 func (app *App) setRoutes() {
@@ -134,7 +143,10 @@ func (app *App) setRoutes() {
 }
 
 func (app *App) Run(port string) {
-	http.ListenAndServe(port, handlers.CORS(app.origin, app.methods, app.headers)(app.router))
+	err := http.ListenAndServe(port, handlers.CORS(app.origin, app.methods, app.headers)(app.router))
+	if err != nil {
+		panic(err)
+	}
 }
 
 // Setting a POST route and its associated handler

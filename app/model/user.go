@@ -15,8 +15,8 @@ type User struct {
 type UserDisplay struct {
 	Email   string            `json:"email"`
 	Manages []*ManagesDisplay `json:"manages"`
-	Tags    []string          `json: "tags"`
-	Attends []Event           `json: "attends"`
+	Tags    []string          `json:"tags"`
+	Attends []Event           `json:"attends"`
 }
 
 // ManagesDisplay is used as a display wrapper for the ClubDisplay
