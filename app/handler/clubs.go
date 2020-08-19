@@ -6,7 +6,12 @@ import (
 	"github.com/2-of-clubs/2ofclubs-server/app/status"
 	"github.com/go-playground/validator"
 	"gorm.io/gorm"
+	"io"
+	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -102,6 +107,89 @@ func CreateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	WriteData(GetJSON(s), http.StatusOK, w)
 }
 
+func GetClubPhoto(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	s := status.New()
+	clubID := getVar(r, model.ClubIDVar)
+	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, model.NewClub())
+	if clubExists {
+		path := fmt.Sprintf("images/%s.png", clubID)
+		img, err := os.Open(path)
+		if err != nil {
+			fmt.Println("can't open image")
+		}
+		files, err := ioutil.ReadDir("./images")
+		if err != nil {
+			log.Fatal(err)
+		}
+		for _, f := range files {
+			fmt.Println(f.Name())
+		}
+		defer img.Close()
+		w.Header().Set("Content-Type", "image/jpeg")
+		_, err = io.Copy(w, img)
+		if err != nil {
+			s.Message = status.FileReadFailure
+		} else {
+			s.Code = status.SuccessCode
+		}
+	} else {
+		s.Message = status.ClubPhotoNotFound
+	}
+	WriteData(GetJSON(s), http.StatusOK, w)
+}
+
+func UploadClubPhoto(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+	s := status.New()
+	httpStatus := http.StatusOK
+	clubID := getVar(r, model.ClubIDVar)
+	club := model.NewClub()
+	user := model.NewUser()
+	claims := GetTokenClaims(r)
+	username := fmt.Sprintf("%v", claims["sub"])
+	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
+	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
+	if clubExists && userExists && isManager(db, user, club) {
+		// Max 10MB upload file
+		r.ParseMultipartForm(10 << 20) // 2^20
+		file, handler, err := r.FormFile("file")
+		if err != nil {
+			fmt.Errorf("file doesn't exist: %v", err)
+			s.Message = status.FileNotFound
+		} else {
+			if filepath.Ext(handler.Filename) != ".png" && filepath.Ext(handler.Filename) != ".jpg" {
+				s.Message = status.InvalidPhotoFormat
+			} else {
+				defer file.Close()
+				fileName := fmt.Sprintf("./images/%v.png", club.ID)
+				tempFile, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0666)
+				fmt.Println(tempFile.Name())
+				if err != nil {
+					s.Message = status.FileCreationFailure
+				} else {
+					defer tempFile.Close()
+					fileBytes, err := ioutil.ReadAll(file)
+					if err != nil {
+						s.Message = status.FileReadFailure
+					} else {
+						_, err := tempFile.Write(fileBytes)
+						if err != nil {
+							s.Message = status.FileWriteFailure
+						} else {
+							s.Code = status.SuccessCode
+							s.Message = status.FileWriteSuccess
+						}
+					}
+				}
+			}
+		}
+	} else {
+		s.Message = http.StatusText(http.StatusForbidden)
+		httpStatus = http.StatusForbidden
+	}
+	WriteData(GetJSON(s), httpStatus, w)
+
+}
+
 func UpdateClubTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	var httpStatus int
 	s := status.New()
@@ -113,9 +201,7 @@ func UpdateClubTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
 	// Must check with both user and club existing in the event that a user gets deleted but you manage to get a hold of their access token
-	fmt.Println("Checkpoint 1")
 	if userExists && clubExists && isManager(db, user, club) {
-		fmt.Println("Checkpoint 2")
 		tags := filterTags(extractTags(db, r))
 		db.Model(club).Association(model.SetsColumn).Replace(tags)
 		s.Message = status.TagsUpdated
@@ -125,7 +211,6 @@ func UpdateClubTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		s.Message = status.ClubNotFound
 		httpStatus = http.StatusOK
 	} else {
-		fmt.Println("Checkpoint 4")
 		s.Message = http.StatusText(http.StatusForbidden)
 		httpStatus = http.StatusForbidden
 	}

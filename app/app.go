@@ -112,9 +112,11 @@ func (app *App) setRoutes() {
 
 	// Tag Routes
 	app.Get("/tags", app.Handle(handler.GetTags, false))
-	app.Get("/tags/active", app.Handle(handler.GetActiveTags, false))       // Done
-	app.Post("/tags", app.Handle(handler.CreateTag, true))                  // Done
-	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true))      // Done
+	app.Get("/tags/active", app.Handle(handler.GetActiveTags, false))  // Done
+	app.Post("/tags", app.Handle(handler.CreateTag, true))             // Done
+	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true)) // Done
+	app.Post("/upload/photos/clubs/{cid:[0-9]+}", app.Handle(handler.UploadClubPhoto, true))
+	app.Get("/photos/clubs/{cid:[0-9]+}", app.Handle(handler.GetClubPhoto, false))
 	app.Post("/toggle/tags/{tagName}", app.Handle(handler.ToggleTag, true)) // Done
 
 	// Club routes
