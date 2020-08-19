@@ -9,7 +9,7 @@ type Event struct {
 	//DateTime    time.Time  `validate:"required,gtetoday,datetime"`
 	Description string  `validate:"required,max=300" json:"description"`
 	Location    string  `validate:"required,max=100" json:"location"`
-	Fee         float64 `validate:"required,gte=0" json:"fee"`
+	Fee         float64 `validate:"gte=0" json:"fee"`
 }
 
 func NewEvent() *Event {
