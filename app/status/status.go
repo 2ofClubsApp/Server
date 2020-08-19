@@ -56,7 +56,7 @@ const (
 	GetNonToggledUsersSuccess = "Retrieved all non toggled users"
 	ManagerOwnerRequired      = "You must be a manager or owner of the club"
 	AdminRequired             = "Please contact an administrator."
-	InvalidFile               = "Invalid File: A .txt file is required"
+	InvalidTxtFile            = "Invalid File: A .txt file is required"
 	UnableToReadFile          = "Unable to read file"
 	FileNotFound              = "File doesn't exist"
 	UserNotApproved           = "Sorry, your account has not been approved yet"
@@ -76,6 +76,14 @@ const (
 	EventDeleted               = "Event Deleted"
 	GetAllEventsFailure        = "Unable to get all events"
 	AllEventsFound             = "All Events Found"
+
+	// Photo Upload
+	InvalidPhotoFormat   = "Invalid File: A .jpg or .png file of 10 MB or less is required."
+	FileCreationFailure  = "Unable to create file"
+	FileReadFailure      = "Unable to read file"
+	FileWriteFailure     = "Unable to write file"
+	FileWriteSuccess     = "Successfully written to file"
+	ClubPhotoNotFound = "Unable to find a photo for the club"
 
 	// Hashing
 	HashErr     = "hashing Error"

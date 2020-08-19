@@ -68,7 +68,7 @@ func UploadTagsList(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 			s.Message = status.FileNotFound
 		} else {
 			if filepath.Ext(handler.Filename) != ".txt" {
-				s.Message = status.InvalidFile
+				s.Message = status.InvalidTxtFile
 			} else {
 				fileContent, err := ioutil.ReadAll(file)
 				defer file.Close()
