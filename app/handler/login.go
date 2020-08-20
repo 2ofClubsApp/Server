@@ -13,42 +13,47 @@ import (
 	"time"
 )
 
-// TODO: Prevent login many times (if user tries to brute force this)
-func Login(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	var httpStatus int
+const (
+	accessDuration  = 5       // 5 minutes
+	refreshDuration = 60 * 24 // 24 hours
+)
+
+/* User Login
+   See model.credentials or docs for username and email constraints
+*/
+func Login(db *gorm.DB, w http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	creds := model.NewCredentials()
-	extractBody(r, creds)
-	creds.Username = strings.ToLower(creds.Username)
-	hash, isFound := getPasswordHash(db, creds.Username)
-	var err error
-	s := status.New()
-	if isFound {
-		err = bcrypt.CompareHashAndPassword(hash, []byte(creds.Password))
+	if extractBody(r, creds) != nil {
+		return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
 	}
+	creds.Username = strings.ToLower(creds.Username)
+	hash, passFound := getPasswordHash(db, creds.Username)
+	if !passFound {
+		return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+	}
+	err := bcrypt.CompareHashAndPassword(hash, []byte(creds.Password))
 	if err != nil {
 		s.Message = status.LoginFailure
-		httpStatus = http.StatusUnauthorized
-	} else {
-		userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, creds.Username, model.NewUser())
-		if tp, err := GetTokenPair(creds.Username, 5, 60*24); err == nil && userExists {
-			c := GenerateCookie(model.RefreshToken, tp.RefreshToken)
-			http.SetCookie(w, c)
-			type login struct {
-				Token string
-			}
-			s.Code = status.SuccessCode
-			s.Message = status.LoginSuccess
-			s.Data = login{Token: tp.AccessToken}
-		} else {
-			s.Message = status.UserNotApproved
-		}
-		httpStatus = http.StatusOK
+		return http.StatusUnauthorized, nil
 	}
-	WriteData(GetJSON(s), httpStatus, w)
+	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, creds.Username, model.NewUser())
+	if tp, err := GetTokenPair(creds.Username, accessDuration, refreshDuration); err == nil && userExists {
+		c := GenerateCookie(model.RefreshToken, tp.RefreshToken)
+		http.SetCookie(w, c)
+		type login struct {
+			Token string
+		}
+		s.Code = status.SuccessCode
+		s.Message = status.LoginSuccess
+		s.Data = login{Token: tp.AccessToken}
+		return http.StatusOK, nil
+	}
+	s.Message = status.UserNotApproved
+	return http.StatusUnauthorized, nil
 }
 
 /*
-	Gets password hash for a user given the username.
+Gets password hash for a user given the username.
 */
 func getPasswordHash(db *gorm.DB, userName string) ([]byte, bool) {
 	type p struct {
@@ -75,14 +80,16 @@ func GenerateCookie(name string, value string) *http.Cookie {
 	}
 }
 
+/*
+Generating a JWT based on the user's username
+*/
 func GenerateJWT(subject string, duration time.Duration, jwtSecret string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
 	sysTime := time.Now()
 	claims["iat"] = sysTime
 	claims["exp"] = sysTime.Add(time.Minute * duration).Unix()
-	claims["sub"] = subject // Subject usually as a number (unique value?)
-	// Note: This must be changed to an env variable later
+	claims["sub"] = subject // Usernames are unique to each user
 	tokenString, err := token.SignedString([]byte(jwtSecret))
 	if err != nil {
 		return "", err
@@ -90,6 +97,11 @@ func GenerateJWT(subject string, duration time.Duration, jwtSecret string) (stri
 	return tokenString, nil
 }
 
+/*
+Obtaining an access and refresh token pair
+Note: Access tokens have a lifespan of 5 minutes
+	  Refresh tokens have a lifespan of 24 hours (1 day)
+*/
 func GetTokenPair(subject string, accessDuration time.Duration, refreshDuration time.Duration) (*model.TokenInfo, error) {
 	if accessToken, atErr := GenerateJWT(subject, accessDuration, os.Getenv("JWT_SECRET")); atErr == nil {
 		if refreshToken, rtErr := GenerateJWT(subject, refreshDuration, os.Getenv("JWT_SECRET")); rtErr == nil {

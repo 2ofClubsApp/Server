@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
 	"github.com/2-of-clubs/2ofclubs-server/app/status"
@@ -16,12 +15,6 @@ import (
 /*
 	Common methods shared amongst the different models
 */
-
-func NotFound() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		WriteData(http.StatusText(http.StatusNotFound), http.StatusNotFound, w)
-	})
-}
 
 /*
 Extracting variables from request URL
@@ -43,8 +36,6 @@ func GetTokenClaims(r *http.Request) jwt.MapClaims {
 	return claims
 }
 
-// Note: Need to add more authentication checks later (This is temporary)
-
 /*
 Return true if the JWT is valid, false otherwise
 */
@@ -57,6 +48,7 @@ func VerifyJWT(r *http.Request) bool {
 	return false
 }
 
+// Returning true whether the JWT is valid
 func IsValidJWT(token string, kf jwt.Keyfunc) bool {
 	if t, err := jwt.Parse(token, kf); err == nil {
 		if _, ok := t.Claims.(jwt.MapClaims); ok && t.Valid {
@@ -66,6 +58,7 @@ func IsValidJWT(token string, kf jwt.Keyfunc) bool {
 	return false
 }
 
+// Key Function to verify the token signing method (Used in conjunction with IsValidJWT)
 func KF(secret string) jwt.Keyfunc {
 	return func(token *jwt.Token) (interface{}, error) {
 		// Verifying that the signing method is the same before continuing any further
@@ -76,6 +69,8 @@ func KF(secret string) jwt.Keyfunc {
 	}
 }
 
+// Returns true if the record is active
+// This is used for verifying users and clubs as they need to be activated upon creation
 func IsSingleRecordActive(db *gorm.DB, tableName string, column string, val string, t interface{}) bool {
 	exists := SingleRecordExists(db, tableName, column, val, t)
 	if exists {
@@ -89,39 +84,13 @@ func IsSingleRecordActive(db *gorm.DB, tableName string, column string, val stri
 	return false
 }
 
-/*
-Returning true if the record already exists in the table, false otherwise.
-*/
-// When soft deleted, the record won't exist anymore
+//Returning true if the record already exists in the table, false otherwise.
 func SingleRecordExists(db *gorm.DB, tableName string, column string, val string, t interface{}) bool {
 	result := db.Table(tableName).Where(column+"= ?", val).First(t)
 	return result.Error == nil
 }
 
-/*
-Returning the JSON representation of a struct.
-*/
-func GetJSON(response interface{}) string {
-	data, err := json.MarshalIndent(response, "", "\t")
-	if err != nil {
-		fmt.Println(err)
-		return ""
-	}
-	return string(data)
-}
-
-/*
-Return response message and an HTTP Status Code upon receiving a request.
-*/
-func WriteData(data string, code int, w http.ResponseWriter) int {
-	w.WriteHeader(code)
-	n, err := fmt.Fprint(w, data)
-	if err != nil {
-		return -1
-	}
-	return n
-}
-
+// Returning true whether the user is an admin or not
 func isAdmin(db *gorm.DB, r *http.Request) bool {
 	claims := GetTokenClaims(r)
 	subject := fmt.Sprintf("%v", claims["sub"])

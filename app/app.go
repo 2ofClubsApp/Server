@@ -5,6 +5,7 @@ import (
 	"github.com/2-of-clubs/2ofclubs-server/app/handler"
 	"github.com/2-of-clubs/2ofclubs-server/app/logger"
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
+	"github.com/2-of-clubs/2ofclubs-server/app/status"
 	"github.com/2-of-clubs/2ofclubs-server/config"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -16,8 +17,9 @@ import (
 )
 
 type routeHandler func(w http.ResponseWriter, r *http.Request)
-type hdlr func(db *gorm.DB, w http.ResponseWriter, r *http.Request)
+type hdlr func(db *gorm.DB, w http.ResponseWriter, r *http.Request, s *status.Status) (httpStatus int, err error)
 
+// API config for DB, Mux Router and CORS
 type App struct {
 	db      *gorm.DB
 	router  *mux.Router
@@ -26,7 +28,9 @@ type App struct {
 	headers handlers.CORSOption
 }
 
-func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisConfig, adminConfig *model.User) {
+// Server initialization
+// Database, CORS and the admin settings are initialized
+func (app *App) Initialize(dbConfig *config.DBConfig, _ *config.RedisConfig, adminConfig *model.User) {
 	//ctx := context.Background()
 	dbFormat :=
 		fmt.Sprintf(
@@ -84,11 +88,10 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 
 }
 
+// Set all routes for API server
 func (app *App) setRoutes() {
 	// Signup Route
 	app.Post("/signup", app.Handle(handler.SignUp, false)) // Done
-	//app.Get("/signup/usernames/{username}", app.Handle(handler.QueryUsername, false)) // Integrated into /signup
-	//app.Get("/signup/emails/{email}", app.Handle(handler.QueryEmail, false))          // Integrated into /signup
 
 	// Login Routes
 	app.Post("/login", app.Handle(handler.Login, false)) // Done (Need to check for synchronous token (CSRF prevention))
@@ -96,7 +99,7 @@ func (app *App) setRoutes() {
 	// Admin Route
 	app.Post("/toggle/users/{username}", app.Handle(handler.ToggleUser, true))   // Done
 	app.Post("/toggle/clubs/{cid:[0-9]+}", app.Handle(handler.ToggleClub, true)) // Done
-	app.Get("/users/toggle", app.Handle(handler.GetToggleUser, true))            // Done
+	app.Get("/users/toggle", app.Handle(handler.GetToggleUser, true))            // In-Progress
 
 	// User Routes
 	app.Get("/users/{username}", app.Handle(handler.GetUser, true))                             // Done
@@ -107,11 +110,10 @@ func (app *App) setRoutes() {
 	app.Post("/events/{eid:[0-9]+}/unattend", app.Handle(handler.RemoveUserAttendsEvent, true)) // Done
 	app.Post("/resetpassword/{username}", app.Handle(handler.RequestResetUserPassword, false))  // Done
 	app.Post("/resetpassword/{username}/{token}", app.Handle(handler.ResetUserPassword, false)) // Done
-	app.Post("/users/{username}", app.Handle(handler.UpdateUserPassword, true))
-	// Potential code merger on /clubs/{name} and /users/{username}
+	app.Post("/changePassword/users/{username}", app.Handle(handler.UpdateUserPassword, true))  // Done
 
 	// Tag Routes
-	app.Get("/tags", app.Handle(handler.GetTags, false))
+	app.Get("/tags", app.Handle(handler.GetTags, false))               // Done
 	app.Get("/tags/active", app.Handle(handler.GetActiveTags, false))  // Done
 	app.Post("/tags", app.Handle(handler.CreateTag, true))             // Done
 	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true)) // Done
@@ -121,30 +123,27 @@ func (app *App) setRoutes() {
 
 	// Club routes
 	app.Post("/clubs", app.Handle(handler.CreateClub, true))              // Done
-	app.Post("/clubs/{cid:[0-9]+}", app.Handle(handler.UpdateClub, true)) // Done
+	//app.Post("/clubs/{cid:[0-9]+}", app.Handle(handler.UpdateClub, true)) // Requires Fixing
 	app.Get("/clubs/{cid:[0-9]+}", app.Handle(handler.GetClub, false))    // Done
 
-	//app.Delete("/clubs/{name}", app.Handle(handler.DeleteClub, true)) // Partially Done (The owner can delete the club and all associations will be removed?) (Clubs can't be deleted, only deactivated)
 	app.Post("/clubs/{cid:[0-9]+}/manages/{username}", app.Handle(handler.AddManager, true))      // Done (Adding managers/maintainers to club)
 	app.Delete("/clubs/{cid:[0-9]+}/manages/{username}", app.Handle(handler.RemoveManager, true)) // Partially done (Removing managers/maintainers) (If the current owner wants to leave, then they must appoint a new person)
 	app.Post("/clubs/{cid:[0-9]+}/tags", app.Handle(handler.UpdateClubTags, true))                // Done
 	app.Get("/clubs", app.Handle(handler.GetClubs, false))                                        // In-Progress
-	//app.Get("/clubs/tags/{tag}", app.Handle(handler.GetClubsTag, false)) // Integrated into /clubs
 
 	app.Get("/events", app.Handle(handler.GetAllEvents, false))                       // Done
 	app.Get("/events/{eid:[0-9]+}", app.Handle(handler.GetEvent, false))              // Done
 	app.Get("/clubs/{cid:[0-9]+}/events", app.Handle(handler.GetClubEvents, false))   // Done
 	app.Post("/clubs/{cid:[0-9]+}/events", app.Handle(handler.CreateClubEvent, true)) // Done
 
-	app.Post("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.UpdateClubEvent, true))   // In-Progress
+	//app.Post("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.UpdateClubEvent, true))   // Done
 	app.Delete("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.DeleteClubEvent, true)) // Done
 
-	//app.Post("/clubs/{cid}/toggle", app.Handle()) // In-Progress
-
 	// 404 Route
-	app.router.NotFoundHandler = handler.NotFound() // Done
+	app.router.NotFoundHandler = notFound() // Done
 }
 
+// Main run function to startup API serve
 func (app *App) Run(port string) {
 	err := http.ListenAndServe(port, handlers.CORS(app.origin, app.methods, app.headers)(app.router))
 	if err != nil {
@@ -167,17 +166,49 @@ func (app *App) Delete(path string, f routeHandler) {
 	app.router.HandleFunc(path, f).Methods(http.MethodDelete)
 }
 
+// Wrapper function to return a base Handler function
 func (app *App) Handle(h hdlr, verifyRequest bool) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Must verify for sensitive information
+		s := status.New()
 		if verifyRequest {
 			if isValid := handler.VerifyJWT(r); isValid {
-				h(app.db, w, r)
-			} else {
-				handler.WriteData(http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized, w)
+				if httpStatus, err := h(app.db, w, r, s); err != nil {
+					WriteData(http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError, w)
+					return
+				} else {
+					WriteData(s.Display(), httpStatus, w)
+					return
+				}
 			}
+			WriteData(http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized, w)
+			return
 		} else {
-			h(app.db, w, r)
+			if httpStatus, err := h(app.db, w, r, s); err != nil {
+				WriteData(http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError, w)
+				return
+			} else {
+				WriteData(s.Display(), httpStatus, w)
+			}
 		}
 	}
+}
+
+// 404 Not Found handler for mismatched routes
+func notFound() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		WriteData(http.StatusText(http.StatusNotFound), http.StatusNotFound, w)
+	})
+}
+
+/*
+Return response message and an HTTP Status Code upon receiving a request.
+*/
+func WriteData(data string, code int, w http.ResponseWriter) int {
+	w.WriteHeader(code)
+	n, err := fmt.Fprint(w, data)
+	if err != nil {
+		return -1
+	}
+	return n
 }

@@ -2,6 +2,7 @@ package handler
 
 import (
 	"errors"
+	"fmt"
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
 	"github.com/2-of-clubs/2ofclubs-server/app/status"
 	"github.com/go-playground/validator"
@@ -12,44 +13,42 @@ import (
 	"strings"
 )
 
-func SignUp(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	s := status.New()
+/* User SignUp
+   See model.Credentials or docs for username and email constraints
+*/
+func SignUp(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	s.Message = status.SignupFailure
 	credStatus := status.CredentialStatus{}
-	// Check if content type is application/json?
 	creds, isValidCred := verifyCredentials(r)
 	hashedPass, hashErr := Hash(creds.Password)
-	if isValidCred && hashErr == nil {
+	if isValidCred == nil && hashErr == nil {
 		creds.Password = hashedPass
 		user := model.NewUser()
-		unameAvailable := !IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, creds.Username, user)
-		emailAvailable := !IsSingleRecordActive(db, model.UserTable, model.EmailColumn, creds.Email, user)
+		unameAvailable := !SingleRecordExists(db, model.UserTable, model.UsernameColumn, creds.Username, user)
+		emailAvailable := !SingleRecordExists(db, model.UserTable, model.EmailColumn, creds.Email, user)
 		if unameAvailable && emailAvailable {
-			err := createUser(db, w, creds, user)
+			err := createUser(db, creds, user)
 			if err != nil {
-				s.Message = status.SignupFailure
-				WriteData(GetJSON(s), http.StatusInternalServerError, w)
-			} else {
-				s.Code = status.SuccessCode
-				s.Message = status.SignupSuccess
-				WriteData(GetJSON(s), http.StatusCreated, w)
+				return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
 			}
-		} else {
-			if !unameAvailable {
-				credStatus.Username = status.UsernameExists
-			}
-			if !emailAvailable {
-				credStatus.Email = status.EmailExists
-			}
-			s.Data = credStatus
-			WriteData(GetJSON(s), http.StatusConflict, w)
+			s.Code = status.SuccessCode
+			s.Message = status.SignupSuccess
+			return http.StatusCreated, nil
 		}
-	} else {
-		credStatus.Username = status.UsernameAlphaNum
-		credStatus.Email = status.ValidEmail
+		if !unameAvailable {
+			credStatus.Username = status.UsernameExists
+		}
+		if !emailAvailable {
+			credStatus.Email = status.EmailExists
+		}
 		s.Data = credStatus
-		WriteData(GetJSON(s), http.StatusUnprocessableEntity, w)
+		return http.StatusConflict, nil
 	}
+	credStatus.Username = status.UsernameAlphaNum
+	credStatus.Email = status.ValidEmail
+	credStatus.Password = status.PasswordRequired
+	s.Data = credStatus
+	return http.StatusUnprocessableEntity, nil
 }
 
 /*
@@ -67,21 +66,23 @@ func Hash(info string) (string, error) {
 /*
 Extracting JSON payload credentials and returning (model, true) if valid, otherwise (model, false).
 */
-func verifyCredentials(r *http.Request) (*model.Credentials, bool) {
+func verifyCredentials(r *http.Request) (*model.Credentials, error) {
 	c := model.NewCredentials()
 	err := extractBody(r, c)
 	if err != nil {
-		return c, false
+		return c, fmt.Errorf("unable to extract credentials")
 	}
 	validate := validator.New()
-	validate.RegisterValidation("alpha", validateUsername)
+	if err := validate.RegisterValidation("alpha", validateUsername); err != nil {
+		return c, fmt.Errorf("struct validation error")
+	}
 	err = validate.Struct(c)
 	if err != nil {
-		return c, false
+		return c, fmt.Errorf("struct validation error")
 	}
 	c.Username = strings.ToLower(c.Username)
 	c.Email = strings.ToLower(c.Email)
-	return c, true
+	return c, nil
 }
 
 /*

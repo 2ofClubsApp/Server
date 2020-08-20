@@ -8,7 +8,6 @@ import (
 	"gorm.io/gorm"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -16,8 +15,8 @@ import (
 )
 
 // In-Progress
-func GetClubs(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	s := status.New()
+func GetClubs(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+	//s := status.New()
 
 	type Club struct {
 		club_id int
@@ -27,29 +26,30 @@ func GetClubs(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	//s.Message = status.ClubsFound
 	activeTags := flatten(filterTags(extractTags(db, r)))
 	fmt.Println(activeTags)
-	//db.Table(model.ClubTagTable).Where("tag_name IN ?", activeTags).Find(&clubs)
+	db.Table(model.ClubTagTable).Where("tag_name IN ?", activeTags).Find(&clubs)
+
 	db.Joins("JOIN club_tag ON club_tag.club_id=club.id").
 		Joins("JOIN tag ON club_tag.tag_name=tag.name").
 		Where("tag.name IN ?", activeTags).
 		Distinct("club.name").
 		Find(&clubs)
-	//db.Raw("SELECT DISTINCT club.name FROM club, club_tag JOIN tag ON club_tag.tag_name=tag.name JOIN club_tag ON club_tag.club_id=club.id WHERE tag.name IN ?", activeTags).Scan(&clubs)
+	//db.Raw("SELECT DISTINCT c.name FROM club AS c NATURAL JOIN club_tag AS ct WHERE tag.name IN ?", activeTags).Scan(&clubs)
 	//res := db.Raw("Select club.id From club NATURAL JOIN club_tag Where club_tag.tag_name IN ?", activeTags).Find(&clubs)
 	//fmt.Println(res.RowsAffected)
 	//fmt.Println(res.Error)
-	//fmt.Println(clubs)
+	fmt.Println(clubs)
 	for _, r := range clubs {
 		fmt.Println(r.Name)
 	}
-	WriteData(GetJSON(s), http.StatusOK, w)
+	return http.StatusForbidden, nil
 }
 
-func UpdateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+// Update club with new information
+// See model.Club or docs for club attribute specifications
+func UpdateClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	clubID := getVar(r, model.ClubIDVar)
-	httpStatusCode := http.StatusOK
 	club := model.NewClub()
 	user := model.NewUser()
-	s := status.New()
 	claims := GetTokenClaims(r)
 	uname := fmt.Sprintf("%v", claims["sub"])
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
@@ -59,88 +59,97 @@ func UpdateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 		extractBody(r, updatedClub)
 		validate := validator.New()
 		err := validate.Struct(updatedClub)
-		if err == nil {
-			db.Model(club).Select(model.BioColumn, model.SizeColumn).Updates(updatedClub)
-			s.Code = status.SuccessCode
-			s.Message = status.ClubUpdateSuccess
-		} else {
+		if err != nil {
 			s.Message = status.ClubUpdateFailure
+			return http.StatusUnprocessableEntity, nil
 		}
+		res := db.Model(club).Select(model.BioColumn, model.SizeColumn).Updates(updatedClub)
+		if res.Error != nil {
+			return http.StatusInternalServerError, fmt.Errorf("unable to update club")
+		}
+		s.Code = status.SuccessCode
+		s.Message = status.ClubUpdateSuccess
+		return http.StatusOK, nil
 	} else if !clubExists {
 		s.Message = status.ClubNotFound
-	} else {
-		s.Code = status.FailureCode
-		s.Message = http.StatusText(http.StatusForbidden)
-		httpStatusCode = http.StatusForbidden
+		return http.StatusNotFound, nil
 	}
-	WriteData(GetJSON(s), httpStatusCode, w)
+	s.Code = status.FailureCode
+	s.Message = http.StatusText(http.StatusForbidden)
+	return http.StatusForbidden, nil
 }
 
-/*
-Check if the email & username is available (RecordExists)
+/* Creating a club (You must have an active user account first)
+See model.Club or the docs for club information constraints
 */
-func CreateClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+func CreateClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	claims := GetTokenClaims(r)
 	user := model.NewUser()
 	uname := fmt.Sprintf("%v", claims["sub"])
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, uname, user)
 	club := model.NewClub()
-	extractBody(r, club)
+	if extractBody(r, club) != nil {
+		return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+	}
 	validate := validator.New()
 	err := validate.Struct(club)
+	if err != nil {
+		return http.StatusUnprocessableEntity, nil
+	}
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.NameColumn, club.Name, model.NewClub())
 	emailExists := SingleRecordExists(db, model.ClubTable, model.EmailColumn, club.Email, model.NewClub())
-	s := status.New()
-	// Keeping userExists as a check even though the user should exist given the valid token because there's a chance that the user is deleted
-	// In this case the user will still exist in the database but will be inaccessible.
-	fmt.Println(userExists)
-	fmt.Println(clubExists)
-	fmt.Println(emailExists)
 	if !emailExists && !clubExists && userExists && err == nil {
-		db.Model(user).Association(model.ManagesColumn).Append(club)
-		db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ? AND is_owner = ?", user.ID, club.ID, false).Update(model.IsOwnerColumn, true)
+		err := db.Model(user).Association(model.ManagesColumn).Append(club)
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+		}
+		res := db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ? AND is_owner = ?", user.ID, club.ID, false).Update(model.IsOwnerColumn, true)
+		if res.Error != nil {
+			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+		}
 		s.Message = status.ClubCreationSuccess
 		s.Code = status.SuccessCode
-	} else {
-		s.Message = status.ClubCreationFailure
+		return http.StatusCreated, nil
 	}
-	WriteData(GetJSON(s), http.StatusOK, w)
+	s.Message = status.ClubCreationFailure
+	return http.StatusUnprocessableEntity, nil
 }
 
-func GetClubPhoto(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	s := status.New()
+// Obtaining a club profile photo (if it exists)
+func GetClubPhoto(db *gorm.DB, w http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	clubID := getVar(r, model.ClubIDVar)
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, model.NewClub())
 	if clubExists {
+		_, err := ioutil.ReadDir("./images")
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("dir doesn't exist")
+		}
 		path := fmt.Sprintf("images/%s.png", clubID)
+		if _, err := os.Stat(path); err != nil {
+			s.Message = status.ClubPhotoNotFound
+			return http.StatusNotFound, nil
+		}
 		img, err := os.Open(path)
 		if err != nil {
-			fmt.Println("can't open image")
-		}
-		files, err := ioutil.ReadDir("./images")
-		if err != nil {
-			log.Fatal(err)
-		}
-		for _, f := range files {
-			fmt.Println(f.Name())
+			return http.StatusInternalServerError, fmt.Errorf("unable to open photo")
 		}
 		defer img.Close()
 		w.Header().Set("Content-Type", "image/jpeg")
 		_, err = io.Copy(w, img)
 		if err != nil {
-			s.Message = status.FileReadFailure
-		} else {
-			s.Code = status.SuccessCode
+			return http.StatusInternalServerError, fmt.Errorf("unable to read file contents")
 		}
-	} else {
-		s.Message = status.ClubPhotoNotFound
+		s.Code = status.SuccessCode
+		return http.StatusOK, nil
 	}
-	WriteData(GetJSON(s), http.StatusOK, w)
+	s.Message = status.ClubNotFound
+	return http.StatusNotFound, nil
 }
 
-func UploadClubPhoto(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	s := status.New()
-	httpStatus := http.StatusOK
+// Uploading a club photo
+// Club photo file size upload is 10 MB max
+func UploadClubPhoto(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+	maxMem := int64(10 << 20)
 	clubID := getVar(r, model.ClubIDVar)
 	club := model.NewClub()
 	user := model.NewUser()
@@ -150,49 +159,46 @@ func UploadClubPhoto(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
 	if clubExists && userExists && isManager(db, user, club) {
 		// Max 10MB upload file
-		r.ParseMultipartForm(10 << 20) // 2^20
+		err := r.ParseMultipartForm(maxMem) // 2^20
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("photo is exceeding upload limit")
+		}
 		file, handler, err := r.FormFile("file")
 		if err != nil {
-			fmt.Errorf("file doesn't exist: %v", err)
 			s.Message = status.FileNotFound
-		} else {
-			if filepath.Ext(handler.Filename) != ".png" && filepath.Ext(handler.Filename) != ".jpg" {
-				s.Message = status.InvalidPhotoFormat
-			} else {
-				defer file.Close()
-				fileName := fmt.Sprintf("./images/%v.png", club.ID)
-				tempFile, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0666)
-				fmt.Println(tempFile.Name())
-				if err != nil {
-					s.Message = status.FileCreationFailure
-				} else {
-					defer tempFile.Close()
-					fileBytes, err := ioutil.ReadAll(file)
-					if err != nil {
-						s.Message = status.FileReadFailure
-					} else {
-						_, err := tempFile.Write(fileBytes)
-						if err != nil {
-							s.Message = status.FileWriteFailure
-						} else {
-							s.Code = status.SuccessCode
-							s.Message = status.FileWriteSuccess
-						}
-					}
-				}
-			}
+			return http.StatusBadRequest, nil
 		}
-	} else {
-		s.Message = http.StatusText(http.StatusForbidden)
-		httpStatus = http.StatusForbidden
+		if filepath.Ext(handler.Filename) != ".png" && filepath.Ext(handler.Filename) != ".jpg" {
+			s.Message = status.InvalidPhotoFormat
+			return http.StatusUnsupportedMediaType, nil
+		}
+		defer file.Close()
+		fileName := fmt.Sprintf("./images/%v.png", club.ID)
+		tempFile, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0666)
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("unable to create temp file")
+		}
+		defer tempFile.Close()
+		fileBytes, err := ioutil.ReadAll(file)
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("unable to read file contents")
+		}
+		_, err = tempFile.Write(fileBytes)
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("unable to write filebytes")
+		}
+		s.Code = status.SuccessCode
+		s.Message = status.FileWriteSuccess
+		return http.StatusOK, nil
 	}
-	WriteData(GetJSON(s), httpStatus, w)
+	s.Message = http.StatusText(http.StatusForbidden)
+	return http.StatusForbidden, nil
 
 }
 
-func UpdateClubTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	var httpStatus int
-	s := status.New()
+// Updating user club tags
+// All old tags will be overrided with the new set of tags provided
+func UpdateClubTags(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	clubID := getVar(r, model.ClubIDVar)
 	club := model.NewClub()
 	claims := GetTokenClaims(r)
@@ -203,60 +209,71 @@ func UpdateClubTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 	// Must check with both user and club existing in the event that a user gets deleted but you manage to get a hold of their access token
 	if userExists && clubExists && isManager(db, user, club) {
 		tags := filterTags(extractTags(db, r))
-		db.Model(club).Association(model.SetsColumn).Replace(tags)
+		err := db.Model(club).Association(model.SetsColumn).Replace(tags)
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("unable to get club tags")
+		}
 		s.Message = status.TagsUpdated
 		s.Code = status.SuccessCode
-		httpStatus = http.StatusOK
-	} else if !clubExists {
-		s.Message = status.ClubNotFound
-		httpStatus = http.StatusOK
-	} else {
-		s.Message = http.StatusText(http.StatusForbidden)
-		httpStatus = http.StatusForbidden
+		return http.StatusOK, nil
 	}
-	WriteData(GetJSON(s), httpStatus, w)
+	if !clubExists {
+		s.Message = status.ClubNotFound
+		return http.StatusNotFound, nil
+	}
+	s.Message = http.StatusText(http.StatusForbidden)
+	return http.StatusForbidden, nil
 }
 
-func GetClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	getClubInfo(db, w, r, model.AllClubInfo)
+// Obtaining all information about a club
+func GetClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+	return getClubInfo(db, r, model.AllClubInfo, s)
 }
 
-func getClubInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType string) {
-	var statusCode int
-	var data string
+// A helper function returning specific or all parts of a club
+func getClubInfo(db *gorm.DB, r *http.Request, infoType string, s *status.Status) (int, error) {
 	clubID := getVar(r, model.ClubIDVar)
-	s := status.New()
 	club := model.NewClub()
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
 	if !clubExists {
 		s.Message = status.ClubNotFound
-	} else {
-		switch strings.ToLower(infoType) {
-		case model.AllClubInfo:
-			loadClubData(db, club)
-			s.Data = club
-		case model.AllClubEventsHost:
-			clubEvents := make(map[string][]model.Event)
-			db.Table(model.ClubTable).Preload(model.HostsColumn).Find(club)
-			clubEvents[model.HostsColumn] = club.Hosts
-			s.Data = clubEvents
-		}
-		s.Message = status.ClubFound
-		s.Code = status.SuccessCode
+		return http.StatusNotFound, nil
 	}
-	statusCode = http.StatusOK
-	data = GetJSON(s)
-	WriteData(data, statusCode, w)
+	switch strings.ToLower(infoType) {
+	case model.AllClubInfo:
+		if loadClubData(db, club) != nil {
+			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+		}
+		s.Data = club
+	case model.AllClubEventsHost:
+		clubEvents := make(map[string][]model.Event)
+		res := db.Table(model.ClubTable).Preload(model.HostsColumn).Find(club)
+		if res.Error != nil {
+			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+		}
+		clubEvents[strings.ToLower(model.HostsColumn)] = club.Hosts
+		s.Data = clubEvents
+	}
+	s.Message = status.ClubFound
+	s.Code = status.SuccessCode
+	return http.StatusOK, nil
 }
 
-func GetClubEvents(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	getClubInfo(db, w, r, model.AllClubEventsHost)
+// Obtaining all events that a club hosts
+func GetClubEvents(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+	return getClubInfo(db, r, model.AllClubEventsHost, s)
 }
-func loadClubData(db *gorm.DB, club *model.Club) {
-	db.Table(model.ClubTable).Preload(model.SetsColumn).Find(club)
-	db.Table(model.ClubTable).Preload(model.HostsColumn).Find(club)
+
+// Returning club relational data (i.e. Club & Tags and Club & Events) and populating to Club struct
+func loadClubData(db *gorm.DB, club *model.Club) error {
+	if db.Table(model.ClubTable).Preload(model.SetsColumn).Find(club).Error != nil {
+		return fmt.Errorf("unable to obtain club tags")
+	}
+	if db.Table(model.ClubTable).Preload(model.HostsColumn).Find(club).Error != nil {
+		return fmt.Errorf("unable to obtain club events hosted")
+	}
 	club.Sets = filterTags(club.Sets)
-	club.Hosts = club.Hosts
+	return nil
 }
 
 /*
@@ -268,24 +285,29 @@ func isOwner(db *gorm.DB, user *model.User, club *model.Club) bool {
 	return userClub.IsOwner
 }
 
+// Returns true if the user is a manager of a club, false otherwise
 func isManager(db *gorm.DB, user *model.User, club *model.Club) bool {
 	userClub := model.NewUserClub()
 	res := db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ?", user.ID, club.ID).First(userClub)
 	return res.Error == nil
 }
 
-func RemoveManager(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	editManagers(db, w, r, model.OpRemove)
+// Removing a manager from a club
+// Note: The user removing the manager must be a club owner
+func RemoveManager(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+	return editManagers(db, r, model.OpRemove, s)
 }
 
-func AddManager(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	editManagers(db, w, r, model.OpAdd)
+// Adding a manager to a club
+// Note: The user adding the manager must be a club owner
+func AddManager(db *gorm.DB, w http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+	return editManagers(db, r, model.OpAdd, s)
 }
 
 /*
 Adding or removing managers and their associations to a particular club
 */
-func editManagers(db *gorm.DB, w http.ResponseWriter, r *http.Request, op string) {
+func editManagers(db *gorm.DB, r *http.Request, op string, s *status.Status) (int, error) {
 	// Default messages set to manager addition, otherwise manager removal
 	var successMessage = status.ManagerAdditionSuccess
 	var failureMessage = status.ManagerAdditionFailure
@@ -293,7 +315,6 @@ func editManagers(db *gorm.DB, w http.ResponseWriter, r *http.Request, op string
 		successMessage = status.ManagerRemoveSuccess
 		failureMessage = status.ManagerRemoveFailure
 	}
-	s := status.New()
 	claims := GetTokenClaims(r)
 	clubOwnerUsername := fmt.Sprintf("%v", claims["sub"])
 	newManagerUname := getVar(r, model.UsernameVar)
@@ -315,22 +336,23 @@ func editManagers(db *gorm.DB, w http.ResponseWriter, r *http.Request, op string
 				if res.Error != nil { // Record not existing, then add the new manager
 					err = db.Model(newManager).Association(model.ManagesColumn).Append(club)
 				} else {
-					err = fmt.Errorf("unable to add manager")
+					s.Message = failureMessage
+					return http.StatusInternalServerError, fmt.Errorf("unable to add new manager")
 				}
 			case model.OpRemove:
 				err = db.Model(newManager).Association(model.ManagesColumn).Delete(club)
+				if err != nil {
+					s.Message = failureMessage
+					return http.StatusInternalServerError, fmt.Errorf("unable to remove manager")
+				}
 			}
-			if err != nil {
-				s.Message = failureMessage
-			} else {
-				s.Message = successMessage
-				s.Code = status.SuccessCode
-			}
-		} else {
-			s.Message = failureMessage
+			s.Message = successMessage
+			s.Code = status.SuccessCode
+			return http.StatusOK, nil
 		}
-	} else {
-		s.Message = failureMessage
+		s.Message = http.StatusText(http.StatusForbidden)
+		return http.StatusForbidden, nil
 	}
-	WriteData(GetJSON(s), http.StatusOK, w)
+	s.Message = fmt.Sprintf("%s & %s", status.UserNotFound, status.ClubNotFound)
+	return http.StatusNotFound, nil
 }

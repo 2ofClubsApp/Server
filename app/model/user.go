@@ -26,10 +26,12 @@ type ManagesDisplay struct {
 	IsOwner bool `json:"isOwner"`
 }
 
+// Returns public club data
 func (u *User) Display() *UserDisplay {
 	return &UserDisplay{Email: u.Email}
 }
 
+// Create new default User
 func NewUser() *User {
 	return &User{Credentials: NewCredentials(), Manages: []Club{}, Chooses: []Tag{}, Attends: []Event{}}
 }

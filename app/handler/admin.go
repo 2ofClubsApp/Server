@@ -8,66 +8,66 @@ import (
 	"net/http"
 )
 
-func ToggleUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	s := status.New()
+// Toggling users as active or inactive
+func ToggleUser(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	user := model.NewUser()
 	username := getVar(r, model.UsernameVar)
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
-	httpStatus := http.StatusForbidden
 	if userExists {
 		if isAdmin(db, r) && !user.IsAdmin {
-			db.Model(user).Update(model.IsApprovedColumn, !user.IsApproved)
-			httpStatus = http.StatusOK
+			res := db.Model(user).Update(model.IsApprovedColumn, !user.IsApproved)
+			if res.Error != nil {
+				return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+			}
 			s.Code = status.SuccessCode
-			s.Message = status.UserUpdated
-		} else {
-			s.Message = status.AdminRequired
+			s.Message = status.ToggleUserSuccess
+			return http.StatusOK, nil
 		}
-	} else {
-		s.Message = status.UserNotFound
+		s.Message = status.AdminRequired
+		return http.StatusForbidden, nil
 	}
-	WriteData(GetJSON(s), httpStatus, w)
+	s.Message = status.UserNotFound
+	return http.StatusNotFound, nil
 }
 
-func ToggleClub(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	s := status.New()
+// Toggling clubs as active or inactive
+func ToggleClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	club := model.NewClub()
 	clubID := getVar(r, model.ClubIDVar)
 	clubExists := SingleRecordExists(db, model.ClubTable, model.IDColumn, clubID, club)
-	httpStatus := http.StatusForbidden
 	if clubExists {
 		if isAdmin(db, r) {
-			db.Model(club).Update(model.ActiveColumn, !club.Active)
-			httpStatus = http.StatusOK
+			res := db.Model(club).Update(model.ActiveColumn, !club.Active)
+			if res.Error != nil {
+				return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+			}
 			s.Code = status.SuccessCode
-			s.Message = status.ClubUpdateSuccess
-		} else {
-			s.Message = status.AdminRequired
+			s.Message = status.ClubToggleSuccess
+			return http.StatusOK, nil
 		}
-	} else {
-		s.Message = status.ClubNotFound
+		s.Message = status.AdminRequired
+		return http.StatusForbidden, nil
 	}
-	WriteData(GetJSON(s), httpStatus, w)
+	s.Message = status.ClubNotFound
+	return http.StatusNotFound, nil
 }
 
-// In-Progress
-func GetToggleUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	s := status.New()
+// Obtaining all users that need to be activated (toggled)
+func GetToggleUser(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	users := []*model.User{}
 	result := db.Where(model.IsApprovedColumn+"= ?", false).Find(&users)
 	if isAdmin(db, r) {
 		if result.Error != nil {
-			s.Message = status.GetNonToggledUsersFailure
-		} else {
-			s.Code = status.SuccessCode
-			s.Message = status.GetNonToggledUsersSuccess
-			s.Data = users
-			for _, v := range users {
-				fmt.Println(v)
-			}
+			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
 		}
-	} else {
-		s.Message = status.AdminRequired
+		s.Code = status.SuccessCode
+		s.Message = status.GetNonToggledUsersSuccess
+		s.Data = users
+		for _, v := range users {
+			fmt.Println(v)
+		}
+		return http.StatusOK, nil
 	}
-	WriteData(GetJSON(s), http.StatusOK, w)
+	s.Message = status.AdminRequired
+	return http.StatusForbidden, nil
 }

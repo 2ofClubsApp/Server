@@ -12,27 +12,7 @@ type Club struct {
 	Hosts  []Event `gorm:"many2many:club_event;" json:"hosts"`
 }
 
-// Displaying public club data
-//type ClubDisplay struct {
-//	ID    uint    `json:"id"`
-//	Name  string  `json:"name"`
-//	Email string  `json:"email"`
-//	Bio   string  `json:"bio"`
-//	Size  int     `json:"size"`
-//	Tags  []Tag   `json:"tags"`
-//	Hosts []Event `json:"hosts"`
-//}
-
-//func (c *Club) Display() *ClubDisplay {
-//	return &ClubDisplay{
-//		ID:    c.ID,
-//		Name:  c.Name,
-//		Email: c.Email,
-//		Bio:   c.Bio,
-//		Size:  c.Size,
-//	}
-//}
-
+// Create new default Club
 func NewClub() *Club {
 	return &Club{Sets: []Tag{}, Hosts: []Event{}, Active: false}
 }

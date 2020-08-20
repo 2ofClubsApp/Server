@@ -20,11 +20,11 @@ import (
 /*
 Create a User given a JSON payload. (See models.User for payload information).
 */
-func createUser(db *gorm.DB, w http.ResponseWriter, c *model.Credentials, u *model.User) error {
+func createUser(db *gorm.DB, c *model.Credentials, u *model.User) error {
 	u.Credentials = c
 	res := db.Create(u)
 	if res.Error != nil {
-		fmt.Errorf("unable to create user")
+		return fmt.Errorf("unable to create user")
 	}
 	return nil
 }
@@ -39,22 +39,19 @@ func IsValidRequest(username string, r *http.Request) bool {
 	return sub == username
 }
 
-func GetUser(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	getUserInfo(db, w, r, model.AllUserInfo)
+// Returns all user info
+func GetUser(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+	return getUserInfo(db, r, model.AllUserInfo, s)
 }
 
-/*
-Returns all of the Clubs that a User currently manages
-*/
-func GetUserClubsManage(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	getUserInfo(db, w, r, model.AllUserClubsManage)
+// Returns all of the Clubs that a User currently manages
+func GetUserClubsManage(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+	return getUserInfo(db, r, model.AllUserClubsManage, s)
 }
 
-/*
-Returns all Events that a User currently attends
-*/
-func GetUserEventsAttend(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	getUserInfo(db, w, r, model.AllUserEventsAttend)
+// Returns all Events that a User currently attends
+func GetUserEventsAttend(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+	return getUserInfo(db, r, model.AllUserEventsAttend, s)
 }
 
 /*
@@ -63,53 +60,60 @@ Current Supported Information:
 	- Users clubs they manage
 	- Users events they attend
 	- All user info
-
 (See docs for more info and usage)
 */
-
-func getUserInfo(db *gorm.DB, w http.ResponseWriter, r *http.Request, infoType string) {
-	var httpStatus int
-	var data string
+func getUserInfo(db *gorm.DB, r *http.Request, infoType string, s *status.Status) (int, error) {
 	username := strings.ToLower(getVar(r, model.UsernameVar))
-	s := status.New()
 	user := model.NewUser()
 	if IsValidRequest(username, r) {
-		// Defaults will be overridden when obtaining data and being inserted into struct except for null
 		userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
 		if userExists {
 			switch strings.ToLower(infoType) {
 			case model.AllUserInfo:
 				userDisplay := user.Display()
-				db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
-				db.Table(model.UserTable).Preload(model.ChoosesColumn).Find(user)
-				db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
+				res := db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
+				if res.Error != nil {
+					return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+				}
+				res = db.Table(model.UserTable).Preload(model.ChoosesColumn).Find(user)
+				if res.Error != nil {
+					return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+
+				}
+				res = db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
+				if res.Error != nil {
+					return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+				}
 				userDisplay.Manages = getManages(db, user)
 				userDisplay.Tags = filterTags(user.Chooses)
 				userDisplay.Attends = user.Attends
 				s.Data = userDisplay
 			case model.AllUserClubsManage:
-				db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
+				res := db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
+				if res.Error != nil {
+					return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+				}
 				response := make(map[string][]*model.ManagesDisplay)
-				response[model.ManagesColumn] = getManages(db, user)
+				response[strings.ToLower(model.ManagesColumn)] = getManages(db, user)
 				s.Data = response
 			case model.AllUserEventsAttend:
-				db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
+				res := db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
+				if res.Error != nil {
+					return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+				}
 				response := make(map[string][]model.Event)
-				response[model.AttendsColumn] = user.Attends
+				response[strings.ToLower(model.AttendsColumn)] = user.Attends
 				s.Data = response
 			}
 			s.Code = status.SuccessCode
 			s.Message = status.UserFound
-		} else {
-			s.Message = status.UserNotFound
+			return http.StatusOK, nil
 		}
-		httpStatus = http.StatusOK
-	} else {
-		s.Message = http.StatusText(http.StatusForbidden)
-		httpStatus = http.StatusForbidden
+		s.Message = status.UserNotFound
+		return http.StatusNotFound, nil
 	}
-	data = GetJSON(s)
-	WriteData(data, httpStatus, w)
+	s.Message = http.StatusText(http.StatusForbidden)
+	return http.StatusForbidden, nil
 }
 
 /*
@@ -119,12 +123,13 @@ func extractBody(r *http.Request, s interface{}) error {
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(s)
 	if err != nil {
-		fmt.Errorf("unable to extract JSON payload")
+		return fmt.Errorf("unable to extract JSON payload")
 	}
 	return nil
 
 }
 
+// Returns the clubs that a user manages in an array of ManagesDisplay
 func getManages(db *gorm.DB, user *model.User) []*model.ManagesDisplay {
 	manages := []*model.ManagesDisplay{}
 	for _, club := range user.Manages {
@@ -141,67 +146,78 @@ func getManages(db *gorm.DB, user *model.User) []*model.ManagesDisplay {
 Updating the users choice of tags and attended events. Only valid tags will be extracted and added if it's not already.
 If an invalid format is provided where there aren't any valid tags to be extracted, the users tag preferences will be reset
 */
-func UpdateUserTags(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
-	var httpStatus int
-	s := status.New()
+func UpdateUserTags(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	username := strings.ToLower(getVar(r, model.UsernameVar))
 	user := model.NewUser()
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
 	if userExists && IsValidRequest(username, r) {
-		httpStatus = http.StatusOK
-		// User is guaranteed to have an account (Verified JWT and request is verified)
 		chooses := filterTags(extractTags(db, r))
-		db.Model(user).Association(model.ChoosesColumn).Replace(chooses)
+		fmt.Println(chooses)
+		if db.Model(user).Association(model.ChoosesColumn).Replace(chooses) != nil {
+			return http.StatusInternalServerError, fmt.Errorf("unable to obtain user tags")
+		}
 		s.Code = status.SuccessCode
 		s.Message = status.TagsUpdated
-	} else {
-		s.Message = http.StatusText(http.StatusForbidden)
-		httpStatus = http.StatusForbidden
+		return http.StatusCreated, nil
 	}
-	WriteData(GetJSON(s), httpStatus, w)
+	s.Message = http.StatusText(http.StatusForbidden)
+	return http.StatusForbidden, nil
 }
 
-func UpdateUserPassword(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+// Updating a user's password by providing the correct original password and the password
+// See model.Credentials or docs for password constraints
+func UpdateUserPassword(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	newCreds := model.NewPasswordChange()
-	extractBody(r, newCreds)
+	if extractBody(r, newCreds) != nil {
+		return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+	}
 	creds := model.NewCredentials()
 	username := strings.ToLower(getVar(r, model.UsernameVar))
 	user := model.NewUser()
-	s := status.New()
 	s.Message = status.PasswordUpdateFailure
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
 	if userExists {
 		if IsValidRequest(user.Username, r) {
 			currentPass, ok := getPasswordHash(db, user.Username)
-			if bcrypt.CompareHashAndPassword(currentPass, []byte(newCreds.OldPassword)) == nil && ok {
-				validate := validator.New()
-				creds.Username = user.Username
-				creds.Password = newCreds.NewPassword
-				creds.Email = user.Email
-				validUser := validate.Struct(creds)
-				hashedNewPass, hashErr := Hash(newCreds.NewPassword)
-				if hashErr == nil && validUser == nil {
-					res := db.Model(user).Update(model.PasswordColumn, hashedNewPass)
-					if res.Error == nil {
-						s.Message = status.PasswordUpdateSuccess
-						s.Code = status.SuccessCode
-					}
-				}
+			if bcrypt.CompareHashAndPassword(currentPass, []byte(newCreds.OldPassword)) != nil && !ok {
+				return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
 			}
+			validate := validator.New()
+			creds.Username = user.Username
+			creds.Password = newCreds.NewPassword
+			creds.Email = user.Email
+			validUser := validate.Struct(creds)
+			hashedNewPass, hashErr := Hash(newCreds.NewPassword)
+			if validUser != nil {
+				return http.StatusUnprocessableEntity, nil
+			}
+			if hashErr != nil {
+				return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+			}
+			res := db.Model(user).Update(model.PasswordColumn, hashedNewPass)
+			if res.Error != nil {
+				return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+			}
+			s.Message = status.PasswordUpdateSuccess
+			s.Code = status.SuccessCode
+			return http.StatusOK, nil
 		}
-	} else {
-		s.Message = status.UserNotFound
+		return http.StatusForbidden, nil
 	}
-	WriteData(GetJSON(s), http.StatusOK, w)
+	s.Message = status.UserNotFound
+	return http.StatusNotFound, nil
 }
 
-func ResetUserPassword(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+/*
+Resetting a user's password through a password email reset
+See model.Credentials or docs for password constraints
+*/
+func ResetUserPassword(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	creds := model.NewCredentials()
 	token := getVar(r, model.TokenVar)
 	username := getVar(r, model.UsernameVar)
 	user := model.NewUser()
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
-	s := status.New()
 	s.Message = status.PasswordUpdateFailure
 	if userExists {
 		hash, obtainedHash := getPasswordHash(db, username)
@@ -215,22 +231,34 @@ func ResetUserPassword(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
 				credErr := validate.Struct(creds)
 				if newPass, hashErr := Hash(creds.Password); credErr == nil && hashErr == nil {
 					res := db.Model(user).Update(model.PasswordColumn, newPass)
-					if res.Error == nil {
-						s.Code = status.SuccessCode
-						s.Message = status.PasswordUpdateSuccess
+					if res.Error != nil {
+						return http.StatusInternalServerError, fmt.Errorf("unable to update password")
 					}
+					s.Code = status.SuccessCode
+					s.Message = status.PasswordUpdateSuccess
+					return http.StatusOK, nil
 				}
+				return http.StatusInternalServerError, fmt.Errorf("invalid credentials")
 			}
+			s.Message = http.StatusText(http.StatusForbidden)
+			return http.StatusForbidden, nil
 		}
+		return http.StatusInternalServerError, fmt.Errorf("unable to hash password")
 	}
-	WriteData(GetJSON(s), http.StatusOK, w)
+	s.Message = status.UserNotFound
+	return http.StatusNotFound, nil
 }
 
-func RequestResetUserPassword(db *gorm.DB, w http.ResponseWriter, r *http.Request) {
+/*
+Requesting a user password reset
+This will send an email to the user (if the user exists).
+The email is valid for 10 minutes and can only be used a single time
+*/
+func RequestResetUserPassword(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+	const emailExpiryTime = 10
 	username := strings.ToLower(getVar(r, model.UsernameVar))
 	user := model.NewUser()
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
-	s := status.New()
 	s.Message = status.EmailSendFailure
 	outputFileName := "template.html"
 	if userExists {
@@ -243,21 +271,22 @@ func RequestResetUserPassword(db *gorm.DB, w http.ResponseWriter, r *http.Reques
 			},
 		}
 
-		token, jwtErr := GenerateJWT(user.Username, 10, user.Password)
+		token, jwtErr := GenerateJWT(user.Username, emailExpiryTime, user.Password)
 		generateErr := generateEmailTemplate(user, h, outputFileName, token)
 		body, fileReadErr := ioutil.ReadFile(outputFileName)
 		sendErr := sendEmail(os.Getenv("EMAIL_FROM_HEADER"), user.Email, "Password Reset Request", body)
-		if generateErr == nil && fileReadErr == nil && sendErr == nil && jwtErr == nil {
-			s.Code = status.SuccessCode
-			s.Message = status.EmailSendSuccess
+		if generateErr != nil || fileReadErr != nil || sendErr != nil || jwtErr != nil {
+			return http.StatusInternalServerError, fmt.Errorf("unable to generate and send email")
 		}
-	} else {
 		s.Code = status.SuccessCode
 		s.Message = status.EmailSendSuccess
+		return http.StatusOK, nil
 	}
-	WriteData(GetJSON(s), http.StatusOK, w)
+	s.Message = status.UserNotFound
+	return http.StatusNotFound, nil
 }
 
+// Sending an email to the given user requesting the reset
 func sendEmail(fromEmail string, toEmail string, subject string, body []byte) error {
 	m := gomail.NewMessage()
 	m.SetHeader("From", fromEmail)
@@ -275,6 +304,8 @@ func sendEmail(fromEmail string, toEmail string, subject string, body []byte) er
 	}
 	return nil
 }
+
+// Generating a password reset email template
 func generateEmailTemplate(user *model.User, h hermes.Hermes, outputFileName string, token string) error {
 	email := hermes.Email{
 		Body: hermes.Body{

@@ -1,89 +1,96 @@
 package status
 
+import "encoding/json"
+
 const (
 	// Status Code
 	FailureCode = -1
 	SuccessCode = 1
 
 	// Manager
-	ManagerRemoveFailure   = "Unable to remove manager"
-	ManagerAdditionFailure = "Unable to add manager"
-	ManagerRemoveSuccess   = "Successfully removed manager"
-	ManagerAdditionSuccess = "Successfully added manager"
+	ManagerRemoveFailure   = "unable to remove manager"
+	ManagerAdditionFailure = "unable to add manager"
+	ManagerRemoveSuccess   = "successfully removed manager"
+	ManagerAdditionSuccess = "successfully added manager"
 
 	// Tags
-	TagUpdateError = "Error Updating Tag"
-	TagUpdated     = "Tag Updated"
-	TagCreated     = "Successfully created tag"
-	TagsCreated    = "Successfully created tags"
-	TagExists      = "Tag already exists"
-	TagsUpdated    = "Tags Updated"
-	TagsFound      = "Tags Found"
-	TagsGetFailure = "Unable to get tags"
-	TagNotFound    = "Tag doesn't exist"
+	TagUpdateError   = "error updating tag"
+	TagToggleSuccess = "tag toggled"
+	TagUpdated       = "tag updated"
+	TagCreated       = "successfully created tag"
+	TagsCreated      = "successfully created tags"
+	TagExists        = "tag already exists"
+	TagsUpdated      = "tags updated"
+	TagsFound        = "tags found"
+	TagsGetFailure   = "unable to get tags"
+	TagNotFound      = "tag doesn't exist"
 
 	// Authentication
-	SignupSuccess    = "Signup Successful"
-	SignupFailure    = "Unable to Sign Up User"
-	LoginSuccess     = "Successfully logged in"
-	LoginFailure     = "Username or Password is Incorrect"
-	UsernameExists   = "Username already exists"
-	UsernameAlphaNum = "Username must start with a letter and can only contain the following characters: a-zA-Z0-9_ and must be 50 characters or less"
-	ValidEmail       = "Must be a valid email"
-	EmailExists      = "Email already exists"
+	SignupSuccess    = "signup successful"
+	SignupFailure    = "unable to sign up user"
+	LoginSuccess     = "successfully logged in"
+	LoginFailure     = "username or password is incorrect"
+	UsernameExists   = "username already exists"
+	UsernameAlphaNum = "username must start with a letter and can only contain the following characters: a-zA-Z0-9_ and must be 50 characters or less"
+	ValidEmail       = "must be a valid email"
+	EmailExists      = "email already exists"
+	PasswordRequired = "a password is required"
 
 	// Password Update/Reset
-	PasswordUpdateSuccess = "Successfully updated password"
-	PasswordUpdateFailure = "Unable to update password"
-	EmailSendFailure      = "Unable to send email"
-	EmailSendSuccess      = "Successfully sent email if user exists"
+	PasswordUpdateSuccess = "successfully updated password"
+	PasswordUpdateFailure = "unable to update password"
+	EmailSendFailure      = "unable to send email"
+	EmailSendSuccess      = "successfully sent email if user exists"
 
 	// User & Club
-	UserUpdated         = "Updated User"
-	UserFound           = "User Found"
-	UserNotFound        = "User Not Found"
-	ClubsFound          = "Clubs Found"
-	ClubsNotFound       = "Clubs Not Found"
-	ClubFound           = "Club Found"
-	ClubNotFound        = "Club Not Found"
-	ClubCreationSuccess = "Club successfully created"
-	ClubCreationFailure = "Unable to create the Club"
-	ClubUpdateSuccess   = "Successfully updated club"
-	ClubUpdateFailure   = "Unable to update club"
+	ToggleUserSuccess   = "toggled user"
+	UserUpdated         = "updated user"
+	UserFound           = "user found"
+	UserNotFound        = "user not found"
+	ClubsFound          = "clubs found"
+	ClubsNotFound       = "clubs not found"
+	ClubFound           = "club found"
+	ClubNotFound        = "club not found"
+	ClubCreationSuccess = "club successfully created"
+	ClubCreationFailure = "unable to create club"
+	ClubUpdateSuccess   = "successfully updated club"
+	ClubToggleSuccess   = "toggled club"
+	ClubUpdateFailure   = "unable to update club"
 
 	// Admin
-	GetNonToggledUsersFailure = "Unable to retrieve non toggled users"
-	GetNonToggledUsersSuccess = "Retrieved all non toggled users"
-	ManagerOwnerRequired      = "You must be a manager or owner of the club"
-	AdminRequired             = "Please contact an administrator."
-	InvalidTxtFile            = "Invalid File: A .txt file is required"
-	UnableToReadFile          = "Unable to read file"
-	FileNotFound              = "File doesn't exist"
-	UserNotApproved           = "Sorry, your account has not been approved yet"
-	ClubNotActive             = "Sorry, this club isn't active yet. Please wait until an administrator activates the club."
+	GetNonToggledUsersFailure = "unable to retrieve non toggled users"
+	GetNonToggledUsersSuccess = "retrieved all non toggled users"
+	ManagerOwnerRequired      = "you must be a manager or owner of the club"
+	AdminRequired             = "please contact an administrator"
+	InvalidTxtFile            = "invalid file: A .txt file is required"
+	UnableToReadFile          = "unable to read file"
+	FileNotFound              = "file doesn't exist"
+	UserNotApproved           = "sorry, your account has not been approved yet"
 
 	// Events
-	CreateEventSuccess         = "Successfully created event"
-	CreateEventFailure         = "Unable to create event"
-	UpdateEventSuccess         = "Successfully updated event"
-	UpdateEventFailure         = "Unable to update event"
-	EventNameConstraint        = "Event name must be at least 1 character and a maximum of 50 characters"
-	EventDescriptionConstraint = "Event description must be a maximum of 300 characters or less"
-	EventLocationConstraint    = "Event location must be a maximum of 100 characters or less"
-	EventFeeConstraint         = "Fee must be greater or equal to 0"
-	EventFound                 = "Event Found"
-	EventNotFound              = "Event not found"
-	EventDeleted               = "Event Deleted"
-	GetAllEventsFailure        = "Unable to get all events"
-	AllEventsFound             = "All Events Found"
+	CreateEventSuccess         = "successfully created event"
+	CreateEventFailure         = "unable to create event"
+	UpdateEventSuccess         = "successfully updated event"
+	UpdateEventFailure         = "unable to update event"
+	EventNameConstraint        = "event name must be at least 1 character and a maximum of 50 characters"
+	EventDescriptionConstraint = "event description must be a maximum of 300 characters or less"
+	EventLocationConstraint    = "event location must be a maximum of 100 characters or less"
+	EventFeeConstraint         = "fee must be greater or equal to 0"
+	EventFound                 = "event found"
+	EventNotFound              = "event not found"
+	EventDeleted               = "event deleted"
+	GetAllEventsFailure        = "unable to get all events"
+	AllEventsFound             = "all events found"
+	EventUnattendSuccess       = "event unattended"
+	EventAttendSuccess         = "event attended"
 
 	// Photo Upload
-	InvalidPhotoFormat   = "Invalid File: A .jpg or .png file of 10 MB or less is required."
-	FileCreationFailure  = "Unable to create file"
-	FileReadFailure      = "Unable to read file"
-	FileWriteFailure     = "Unable to write file"
-	FileWriteSuccess     = "Successfully written to file"
-	ClubPhotoNotFound = "Unable to find a photo for the club"
+	InvalidPhotoFormat  = "invalid file: A .jpg or .png file of 10 MB or less is required"
+	FileCreationFailure = "unable to create file"
+	FileReadFailure     = "unable to read file"
+	FileWriteFailure    = "unable to write file"
+	FileWriteSuccess    = "successfully written to file"
+	ClubPhotoNotFound   = "unable to find a photo for the club"
 
 	// Hashing
 	HashErr     = "hashing Error"
@@ -109,8 +116,20 @@ type Status struct {
 type CredentialStatus struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 func New() *Status {
 	return &Status{Code: FailureCode, Message: "", Data: T{}}
+}
+
+/*
+Returning the JSON representation of a struct.
+*/
+func (s *Status) Display() string {
+	data, err := json.MarshalIndent(s, "", "\t")
+	if err != nil {
+		return ""
+	}
+	return string(data)
 }

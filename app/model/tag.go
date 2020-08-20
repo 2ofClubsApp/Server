@@ -15,6 +15,7 @@ type Tag struct {
 	IsActive  bool           `json:"isActive"`
 }
 
+// Create new default Tag
 func NewTag() *Tag {
 	return &Tag{}
 }

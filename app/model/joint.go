@@ -20,6 +20,7 @@ type UserClub struct {
 	IsOwner bool
 }
 
+// Create new default UserClub
 func NewUserClub() *UserClub {
 	return &UserClub{}
 }

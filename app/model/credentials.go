@@ -15,10 +15,12 @@ type PasswordChange struct {
 	NewPassword string `validate:"required"`
 }
 
+// Create new default PasswordChange
 func NewPasswordChange() *PasswordChange {
 	return &PasswordChange{}
 }
 
+// Create new default Credentials
 func NewCredentials() *Credentials {
 	return &Credentials{}
 }
