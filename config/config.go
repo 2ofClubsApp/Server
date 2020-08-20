@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-// Base DB Config
+// DBConfig - Base DB Config
 type DBConfig struct {
 	Host     string
 	Port     string
@@ -15,14 +15,14 @@ type DBConfig struct {
 	Password string
 }
 
-// Base Redis Config
+// RedisConfig - Base Redis Config
 type RedisConfig struct {
 	Addr     string
 	Password string
 	DB       int
 }
 
-// Return DB config with given environment vars
+// GetDBConfig - Return DB config with given environment vars
 func GetDBConfig() *DBConfig {
 	return &DBConfig{
 		Host:     os.Getenv("DB_HOST"),
@@ -33,7 +33,7 @@ func GetDBConfig() *DBConfig {
 	}
 }
 
-// Return redis config with given environment vars
+// GetRedisConfig - Return redis config with given environment vars
 func GetRedisConfig() *RedisConfig {
 	return &RedisConfig{
 		Addr:     os.Getenv("REDIS_ADDR"),
@@ -42,7 +42,7 @@ func GetRedisConfig() *RedisConfig {
 	}
 }
 
-// Return admin config with given environment vars
+// GetAdminConfig - Return admin config with given environment vars
 func GetAdminConfig() *model.User {
 	credentials := model.NewCredentials()
 	credentials.Username = os.Getenv("ADMIN_USERNAME")

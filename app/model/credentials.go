@@ -9,24 +9,24 @@ type Credentials struct {
 	Password string `validate:"required,min=3,max=45" json:"password"`
 }
 
-// Resetting a user password given the old and new passwords
+// PasswordChange - Resetting a user password given the old and new passwords
 type PasswordChange struct {
 	OldPassword string `validate:"required"`
 	NewPassword string `validate:"required"`
 }
 
-// Create new default PasswordChange
+// NewPasswordChange - Create new default PasswordChange
 func NewPasswordChange() *PasswordChange {
 	return &PasswordChange{}
 }
 
-// Create new default Credentials
+// NewCredentials - Create new default Credentials
 func NewCredentials() *Credentials {
 	return &Credentials{}
 }
 
+// Credential variables for db columns/route variables
 const (
-	EmailVar       = "email"
 	UsernameVar    = "username"
 	UsernameColumn = "username"
 	EmailColumn    = "email"

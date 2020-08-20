@@ -1,6 +1,6 @@
 package model
 
-// Base Club struct
+// Club - Base Club struct
 type Club struct {
 	Base
 	Name   string  `validate:"required,min=3,max=50" json:"name"`
@@ -12,22 +12,21 @@ type Club struct {
 	Hosts  []Event `gorm:"many2many:club_event;" json:"hosts"`
 }
 
-// Create new default Club
+// NewClub - Create new default Club
 func NewClub() *Club {
 	return &Club{Sets: []Tag{}, Hosts: []Event{}, Active: false}
 }
 
+// Club variables for db columns/route variables
 const (
 	ClubIDVar         = "cid"
 	AllClubInfo       = "all"
 	AllClubEventsHost = "events"
 	ClubTagTable      = "club_tag"
 	SetsColumn        = "Sets"
-	TagsColumn        = "tags"
 	HostsColumn       = "Hosts"
 	SizeColumn        = "size"
 	BioColumn         = "bio"
-	HelpNeededColumn  = "help_needed"
 	ClubTable         = "club"
 	NameColumn        = "name"
 	ActiveColumn      = "active"

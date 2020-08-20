@@ -31,9 +31,7 @@ func tagExists(db *gorm.DB, tagName string) bool {
 	return true
 }
 
-/*
-Create a single tag provided the proper JSON request (See the docs for more info)
-*/
+// CreateTag - Create a single tag provided the proper JSON request (See the docs for more info)
 func CreateTag(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	if isAdmin(db, r) {
 		payload := map[string]string{}
@@ -55,10 +53,8 @@ func CreateTag(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.St
 	return http.StatusForbidden, nil
 }
 
-/*
-Create tags based on a new line separated list
-Refer to docs for file specifications.
-*/
+// UploadTagsList - Create tags based on a new line separated list
+// Refer to docs for file specifications.
 func UploadTagsList(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	if isAdmin(db, r) {
 		file, handler, err := r.FormFile("file")
@@ -88,7 +84,7 @@ func UploadTagsList(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *stat
 
 }
 
-// Obtaining all tags (both active and inactive)
+// GetTags - Obtaining all tags (both active and inactive)
 func GetTags(db *gorm.DB, _ http.ResponseWriter, _ *http.Request, s *status.Status) (int, error) {
 	tags, err := getAllTags(db)
 	if err != nil {
@@ -110,7 +106,7 @@ func getAllTags(db *gorm.DB) ([]model.Tag, error) {
 	return allTags, nil
 }
 
-// Obtaining all active tags
+// GetActiveTags - Obtaining all active tags
 func GetActiveTags(db *gorm.DB, _ http.ResponseWriter, _ *http.Request, s *status.Status) (int, error) {
 	tags, err := getAllTags(db)
 	if err != nil {
@@ -136,7 +132,7 @@ func extractTags(db *gorm.DB, r *http.Request) []model.Tag {
 	return chooses
 }
 
-// Toggling tags as either active or inactive
+// ToggleTag - Toggling tags as either active or inactive
 func ToggleTag(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	if isAdmin(db, r) {
 		tagName := getVar(r, model.TagNameVar)

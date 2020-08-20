@@ -9,11 +9,13 @@ type TokenInfo struct {
 	RefreshToken string
 }
 
-// Create new default TokenInfo
+// NewTokenInfo Create new default TokenInfo
 func NewTokenInfo() *TokenInfo {
 	return &TokenInfo{}
 }
 
-const RefreshToken = "RefreshToken"
-const AccessToken = "AccessToken"
-const TokenVar = "token"
+// Token variable constants
+const (
+	RefreshToken = "RefreshToken"
+	TokenVar     = "token"
+)

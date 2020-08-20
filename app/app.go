@@ -19,7 +19,7 @@ import (
 type routeHandler func(w http.ResponseWriter, r *http.Request)
 type hdlr func(db *gorm.DB, w http.ResponseWriter, r *http.Request, s *status.Status) (httpStatus int, err error)
 
-// API config for DB, Mux Router and CORS
+// App - API config for DB, Mux Router and CORS
 type App struct {
 	db      *gorm.DB
 	router  *mux.Router
@@ -28,7 +28,7 @@ type App struct {
 	headers handlers.CORSOption
 }
 
-// Server initialization
+// Initialize - Server initialization
 // Database, CORS and the admin settings are initialized
 func (app *App) Initialize(dbConfig *config.DBConfig, _ *config.RedisConfig, adminConfig *model.User) {
 	//ctx := context.Background()
@@ -143,7 +143,7 @@ func (app *App) setRoutes() {
 	app.router.NotFoundHandler = notFound() // Done
 }
 
-// Main run function to startup API serve
+// Run - Main run function to startup API serve
 func (app *App) Run(port string) {
 	err := http.ListenAndServe(port, handlers.CORS(app.origin, app.methods, app.headers)(app.router))
 	if err != nil {
@@ -151,22 +151,22 @@ func (app *App) Run(port string) {
 	}
 }
 
-// Setting a POST route and its associated handler
+// Post - Setting a POST route and its associated handler
 func (app *App) Post(path string, f routeHandler) {
 	app.router.HandleFunc(path, f).Methods(http.MethodPost)
 }
 
-// Setting a GET route and its associated handler
+// Get - Setting a GET route and its associated handler
 func (app *App) Get(path string, f routeHandler) {
 	app.router.HandleFunc(path, f).Methods(http.MethodGet)
 }
 
-// Setting a Delete route and its associated handler
+// Delete - Setting a Delete route and its associated handler
 func (app *App) Delete(path string, f routeHandler) {
 	app.router.HandleFunc(path, f).Methods(http.MethodDelete)
 }
 
-// Wrapper function to return a base Handler function
+// Handle - Wrapper function to return a base Handler function
 func (app *App) Handle(h hdlr, verifyRequest bool) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Must verify for sensitive information
@@ -198,9 +198,7 @@ func notFound() http.Handler {
 	})
 }
 
-/*
-Return response message and an HTTP Status Code upon receiving a request.
-*/
+// WriteData - Return response message and an HTTP Status Code upon receiving a request.
 func WriteData(data string, code int, w http.ResponseWriter) int {
 	w.WriteHeader(code)
 	n, err := fmt.Fprint(w, data)

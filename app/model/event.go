@@ -2,7 +2,7 @@ package model
 
 import "github.com/2-of-clubs/2ofclubs-server/app/status"
 
-// Basic Event Struct
+// Event - Basic Event Struct
 type Event struct {
 	Base
 	Name string `validate:"required,min=1,max=50" json:"name"`
@@ -12,12 +12,12 @@ type Event struct {
 	Fee         float64 `validate:"gte=0" json:"fee"`
 }
 
-// Create new default Event
+// NewEvent - Create new default Event
 func NewEvent() *Event {
 	return &Event{}
 }
 
-// Listing out requirements for an event to be successfully created
+// EventRequirement - Listing out requirements for an event to be successfully created
 type EventRequirement struct {
 	Admin       string
 	Name        string
@@ -36,29 +36,8 @@ func NewEventRequirement() *EventRequirement {
 	}
 }
 
-//type EventDisplay struct {
-//	ID          uint
-//	Name        string
-//	Description string
-//	Location    string
-//	Fee         float64
-//}
-//
-//func (e *Event) Display() EventDisplay {
-//	return EventDisplay{
-//		ID:          e.ID,
-//		Name:        e.Name,
-//		Description: e.Description,
-//		Location:    e.Location,
-//		Fee:         e.Fee,
-//	}
-//}
-
+// Event variables for db columns/route variables
 const (
-	EventIDVar        = "eid"
-	EventTable        = "event"
-	DateTimeColumn    = "date_time"
-	DescriptionColumn = "description"
-	LocationColumn    = "location"
-	DateFeeColumn     = "fee"
+	EventIDVar = "eid"
+	EventTable = "event"
 )

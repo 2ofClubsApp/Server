@@ -11,7 +11,7 @@ type User struct {
 	IsApproved bool    `json:"-"`
 }
 
-// Displaying public user data
+// UserDisplay - Displaying public user data
 type UserDisplay struct {
 	Email   string            `json:"email"`
 	Manages []*ManagesDisplay `json:"manages"`
@@ -26,30 +26,26 @@ type ManagesDisplay struct {
 	IsOwner bool `json:"isOwner"`
 }
 
-// Returns public club data
+// Display - Returns public club data
 func (u *User) Display() *UserDisplay {
 	return &UserDisplay{Email: u.Email}
 }
 
-// Create new default User
+// NewUser - Create new default User
 func NewUser() *User {
 	return &User{Credentials: NewCredentials(), Manages: []Club{}, Chooses: []Tag{}, Attends: []Event{}}
 }
 
+// User variables for db columns/route variables
 const (
 	AllUserInfo         = "all"
 	AllUserClubsManage  = "clubs"
 	AllUserEventsAttend = "events"
 	ChoosesColumn       = "Chooses"
 	AttendsColumn       = "Attends"
-	UserTagTable        = "user_tag"
 	UserClubTable       = "user_club"
-	IsHelpingColumn     = "is_helping"
 	UserTable           = "user"
 	ManagesColumn       = "Manages"
-	IsAdminColumn       = "is_admin"
 	IsApprovedColumn    = "is_approved"
 	IDColumn            = "id"
-	CreatedAtColumn     = "created_at"
-	DeletedAtColumn     = "deleted_at"
 )

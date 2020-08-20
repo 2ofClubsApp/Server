@@ -14,12 +14,12 @@ import (
 	"strings"
 )
 
-// In-Progress
+// GetClubs - In-Progress
 func GetClubs(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	//s := status.New()
 
 	type Club struct {
-		club_id int
+		clubId int
 	}
 	var clubs []model.Club
 	//clubs := []model.Club{}
@@ -44,7 +44,7 @@ func GetClubs(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Sta
 	return http.StatusForbidden, nil
 }
 
-// Update club with new information
+// UpdateClub - Update club with new information
 // See model.Club or docs for club attribute specifications
 func UpdateClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	clubID := getVar(r, model.ClubIDVar)
@@ -79,9 +79,8 @@ func UpdateClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.S
 	return http.StatusForbidden, nil
 }
 
-/* Creating a club (You must have an active user account first)
-See model.Club or the docs for club information constraints
-*/
+// CreateClub - Creating a club (You must have an active user account first)
+// See model.Club or the docs for club information constraints
 func CreateClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	claims := GetTokenClaims(r)
 	user := model.NewUser()
@@ -115,7 +114,7 @@ func CreateClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.S
 	return http.StatusUnprocessableEntity, nil
 }
 
-// Obtaining a club profile photo (if it exists)
+// GetClubPhoto - Obtaining a club profile photo (if it exists)
 func GetClubPhoto(db *gorm.DB, w http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	clubID := getVar(r, model.ClubIDVar)
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, model.NewClub())
@@ -146,7 +145,7 @@ func GetClubPhoto(db *gorm.DB, w http.ResponseWriter, r *http.Request, s *status
 	return http.StatusNotFound, nil
 }
 
-// Uploading a club photo
+// UploadClubPhoto - Uploading a club photo
 // Club photo file size upload is 10 MB max
 func UploadClubPhoto(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	maxMem := int64(10 << 20)
@@ -196,7 +195,7 @@ func UploadClubPhoto(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *sta
 
 }
 
-// Updating user club tags
+// UpdateClubTags - Updating user club tags
 // All old tags will be overrided with the new set of tags provided
 func UpdateClubTags(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	clubID := getVar(r, model.ClubIDVar)
@@ -225,7 +224,7 @@ func UpdateClubTags(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *stat
 	return http.StatusForbidden, nil
 }
 
-// Obtaining all information about a club
+// GetClub - Obtaining all information about a club
 func GetClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return getClubInfo(db, r, model.AllClubInfo, s)
 }
@@ -259,7 +258,7 @@ func getClubInfo(db *gorm.DB, r *http.Request, infoType string, s *status.Status
 	return http.StatusOK, nil
 }
 
-// Obtaining all events that a club hosts
+// GetClubEvents - Obtaining all events that a club hosts
 func GetClubEvents(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return getClubInfo(db, r, model.AllClubEventsHost, s)
 }
@@ -292,15 +291,15 @@ func isManager(db *gorm.DB, user *model.User, club *model.Club) bool {
 	return res.Error == nil
 }
 
-// Removing a manager from a club
+// RemoveManager - Removing a manager from a club
 // Note: The user removing the manager must be a club owner
 func RemoveManager(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return editManagers(db, r, model.OpRemove, s)
 }
 
-// Adding a manager to a club
+// AddManager - Adding a manager to a club
 // Note: The user adding the manager must be a club owner
-func AddManager(db *gorm.DB, w http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func AddManager(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return editManagers(db, r, model.OpAdd, s)
 }
 

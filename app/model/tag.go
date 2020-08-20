@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// Basic Tag Struct
+// Tag - Basic Tag Struct
 type Tag struct {
 	ID        uint           `gorm:"autoIncrement" json:"id"`
 	CreatedAt time.Time      `json:"-"`
@@ -15,11 +15,12 @@ type Tag struct {
 	IsActive  bool           `json:"isActive"`
 }
 
-// Create new default Tag
+// NewTag - Create new default Tag
 func NewTag() *Tag {
 	return &Tag{}
 }
 
+// Tag variables for db columns/route variables
 const (
 	TagNameVar     = "tagName"
 	TagTable       = "tag"

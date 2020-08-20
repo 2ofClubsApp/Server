@@ -30,7 +30,7 @@ func createUser(db *gorm.DB, c *model.Credentials, u *model.User) error {
 }
 
 /*
-Validating the user request to ensure that they can only access/modify their own data.
+IsValidRequest - Validating the user request to ensure that they can only access/modify their own data.
 True if the requested user has the same username identifier as the token username
 */
 func IsValidRequest(username string, r *http.Request) bool {
@@ -39,17 +39,17 @@ func IsValidRequest(username string, r *http.Request) bool {
 	return sub == username
 }
 
-// Returns all user info
+// GetUser - Returns all user info
 func GetUser(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return getUserInfo(db, r, model.AllUserInfo, s)
 }
 
-// Returns all of the Clubs that a User currently manages
+// GetUserClubsManage - Returns all of the Clubs that a User currently manages
 func GetUserClubsManage(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return getUserInfo(db, r, model.AllUserClubsManage, s)
 }
 
-// Returns all Events that a User currently attends
+// GetUserEventsAttend - Returns all Events that a User currently attends
 func GetUserEventsAttend(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return getUserInfo(db, r, model.AllUserEventsAttend, s)
 }
@@ -145,7 +145,7 @@ func getManages(db *gorm.DB, user *model.User) []*model.ManagesDisplay {
 }
 
 /*
-Updating the users choice of tags and attended events. Only valid tags will be extracted and added if it's not already.
+UpdateUserTags - Updating the users choice of tags and attended events. Only valid tags will be extracted and added if it's not already.
 If an invalid format is provided where there aren't any valid tags to be extracted, the users tag preferences will be reset
 */
 func UpdateUserTags(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
@@ -166,7 +166,7 @@ func UpdateUserTags(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *stat
 	return http.StatusForbidden, nil
 }
 
-// Updating a user's password by providing the correct original password and the password
+// UpdateUserPassword - Updating a user's password by providing the correct original password and the password
 // See model.Credentials or docs for password constraints
 func UpdateUserPassword(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	newCreds := model.NewPasswordChange()
@@ -211,7 +211,7 @@ func UpdateUserPassword(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *
 }
 
 /*
-Resetting a user's password through a password email reset
+ResetUserPassword - Resetting a user's password through a password email reset
 See model.Credentials or docs for password constraints
 */
 func ResetUserPassword(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
@@ -252,7 +252,7 @@ func ResetUserPassword(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *s
 }
 
 /*
-Requesting a user password reset
+RequestResetUserPassword - Requesting a user password reset
 This will send an email to the user (if the user exists).
 The email is valid for 10 minutes and can only be used a single time
 */

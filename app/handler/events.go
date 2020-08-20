@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-// Returning all events from all clubs
+// GetAllEvents - Returning all events from all clubs
 func GetAllEvents(db *gorm.DB, _ http.ResponseWriter, _ *http.Request, s *status.Status) (int, error) {
 	events := []model.Event{}
 	result := db.Find(&events)
@@ -25,7 +25,7 @@ func GetAllEvents(db *gorm.DB, _ http.ResponseWriter, _ *http.Request, s *status
 	return http.StatusOK, nil
 }
 
-// Obtaining an event from a specific club
+// GetEvent - Obtaining an event from a specific club
 func GetEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	eventID := getVar(r, model.EventIDVar)
 	event := model.NewEvent()
@@ -41,7 +41,7 @@ func GetEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Sta
 
 }
 
-// Deleting a club event
+// DeleteClubEvent - Deleting a club event
 func DeleteClubEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	clubID := getVar(r, model.ClubIDVar)
 	eid := getVar(r, model.EventIDVar)
@@ -78,7 +78,7 @@ func DeleteClubEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *sta
 	return http.StatusForbidden, nil
 }
 
-// Creating an event for a particular club. The user creating the club must at least be a manager
+// CreateClubEvent - Creating an event for a particular club. The user creating the club must at least be a manager
 // See model.Event or docs for the event constraints
 func CreateClubEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	claims := GetTokenClaims(r)
@@ -120,7 +120,7 @@ func CreateClubEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *sta
 	return http.StatusNotFound, nil
 }
 
-// Updating an event for a particular club
+// UpdateClubEvent - Updating an event for a particular club
 func UpdateClubEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	claims := GetTokenClaims(r)
 	uname := fmt.Sprintf("%v", claims["sub"])
@@ -159,12 +159,12 @@ func UpdateClubEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *sta
 	return 403, nil
 }
 
-// Removing a user attended event
+// RemoveUserAttendsEvent - Removing a user attended event
 func RemoveUserAttendsEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return manageUserAttends(db, r, model.OpRemove, s)
 }
 
-// Adding a user attended event
+// AddUserAttendsEvent - Adding a user attended event
 func AddUserAttendsEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return manageUserAttends(db, r, model.OpAdd, s)
 }

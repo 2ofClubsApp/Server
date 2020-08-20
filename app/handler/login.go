@@ -18,9 +18,8 @@ const (
 	refreshDuration = 60 * 24 // 24 hours
 )
 
-/* User Login
-   See model.credentials or docs for username and email constraints
-*/
+// Login - User Login
+//   See model.credentials or docs for username and email constraints
 func Login(db *gorm.DB, w http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	creds := model.NewCredentials()
 	if extractBody(r, creds) != nil {
@@ -68,9 +67,7 @@ func getPasswordHash(db *gorm.DB, userName string) ([]byte, bool) {
 
 }
 
-/*
-Generating http cookie where the refresh token will be embedded.
-*/
+// GenerateCookie - Generating http cookie where the refresh token will be embedded.
 func GenerateCookie(name string, value string) *http.Cookie {
 	return &http.Cookie{
 		Name:     name,
@@ -80,9 +77,7 @@ func GenerateCookie(name string, value string) *http.Cookie {
 	}
 }
 
-/*
-Generating a JWT based on the user's username
-*/
+// GenerateJWT - Generating a JWT based on the user's username
 func GenerateJWT(subject string, duration time.Duration, jwtSecret string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
@@ -97,11 +92,9 @@ func GenerateJWT(subject string, duration time.Duration, jwtSecret string) (stri
 	return tokenString, nil
 }
 
-/*
-Obtaining an access and refresh token pair
-Note: Access tokens have a lifespan of 5 minutes
-	  Refresh tokens have a lifespan of 24 hours (1 day)
-*/
+// GetTokenPair - Obtaining an access and refresh token pair
+// Note: Access tokens have a lifespan of 5 minutes
+//	  Refresh tokens have a lifespan of 24 hours (1 day)
 func GetTokenPair(subject string, accessDuration time.Duration, refreshDuration time.Duration) (*model.TokenInfo, error) {
 	if accessToken, atErr := GenerateJWT(subject, accessDuration, os.Getenv("JWT_SECRET")); atErr == nil {
 		if refreshToken, rtErr := GenerateJWT(subject, refreshDuration, os.Getenv("JWT_SECRET")); rtErr == nil {

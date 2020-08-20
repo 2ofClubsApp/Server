@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-// Logging all API endpoints
+// LoggingMiddleware - Logging all API endpoints
 func LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if origin := r.Header.Get("Origin"); origin != "" {

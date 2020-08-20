@@ -1,31 +1,36 @@
 package status
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
+// Status Codes when querying data
 const (
-	// Status Code
 	FailureCode = -1
 	SuccessCode = 1
+)
 
-	// Manager
+// Manager addition/removal status messages
+const (
 	ManagerRemoveFailure   = "unable to remove manager"
 	ManagerAdditionFailure = "unable to add manager"
 	ManagerRemoveSuccess   = "successfully removed manager"
 	ManagerAdditionSuccess = "successfully added manager"
+)
 
-	// Tags
-	TagUpdateError   = "error updating tag"
+// Tag status messages
+const (
 	TagToggleSuccess = "tag toggled"
-	TagUpdated       = "tag updated"
 	TagCreated       = "successfully created tag"
 	TagsCreated      = "successfully created tags"
 	TagExists        = "tag already exists"
 	TagsUpdated      = "tags updated"
 	TagsFound        = "tags found"
-	TagsGetFailure   = "unable to get tags"
 	TagNotFound      = "tag doesn't exist"
+)
 
-	// Authentication
+// Authentication status messages
+const (
 	SignupSuccess    = "signup successful"
 	SignupFailure    = "unable to sign up user"
 	LoginSuccess     = "successfully logged in"
@@ -35,20 +40,21 @@ const (
 	ValidEmail       = "must be a valid email"
 	EmailExists      = "email already exists"
 	PasswordRequired = "a password is required"
+)
 
-	// Password Update/Reset
+// Password reset status messages
+const (
 	PasswordUpdateSuccess = "successfully updated password"
 	PasswordUpdateFailure = "unable to update password"
 	EmailSendFailure      = "unable to send email"
 	EmailSendSuccess      = "successfully sent email if user exists"
+)
 
-	// User & Club
+// User & Club status messages
+const (
 	ToggleUserSuccess   = "toggled user"
-	UserUpdated         = "updated user"
 	UserFound           = "user found"
 	UserNotFound        = "user not found"
-	ClubsFound          = "clubs found"
-	ClubsNotFound       = "clubs not found"
 	ClubFound           = "club found"
 	ClubNotFound        = "club not found"
 	ClubCreationSuccess = "club successfully created"
@@ -56,18 +62,20 @@ const (
 	ClubUpdateSuccess   = "successfully updated club"
 	ClubToggleSuccess   = "toggled club"
 	ClubUpdateFailure   = "unable to update club"
+)
 
-	// Admin
-	GetNonToggledUsersFailure = "unable to retrieve non toggled users"
+// Admin status messages
+const (
 	GetNonToggledUsersSuccess = "retrieved all non toggled users"
 	ManagerOwnerRequired      = "you must be a manager or owner of the club"
 	AdminRequired             = "please contact an administrator"
 	InvalidTxtFile            = "invalid file: A .txt file is required"
-	UnableToReadFile          = "unable to read file"
 	FileNotFound              = "file doesn't exist"
 	UserNotApproved           = "sorry, your account has not been approved yet"
+)
 
-	// Events
+// Events status messages
+const (
 	CreateEventSuccess         = "successfully created event"
 	CreateEventFailure         = "unable to create event"
 	UpdateEventSuccess         = "successfully updated event"
@@ -83,23 +91,25 @@ const (
 	AllEventsFound             = "all events found"
 	EventUnattendSuccess       = "event unattended"
 	EventAttendSuccess         = "event attended"
-
-	// Photo Upload
-	InvalidPhotoFormat  = "invalid file: A .jpg or .png file of 10 MB or less is required"
-	FileCreationFailure = "unable to create file"
-	FileReadFailure     = "unable to read file"
-	FileWriteFailure    = "unable to write file"
-	FileWriteSuccess    = "successfully written to file"
-	ClubPhotoNotFound   = "unable to find a photo for the club"
-
-	// Hashing
-	HashErr     = "hashing Error"
-	ErrTokenGen = "token generation error"
-
-	ErrGeneric = "an error occurred"
 )
 
-//
+// Photo upload status messages
+const (
+	InvalidPhotoFormat = "invalid file: A .jpg or .png file of 10 MB or less is required"
+	FileWriteSuccess   = "successfully written to file"
+	ClubPhotoNotFound  = "unable to find a photo for the club"
+)
+
+// Hashing status messages
+const (
+	HashErr     = "hashing Error"
+	ErrTokenGen = "token generation error"
+)
+
+// ErrGeneric represents an generic error that occurred
+var ErrGeneric = "an error occurred"
+
+// T - Basic generic struct for any data fetched
 type T struct{}
 
 // Status Struct used as the standard response when querying the API
@@ -112,19 +122,21 @@ type Status struct {
 	Data    interface{} `json:"data"`
 }
 
-// Listing out requirements for a signup to be successfully created
+// CredentialStatus - Listing out requirements for a signup to be successfully created
 type CredentialStatus struct {
 	Username string `json:"username"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
 }
 
+// New - Creates a new basic status
+// By default, the status code will be a FailureCode (i.e. -1)
 func New() *Status {
 	return &Status{Code: FailureCode, Message: "", Data: T{}}
 }
 
 /*
-Returning the JSON representation of a struct.
+Display - Returning the JSON representation of a struct.
 */
 func (s *Status) Display() string {
 	data, err := json.MarshalIndent(s, "", "\t")

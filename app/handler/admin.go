@@ -8,7 +8,7 @@ import (
 	"net/http"
 )
 
-// Toggling users as active or inactive
+// ToggleUser - Toggling users as active or inactive
 func ToggleUser(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	user := model.NewUser()
 	username := getVar(r, model.UsernameVar)
@@ -30,7 +30,7 @@ func ToggleUser(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.S
 	return http.StatusNotFound, nil
 }
 
-// Toggling clubs as active or inactive
+// ToggleClub - Toggling clubs as active or inactive
 func ToggleClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	club := model.NewClub()
 	clubID := getVar(r, model.ClubIDVar)
@@ -52,7 +52,7 @@ func ToggleClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.S
 	return http.StatusNotFound, nil
 }
 
-// Obtaining all users that need to be activated (toggled)
+// GetToggleUser Obtaining all users that need to be activated (toggled)
 func GetToggleUser(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	users := []*model.User{}
 	result := db.Where(model.IsApprovedColumn+"= ?", false).Find(&users)

@@ -13,9 +13,8 @@ import (
 	"strings"
 )
 
-/* User SignUp
-   See model.Credentials or docs for username and email constraints
-*/
+// SignUp
+// See model.Credentials or docs for username and email constraints
 func SignUp(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	s.Message = status.SignupFailure
 	credStatus := status.CredentialStatus{}
@@ -51,9 +50,7 @@ func SignUp(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Statu
 	return http.StatusUnprocessableEntity, nil
 }
 
-/*
-Returning (hash, true) on Hash success otherwise, ("", false) on error.
-*/
+// Hash - Returning (hash, true) on Hash success otherwise, ("", false) on error.
 func Hash(info string) (string, error) {
 	// Change cost to 10+ (try to find a way to scale it with hardware?)
 	saltedHashPass, err := bcrypt.GenerateFromPassword([]byte(info), bcrypt.DefaultCost)
@@ -63,9 +60,7 @@ func Hash(info string) (string, error) {
 	return string(saltedHashPass), nil
 }
 
-/*
-Extracting JSON payload credentials and returning (model, true) if valid, otherwise (model, false).
-*/
+// Extracting JSON payload credentials and returning (model, true) if valid, otherwise (model, false).
 func verifyCredentials(r *http.Request) (*model.Credentials, error) {
 	c := model.NewCredentials()
 	err := extractBody(r, c)

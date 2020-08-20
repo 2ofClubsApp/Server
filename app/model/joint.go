@@ -1,18 +1,9 @@
 package model
 
-const (
-	ChatIDColumn    = "chat_id"
-	LogIDColumn     = "log_id"
-	IsOwnerColumn   = "is_owner"
-	UserIDColumn    = "user_id"
-	ClubIDColumn    = "club_id"
-	EventIDColumn   = "event_id"
-	TagIDColumn     = "tag_id"
-	StudentIDColumn = "student_id"
-	TagNameColumn   = "tag_name"
-)
+// IsOwnerColumn represents the is_owner column in the UserClub joint table
+var IsOwnerColumn = "is_owner"
 
-// Database format for many to many relation with User and Club
+// UserClub - Database format for many to many relation with User and Club
 // Keeping a record of users to clubs and whether they're an associated owner of the club or not
 type UserClub struct {
 	UserId  int
@@ -20,7 +11,7 @@ type UserClub struct {
 	IsOwner bool
 }
 
-// Create new default UserClub
+// NewUserClub - Create new default UserClub
 func NewUserClub() *UserClub {
 	return &UserClub{}
 }
