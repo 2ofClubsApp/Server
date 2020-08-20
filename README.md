@@ -1,5 +1,4 @@
 # 2ofClubs Server
-[![Go Report Card](https://goreportcard.com/badge/github.com/2-of-clubs/2ofclubs-server)](https://goreportcard.com/report/github.com/2-of-clubs/2ofclubs-server)
 [![GoDoc](https://godoc.org/github.com/2-of-clubs/2ofclubs-server?status.svg)](https://godoc.org/github.com/2-of-clubs/2ofclubs-server)
 [![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
