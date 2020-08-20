@@ -54,7 +54,12 @@ func ToggleClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.S
 
 // GetToggleUser Obtaining all users that need to be activated (toggled)
 func GetToggleUser(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
-	users := []*model.User{}
+	var users []model.User
+	type userBaseInfo struct {
+		Username string `json:"username"`
+		ID       uint   `json:"id"`
+	}
+	
 	result := db.Where(model.IsApprovedColumn+"= ?", false).Find(&users)
 	if isAdmin(db, r) {
 		if result.Error != nil {
@@ -62,9 +67,14 @@ func GetToggleUser(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *statu
 		}
 		s.Code = status.SuccessCode
 		s.Message = status.GetNonToggledUsersSuccess
-		s.Data = users
-		for _, v := range users {
-			fmt.Println(v)
+		var toggleUsers []userBaseInfo
+		for _, u := range users {
+			toggleUsers = append(toggleUsers, userBaseInfo{Username: u.Username, ID: u.ID})
+		}
+		if toggleUsers == nil {
+			s.Data = []userBaseInfo{}
+		} else {
+			s.Data = toggleUsers
 		}
 		return http.StatusOK, nil
 	}

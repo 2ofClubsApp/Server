@@ -3,12 +3,12 @@ package model
 // User base struct
 type User struct {
 	Base
-	*Credentials
-	Manages    []Club  `gorm:"many2many:user_club;" json:"-"`
-	Chooses    []Tag   `gorm:"many2many:user_tag;foreignKey:id;References:Name" json:"-"`
-	Attends    []Event `gorm:"many2many:user_event;" json:"-"`
-	IsAdmin    bool    `json:"-"`
-	IsApproved bool    `json:"-"`
+	*Credentials `json:"-"`
+	Manages      []Club  `gorm:"many2many:user_club;" json:"-"`
+	Chooses      []Tag   `gorm:"many2many:user_tag;foreignKey:id;References:Name" json:"-"`
+	Attends      []Event `gorm:"many2many:user_event;" json:"-"`
+	IsAdmin      bool    `json:"-"`
+	IsApproved   bool    `json:"-"`
 }
 
 // UserDisplay - Displaying public user data
