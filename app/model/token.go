@@ -9,6 +9,7 @@ type TokenInfo struct {
 	RefreshToken string
 }
 
+// Create new default TokenInfo
 func NewTokenInfo() *TokenInfo {
 	return &TokenInfo{}
 }

@@ -12,6 +12,7 @@ type Event struct {
 	Fee         float64 `validate:"gte=0" json:"fee"`
 }
 
+// Create new default Event
 func NewEvent() *Event {
 	return &Event{}
 }
