@@ -93,7 +93,9 @@ func CreateClubEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *sta
 	if userExists {
 		if clubExists {
 			if isManager(db, user, club) {
-				extractBody(r, event)
+				if err := extractBody(r, event); err != nil {
+					return http.StatusInternalServerError, fmt.Errorf(err.Error())
+				}
 				err := validate.Struct(event)
 				if err != nil {
 					s.Message = status.CreateEventFailure
@@ -133,7 +135,9 @@ func UpdateClubEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *sta
 	eventExists := SingleRecordExists(db, model.EventTable, model.IDColumn, eventID, event)
 	if eventExists && clubExists && userExists && isManager(db, user, club) {
 		updatedEvent := model.NewEvent()
-		extractBody(r, updatedEvent)
+		if err := extractBody(r, updatedEvent); err != nil {
+			return http.StatusInternalServerError, fmt.Errorf(err.Error())
+		}
 		err := validate.Struct(updatedEvent)
 		if err == nil {
 			db.Model(event).Updates(updatedEvent)

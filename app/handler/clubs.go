@@ -134,7 +134,7 @@ func GetClubPhoto(db *gorm.DB, w http.ResponseWriter, r *http.Request, s *status
 			return http.StatusInternalServerError, fmt.Errorf("unable to open photo")
 		}
 		defer img.Close()
-		w.Header().Set("Content-Type", "image/jpeg")
+		//w.Header().Set("Content-Type", "image/jpeg")
 		_, err = io.Copy(w, img)
 		if err != nil {
 			return http.StatusInternalServerError, fmt.Errorf("unable to read file contents")
@@ -174,7 +174,7 @@ func UploadClubPhoto(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *sta
 		}
 		defer file.Close()
 		fileName := fmt.Sprintf("./images/%v.png", club.ID)
-		tempFile, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0666)
+		tempFile, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0600)
 		if err != nil {
 			return http.StatusInternalServerError, fmt.Errorf("unable to create temp file")
 		}
@@ -335,9 +335,10 @@ func editManagers(db *gorm.DB, r *http.Request, op string, s *status.Status) (in
 				res := db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ?", newManager.ID, club.ID).First(model.NewUserClub())
 				if res.Error != nil { // Record not existing, then add the new manager
 					err = db.Model(newManager).Association(model.ManagesColumn).Append(club)
-				} else {
-					s.Message = failureMessage
-					return http.StatusInternalServerError, fmt.Errorf("unable to add new manager")
+					if err != nil {
+						s.Message = failureMessage
+						return http.StatusInternalServerError, fmt.Errorf("unable to add new manager")
+					}
 				}
 			case model.OpRemove:
 				err = db.Model(newManager).Association(model.ManagesColumn).Delete(club)

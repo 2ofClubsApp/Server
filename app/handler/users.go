@@ -134,7 +134,9 @@ func getManages(db *gorm.DB, user *model.User) []*model.ManagesDisplay {
 	manages := []*model.ManagesDisplay{}
 	for _, club := range user.Manages {
 		managesDisplay := model.ManagesDisplay{}
-		loadClubData(db, &club)
+		if loadClubData(db, &club) != nil {
+			return manages
+		}
 		managesDisplay.Club = club
 		managesDisplay.IsOwner = isOwner(db, user, &club)
 		manages = append(manages, &managesDisplay)

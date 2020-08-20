@@ -122,9 +122,9 @@ func (app *App) setRoutes() {
 	app.Post("/toggle/tags/{tagName}", app.Handle(handler.ToggleTag, true)) // Done
 
 	// Club routes
-	app.Post("/clubs", app.Handle(handler.CreateClub, true))              // Done
+	app.Post("/clubs", app.Handle(handler.CreateClub, true)) // Done
 	//app.Post("/clubs/{cid:[0-9]+}", app.Handle(handler.UpdateClub, true)) // Requires Fixing
-	app.Get("/clubs/{cid:[0-9]+}", app.Handle(handler.GetClub, false))    // Done
+	app.Get("/clubs/{cid:[0-9]+}", app.Handle(handler.GetClub, false)) // Done
 
 	app.Post("/clubs/{cid:[0-9]+}/manages/{username}", app.Handle(handler.AddManager, true))      // Done (Adding managers/maintainers to club)
 	app.Delete("/clubs/{cid:[0-9]+}/manages/{username}", app.Handle(handler.RemoveManager, true)) // Partially done (Removing managers/maintainers) (If the current owner wants to leave, then they must appoint a new person)
@@ -175,18 +175,15 @@ func (app *App) Handle(h hdlr, verifyRequest bool) func(w http.ResponseWriter, r
 			if isValid := handler.VerifyJWT(r); isValid {
 				if httpStatus, err := h(app.db, w, r, s); err != nil {
 					WriteData(http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError, w)
-					return
 				} else {
 					WriteData(s.Display(), httpStatus, w)
-					return
 				}
+			} else {
+				WriteData(http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized, w)
 			}
-			WriteData(http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized, w)
-			return
 		} else {
 			if httpStatus, err := h(app.db, w, r, s); err != nil {
 				WriteData(http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError, w)
-				return
 			} else {
 				WriteData(s.Display(), httpStatus, w)
 			}
