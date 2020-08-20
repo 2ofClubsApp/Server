@@ -1,6 +1,6 @@
 package model
 
-// Base User struct
+// User base struct
 type User struct {
 	Base
 	*Credentials

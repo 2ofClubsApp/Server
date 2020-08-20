@@ -298,11 +298,10 @@ func sendEmail(fromEmail string, toEmail string, subject string, body []byte) er
 	port, err := strconv.Atoi(os.Getenv("EMAIL_PORT"))
 	if err != nil {
 		return fmt.Errorf("port error")
-	} else {
-		d := gomail.NewDialer(os.Getenv("EMAIL_HOST"), port, os.Getenv("EMAIL_USERNAME"), os.Getenv("EMAIL_PASSWORD"))
-		if err := d.DialAndSend(m); err != nil {
-			return fmt.Errorf("unable to send email")
-		}
+	}
+	d := gomail.NewDialer(os.Getenv("EMAIL_HOST"), port, os.Getenv("EMAIL_USERNAME"), os.Getenv("EMAIL_PASSWORD"))
+	if err := d.DialAndSend(m); err != nil {
+		return fmt.Errorf("unable to send email")
 	}
 	return nil
 }

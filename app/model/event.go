@@ -26,6 +26,8 @@ type EventRequirement struct {
 	Fee         string
 }
 
+// NewEventRequirement returns the requirements when creating an event
+// See model.event or docs for event constraints
 func NewEventRequirement() *EventRequirement {
 	return &EventRequirement{
 		Admin:       status.ManagerOwnerRequired,

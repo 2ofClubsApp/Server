@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-// SignUp
+// SignUp will create a user given valid credentials
 // See model.Credentials or docs for username and email constraints
 func SignUp(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	s.Message = status.SignupFailure
