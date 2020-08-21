@@ -12,9 +12,20 @@ type Club struct {
 	Hosts  []Event `gorm:"many2many:club_event;" json:"hosts"`
 }
 
+// ClubBaseInfo - Displaying basic club data
+type ClubBaseInfo struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}
+
 // NewClub - Create new default Club
 func NewClub() *Club {
 	return &Club{Sets: []Tag{}, Hosts: []Event{}, Active: false}
+}
+
+// DisplayBaseClubInfo displays base club data
+func (c *Club) DisplayBaseClubInfo() ClubBaseInfo {
+	return ClubBaseInfo{ID: c.ID, Name: c.Name}
 }
 
 // Club variables for db columns/route variables
