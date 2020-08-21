@@ -1,12 +1,14 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"github.com/2-of-clubs/2ofclubs-server/app/handler"
 	"github.com/2-of-clubs/2ofclubs-server/app/logger"
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
 	"github.com/2-of-clubs/2ofclubs-server/app/status"
 	"github.com/2-of-clubs/2ofclubs-server/config"
+	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"gorm.io/driver/postgres"
@@ -17,11 +19,12 @@ import (
 )
 
 type routeHandler func(w http.ResponseWriter, r *http.Request)
-type hdlr func(db *gorm.DB, w http.ResponseWriter, r *http.Request, s *status.Status) (httpStatus int, err error)
+type hdlr func(db *gorm.DB, redis *redis.Client, w http.ResponseWriter, r *http.Request, s *status.Status) (httpStatus int, err error)
 
 // App - API config for DB, Mux Router and CORS
 type App struct {
 	db      *gorm.DB
+	redis   *redis.Client
 	router  *mux.Router
 	origin  handlers.CORSOption
 	methods handlers.CORSOption
@@ -30,8 +33,8 @@ type App struct {
 
 // Initialize - Server initialization
 // Database, CORS and the admin settings are initialized
-func (app *App) Initialize(dbConfig *config.DBConfig, _ *config.RedisConfig, adminConfig *model.User) {
-	//ctx := context.Background()
+func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisConfig, adminConfig *model.User) {
+	ctx := context.Background()
 	dbFormat :=
 		fmt.Sprintf(
 			"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
@@ -41,17 +44,16 @@ func (app *App) Initialize(dbConfig *config.DBConfig, _ *config.RedisConfig, adm
 			dbConfig.Password,
 			dbConfig.Name,
 		)
-	//redisClient := redis.NewClient(
-	//	&redis.Options{
-	//		Addr:     redisConfig.Addr,
-	//		Password: redisConfig.Password,
-	//		DB:       redisConfig.DB,
-	//	})
-	//_, err := redisClient.Ping(ctx).Result()
-	//if err != nil {
-	//	log.Fatal("Unable to connect to Redis\n", err)
-	//}
-
+	redisClient := redis.NewClient(
+		&redis.Options{
+			Addr:     redisConfig.Addr,
+			Password: redisConfig.Password,
+			DB:       redisConfig.DB,
+		})
+	_, err := redisClient.Ping(ctx).Result()
+	if err != nil {
+		log.Fatal("Unable to connect to Redis\n", err)
+	}
 	db, err := gorm.Open(postgres.Open(dbFormat), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{SingularTable: true},
 		//DisableForeignKeyConstraintWhenMigrating: true,
@@ -60,6 +62,7 @@ func (app *App) Initialize(dbConfig *config.DBConfig, _ *config.RedisConfig, adm
 		log.Fatal("Unable to connect to database\n", err)
 	}
 	app.db = db
+	app.redis = redisClient
 	app.router = mux.NewRouter()
 	//StrictSlash(true)
 	app.router.Use(logger.LoggingMiddleware)
@@ -92,7 +95,7 @@ func (app *App) Initialize(dbConfig *config.DBConfig, _ *config.RedisConfig, adm
 func (app *App) setRoutes() {
 	// Signup Route
 	app.Post("/signup", app.Handle(handler.SignUp, false)) // Done
-
+	// Logout Route
 	// Login Routes
 	app.Post("/login", app.Handle(handler.Login, false)) // Done (Need to check for synchronous token (CSRF prevention))
 
@@ -174,7 +177,7 @@ func (app *App) Handle(h hdlr, verifyRequest bool) func(w http.ResponseWriter, r
 		s := status.New()
 		if verifyRequest {
 			if isValid := handler.VerifyJWT(r); isValid {
-				if httpStatus, err := h(app.db, w, r, s); err != nil {
+				if httpStatus, err := h(app.db, app.redis, w, r, s); err != nil {
 					WriteData(http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError, w)
 				} else {
 					WriteData(s.Display(), httpStatus, w)
@@ -183,7 +186,7 @@ func (app *App) Handle(h hdlr, verifyRequest bool) func(w http.ResponseWriter, r
 				WriteData(http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized, w)
 			}
 		} else {
-			if httpStatus, err := h(app.db, w, r, s); err != nil {
+			if httpStatus, err := h(app.db, app.redis, w, r, s); err != nil {
 				WriteData(http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError, w)
 			} else {
 				WriteData(s.Display(), httpStatus, w)

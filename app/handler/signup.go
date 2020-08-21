@@ -6,6 +6,7 @@ import (
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
 	"github.com/2-of-clubs/2ofclubs-server/app/status"
 	"github.com/go-playground/validator"
+	"github.com/go-redis/redis/v8"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 	"net/http"
@@ -15,7 +16,7 @@ import (
 
 // SignUp will create a user given valid credentials
 // See model.Credentials or docs for username and email constraints
-func SignUp(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func SignUp(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	s.Message = status.SignupFailure
 	credStatus := status.CredentialStatus{}
 	creds, isValidCred := verifyCredentials(r)

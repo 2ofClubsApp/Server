@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
 	"github.com/2-of-clubs/2ofclubs-server/app/status"
+	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 	"net/http"
 )
 
 // ToggleUser - Toggling users as active or inactive
-func ToggleUser(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func ToggleUser(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	user := model.NewUser()
 	username := getVar(r, model.UsernameVar)
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
@@ -31,7 +32,7 @@ func ToggleUser(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.S
 }
 
 // ToggleClub - Toggling clubs as active or inactive
-func ToggleClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func ToggleClub(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	club := model.NewClub()
 	clubID := getVar(r, model.ClubIDVar)
 	clubExists := SingleRecordExists(db, model.ClubTable, model.IDColumn, clubID, club)
@@ -53,12 +54,12 @@ func ToggleClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.S
 }
 
 // GetToggleClub obtains all clubs that need to be activated (toggled)
-func GetToggleClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func GetToggleClub(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return getToggleModel(db, r, s, model.ClubTable)
 }
 
 // GetToggleUser obtains all users that need to be activated (toggled)
-func GetToggleUser(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func GetToggleUser(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return getToggleModel(db, r, s, model.UserTable)
 }
 

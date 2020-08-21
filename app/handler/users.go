@@ -6,6 +6,7 @@ import (
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
 	"github.com/2-of-clubs/2ofclubs-server/app/status"
 	"github.com/go-playground/validator"
+	"github.com/go-redis/redis/v8"
 	"github.com/matcornic/hermes/v2"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/gomail.v2"
@@ -40,17 +41,17 @@ func IsValidRequest(username string, r *http.Request) bool {
 }
 
 // GetUser - Returns all user info
-func GetUser(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func GetUser(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return getUserInfo(db, r, model.AllUserInfo, s)
 }
 
 // GetUserClubsManage - Returns all of the Clubs that a User currently manages
-func GetUserClubsManage(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func GetUserClubsManage(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return getUserInfo(db, r, model.AllUserClubsManage, s)
 }
 
 // GetUserEventsAttend - Returns all Events that a User currently attends
-func GetUserEventsAttend(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func GetUserEventsAttend(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return getUserInfo(db, r, model.AllUserEventsAttend, s)
 }
 
@@ -148,7 +149,7 @@ func getManages(db *gorm.DB, user *model.User) []*model.ManagesDisplay {
 UpdateUserTags - Updating the users choice of tags and attended events. Only valid tags will be extracted and added if it's not already.
 If an invalid format is provided where there aren't any valid tags to be extracted, the users tag preferences will be reset
 */
-func UpdateUserTags(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func UpdateUserTags(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	username := strings.ToLower(getVar(r, model.UsernameVar))
 	user := model.NewUser()
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
@@ -168,7 +169,7 @@ func UpdateUserTags(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *stat
 
 // UpdateUserPassword - Updating a user's password by providing the correct original password and the password
 // See model.Credentials or docs for password constraints
-func UpdateUserPassword(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func UpdateUserPassword(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	newCreds := model.NewPasswordChange()
 	if extractBody(r, newCreds) != nil {
 		return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
@@ -214,7 +215,7 @@ func UpdateUserPassword(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *
 ResetUserPassword - Resetting a user's password through a password email reset
 See model.Credentials or docs for password constraints
 */
-func ResetUserPassword(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func ResetUserPassword(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	creds := model.NewCredentials()
 	token := getVar(r, model.TokenVar)
 	username := getVar(r, model.UsernameVar)
@@ -256,7 +257,7 @@ RequestResetUserPassword - Requesting a user password reset
 This will send an email to the user (if the user exists).
 The email is valid for 10 minutes and can only be used a single time
 */
-func RequestResetUserPassword(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func RequestResetUserPassword(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	const emailExpiryTime = 10
 	username := strings.ToLower(getVar(r, model.UsernameVar))
 	user := model.NewUser()

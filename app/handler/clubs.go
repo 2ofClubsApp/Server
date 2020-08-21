@@ -5,6 +5,7 @@ import (
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
 	"github.com/2-of-clubs/2ofclubs-server/app/status"
 	"github.com/go-playground/validator"
+	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 	"io"
 	"io/ioutil"
@@ -15,9 +16,7 @@ import (
 )
 
 // GetClubs - In-Progress
-func GetClubs(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
-	//s := status.New()
-
+func GetClubs(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	type Club struct {
 		clubId int
 	}
@@ -83,7 +82,7 @@ func UpdateClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.S
 
 // CreateClub - Creating a club (You must have an active user account first)
 // See model.Club or the docs for club information constraints
-func CreateClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func CreateClub(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	claims := GetTokenClaims(r)
 	user := model.NewUser()
 	uname := fmt.Sprintf("%v", claims["sub"])
@@ -117,7 +116,7 @@ func CreateClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.S
 }
 
 // GetClubPhoto - Obtaining a club profile photo (if it exists)
-func GetClubPhoto(db *gorm.DB, w http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func GetClubPhoto(db *gorm.DB, _ *redis.Client, w http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	clubID := getVar(r, model.ClubIDVar)
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, model.NewClub())
 	if clubExists {
@@ -149,7 +148,7 @@ func GetClubPhoto(db *gorm.DB, w http.ResponseWriter, r *http.Request, s *status
 
 // UploadClubPhoto - Uploading a club photo
 // Club photo file size upload is 10 MB max
-func UploadClubPhoto(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func UploadClubPhoto(db *gorm.DB,_ *redis.Client,  _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	maxMem := int64(10 << 20)
 	clubID := getVar(r, model.ClubIDVar)
 	club := model.NewClub()
@@ -199,7 +198,7 @@ func UploadClubPhoto(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *sta
 
 // UpdateClubTags - Updating user club tags
 // All old tags will be overrided with the new set of tags provided
-func UpdateClubTags(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func UpdateClubTags(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	clubID := getVar(r, model.ClubIDVar)
 	club := model.NewClub()
 	claims := GetTokenClaims(r)
@@ -227,7 +226,7 @@ func UpdateClubTags(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *stat
 }
 
 // GetClub - Obtaining all information about a club
-func GetClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func GetClub(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return getClubInfo(db, r, model.AllClubInfo, s)
 }
 
@@ -261,7 +260,7 @@ func getClubInfo(db *gorm.DB, r *http.Request, infoType string, s *status.Status
 }
 
 // GetClubEvents - Obtaining all events that a club hosts
-func GetClubEvents(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func GetClubEvents(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return getClubInfo(db, r, model.AllClubEventsHost, s)
 }
 
@@ -295,13 +294,13 @@ func isManager(db *gorm.DB, user *model.User, club *model.Club) bool {
 
 // RemoveManager - Removing a manager from a club
 // Note: The user removing the manager must be a club owner
-func RemoveManager(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func RemoveManager(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return editManagers(db, r, model.OpRemove, s)
 }
 
 // AddManager - Adding a manager to a club
 // Note: The user adding the manager must be a club owner
-func AddManager(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func AddManager(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return editManagers(db, r, model.OpAdd, s)
 }
 
