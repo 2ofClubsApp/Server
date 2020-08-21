@@ -52,26 +52,27 @@ const (
 
 // User & Club status messages
 const (
-	ToggleUserSuccess   = "toggled user"
-	UserFound           = "user found"
-	UserNotFound        = "user not found"
-	ClubFound           = "club found"
-	ClubNotFound        = "club not found"
-	ClubCreationSuccess = "club successfully created"
-	ClubCreationFailure = "unable to create club"
-	ClubUpdateSuccess   = "successfully updated club"
-	ClubToggleSuccess   = "toggled club"
-	ClubUpdateFailure   = "unable to update club"
+	ToggleUserSuccess          = "toggled user"
+	UserFound                  = "user found"
+	UserNotFound               = "user not found"
+	ClubFound                  = "club found"
+	ClubNotFound               = "club not found"
+	ClubCreationSuccess        = "club successfully created"
+	ClubCreationFailure        = "unable to create club"
+	ClubUpdateSuccess          = "successfully updated club"
+	ClubToggleSuccess          = "toggled club"
+	ClubUpdateFailure          = "unable to update club"
+	GetNonApprovedUsersSuccess = "retrieved all users that require approval"
+	GetNonApprovedClubsSuccess = "retrieved all clubs that require approval"
 )
 
 // Admin status messages
 const (
-	GetNonToggledUsersSuccess = "retrieved all non toggled users"
-	ManagerOwnerRequired      = "you must be a manager or owner of the club"
-	AdminRequired             = "please contact an administrator"
-	InvalidTxtFile            = "invalid file: A .txt file is required"
-	FileNotFound              = "file doesn't exist"
-	UserNotApproved           = "sorry, your account has not been approved yet"
+	ManagerOwnerRequired = "you must be a manager or owner of the club"
+	AdminRequired        = "please contact an administrator"
+	InvalidTxtFile       = "invalid file: A .txt file is required"
+	FileNotFound         = "file doesn't exist"
+	UserNotApproved      = "sorry, your account has not been approved yet"
 )
 
 // Events status messages

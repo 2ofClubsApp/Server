@@ -52,20 +52,47 @@ func ToggleClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.S
 	return http.StatusNotFound, nil
 }
 
-// GetToggleUser Obtaining all users that need to be activated (toggled)
+// GetToggleClub obtains all clubs that need to be activated (toggled)
+func GetToggleClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+	return getToggleModel(db, r, s, model.ClubTable)
+}
+
+// GetToggleUser obtains all users that need to be activated (toggled)
 func GetToggleUser(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
-	users := []*model.User{}
-	result := db.Where(model.IsApprovedColumn+"= ?", false).Find(&users)
+	return getToggleModel(db, r, s, model.UserTable)
+}
+
+// Helper function for obtaining all models (users/clubs) that need to be toggled
+// This can be extended for future models that require approval
+func getToggleModel(db *gorm.DB, r *http.Request, s *status.Status, modelType string) (int, error) {
 	if isAdmin(db, r) {
-		if result.Error != nil {
-			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+		switch modelType {
+		case model.ClubTable:
+			var clubs []model.Club
+			result := db.Where(model.ActiveColumn+"= ?", false).Find(&clubs)
+			if result.Error != nil {
+				return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+			}
+			s.Message = status.GetNonApprovedClubsSuccess
+			toggleClubs := []model.ClubBaseInfo{}
+			for _, c := range clubs {
+				toggleClubs = append(toggleClubs, c.DisplayBaseClubInfo())
+			}
+			s.Data = toggleClubs
+		case model.UserTable:
+			var users []model.User
+			result := db.Where(model.IsApprovedColumn+"= ?", false).Find(&users)
+			if result.Error != nil {
+				return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+			}
+			s.Message = status.GetNonApprovedUsersSuccess
+			toggleUsers := []model.UserBaseInfo{}
+			for _, u := range users {
+				toggleUsers = append(toggleUsers, u.DisplayBaseUserInfo())
+			}
+			s.Data = toggleUsers
 		}
 		s.Code = status.SuccessCode
-		s.Message = status.GetNonToggledUsersSuccess
-		s.Data = users
-		for _, v := range users {
-			fmt.Println(v)
-		}
 		return http.StatusOK, nil
 	}
 	s.Message = status.AdminRequired

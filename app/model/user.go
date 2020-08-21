@@ -3,12 +3,12 @@ package model
 // User base struct
 type User struct {
 	Base
-	*Credentials
-	Manages    []Club  `gorm:"many2many:user_club;" json:"-"`
-	Chooses    []Tag   `gorm:"many2many:user_tag;foreignKey:id;References:Name" json:"-"`
-	Attends    []Event `gorm:"many2many:user_event;" json:"-"`
-	IsAdmin    bool    `json:"-"`
-	IsApproved bool    `json:"-"`
+	*Credentials `json:"-"`
+	Manages      []Club  `gorm:"many2many:user_club;" json:"-"`
+	Chooses      []Tag   `gorm:"many2many:user_tag;foreignKey:id;References:Name" json:"-"`
+	Attends      []Event `gorm:"many2many:user_event;" json:"-"`
+	IsAdmin      bool    `json:"-"`
+	IsApproved   bool    `json:"-"`
 }
 
 // UserDisplay - Displaying public user data
@@ -19,6 +19,12 @@ type UserDisplay struct {
 	Attends []Event           `json:"attends"`
 }
 
+// UserBaseInfo - Displaying basic user data
+type UserBaseInfo struct {
+	ID       uint   `json:"id"`
+	Username string `json:"username"`
+}
+
 // ManagesDisplay is used as a display wrapper for the ClubDisplay
 // For a users managed club, whether they're an owner or not is also displayed
 type ManagesDisplay struct {
@@ -26,9 +32,14 @@ type ManagesDisplay struct {
 	IsOwner bool `json:"isOwner"`
 }
 
-// Display - Returns public club data
-func (u *User) Display() *UserDisplay {
+// DisplayAllInfo public user data
+func (u *User) DisplayAllInfo() *UserDisplay {
 	return &UserDisplay{Email: u.Email}
+}
+
+// DisplayBaseUserInfo displays base user data
+func (u *User) DisplayBaseUserInfo() UserBaseInfo {
+	return UserBaseInfo{ID: u.ID, Username: u.Username}
 }
 
 // NewUser - Create new default User

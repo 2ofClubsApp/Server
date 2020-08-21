@@ -70,7 +70,7 @@ func getUserInfo(db *gorm.DB, r *http.Request, infoType string, s *status.Status
 		if userExists {
 			switch strings.ToLower(infoType) {
 			case model.AllUserInfo:
-				userDisplay := user.Display()
+				userDisplay := user.DisplayAllInfo()
 				res := db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
 				if res.Error != nil {
 					return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))

@@ -99,7 +99,8 @@ func (app *App) setRoutes() {
 	// Admin Route
 	app.Post("/toggle/users/{username}", app.Handle(handler.ToggleUser, true))   // Done
 	app.Post("/toggle/clubs/{cid:[0-9]+}", app.Handle(handler.ToggleClub, true)) // Done
-	app.Get("/users/toggle", app.Handle(handler.GetToggleUser, true))            // In-Progress
+	app.Get("/users/toggle", app.Handle(handler.GetToggleUser, true))            // Done
+	app.Get("/clubs/toggle", app.Handle(handler.GetToggleClub, true))            // Done
 
 	// User Routes
 	app.Get("/users/{username}", app.Handle(handler.GetUser, true))                             // Done

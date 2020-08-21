@@ -33,7 +33,9 @@ func GetClubs(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Sta
 		Where("tag.name IN ?", activeTags).
 		Distinct("club.name").
 		Find(&clubs)
+	//db.Joins("club").Joins("club_tag").Joins("tags").Find(&clubs, "club.sets IN ?", activeTags)
 	//db.Raw("SELECT DISTINCT c.name FROM club AS c NATURAL JOIN club_tag AS ct WHERE tag.name IN ?", activeTags).Scan(&clubs)
+	//db.Raw(" SELECT * FROM club_tag WHERE tag_name IN ?", activeTags).Find(&clubs)
 	//res := db.Raw("Select club.id From club NATURAL JOIN club_tag Where club_tag.tag_name IN ?", activeTags).Find(&clubs)
 	//fmt.Println(res.RowsAffected)
 	//fmt.Println(res.Error)
