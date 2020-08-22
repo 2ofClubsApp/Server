@@ -46,7 +46,7 @@ func GetEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Reque
 func DeleteClubEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	clubID := getVar(r, model.ClubIDVar)
 	eid := getVar(r, model.EventIDVar)
-	claims := GetTokenClaims(r)
+	claims := GetTokenClaims(ExtractToken(r))
 	uname := fmt.Sprintf("%v", claims["sub"])
 	club := model.NewClub()
 	event := model.NewEvent()
@@ -82,7 +82,7 @@ func DeleteClubEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *htt
 // CreateClubEvent - Creating an event for a particular club. The user creating the club must at least be a manager
 // See model.Event or docs for the event constraints
 func CreateClubEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
-	claims := GetTokenClaims(r)
+	claims := GetTokenClaims(ExtractToken(r))
 	uname := fmt.Sprintf("%v", claims["sub"])
 	clubID := getVar(r, model.ClubIDVar)
 	club := model.NewClub()
@@ -123,7 +123,7 @@ func CreateClubEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *htt
 
 // UpdateClubEvent - Updating an event for a particular club
 func UpdateClubEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
-	claims := GetTokenClaims(r)
+	claims := GetTokenClaims(ExtractToken(r))
 	uname := fmt.Sprintf("%v", claims["sub"])
 	clubID := getVar(r, model.ClubIDVar)
 	club := model.NewClub()
@@ -173,7 +173,7 @@ func AddUserAttendsEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r 
 // Helper function to add or remove club events
 func manageUserAttends(db *gorm.DB, r *http.Request, operation string, s *status.Status) (int, error) {
 	eventID := getVar(r, model.EventIDVar)
-	claims := GetTokenClaims(r)
+	claims := GetTokenClaims(ExtractToken(r))
 	uname := fmt.Sprintf("%v", claims["sub"])
 	event := model.NewEvent()
 	user := model.NewUser()

@@ -23,6 +23,7 @@ const (
 // Login - User Login
 //   See model.credentials or docs for username and email constraints
 func Login(db *gorm.DB, rc *redis.Client, w http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+	var minuteToNanosecond = 60000000000
 	ctx := context.Background()
 	creds := model.NewCredentials()
 	if extractBody(r, creds) != nil {
@@ -48,13 +49,10 @@ func Login(db *gorm.DB, rc *redis.Client, w http.ResponseWriter, r *http.Request
 		s.Code = status.SuccessCode
 		s.Message = status.LoginSuccess
 		s.Data = login{Token: tp.AccessToken}
-		fmt.Println(creds.Username)
-		fmt.Println(tp.AccessToken)
-		val, err := rc.Set(ctx, creds.Username, tp.AccessToken, 300000000000).Result()
+		_, err := rc.Set(ctx, creds.Username, tp.AccessToken, time.Duration(accessDuration*minuteToNanosecond)).Result()
 		if err != nil {
 			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
 		}
-		fmt.Println(val)
 		return http.StatusOK, nil
 	}
 	s.Message = status.UserNotApproved

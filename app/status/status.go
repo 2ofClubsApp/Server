@@ -40,6 +40,8 @@ const (
 	ValidEmail       = "must be a valid email"
 	EmailExists      = "email already exists"
 	PasswordRequired = "a password is required"
+	LogoutSuccess    = "successfully logged out"
+	LogoutFailure    = "unable to logout user"
 )
 
 // Password reset status messages

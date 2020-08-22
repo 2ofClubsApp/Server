@@ -96,6 +96,7 @@ func (app *App) setRoutes() {
 	// Signup Route
 	app.Post("/signup", app.Handle(handler.SignUp, false)) // Done
 	// Logout Route
+	app.Post("/logout/{username}", app.Handle(handler.Logout, false)) // Done
 	// Login Routes
 	app.Post("/login", app.Handle(handler.Login, false)) // Done (Need to check for synchronous token (CSRF prevention))
 
@@ -176,7 +177,7 @@ func (app *App) Handle(h hdlr, verifyRequest bool) func(w http.ResponseWriter, r
 		// Must verify for sensitive information
 		s := status.New()
 		if verifyRequest {
-			if isValid := handler.VerifyJWT(r); isValid {
+			if isValid := handler.VerifyJWT(r); isValid && handler.IsActiveToken(app.redis, r) {
 				if httpStatus, err := h(app.db, app.redis, w, r, s); err != nil {
 					WriteData(http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError, w)
 				} else {

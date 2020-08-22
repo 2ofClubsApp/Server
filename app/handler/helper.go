@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
 	"github.com/2-of-clubs/2ofclubs-server/app/status"
 	"github.com/dgrijalva/jwt-go"
+	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/mux"
 	"gorm.io/gorm"
 	"net/http"
@@ -25,23 +27,31 @@ func getVar(r *http.Request, name string) string {
 }
 
 // GetTokenClaims - Extract the Token Claims from the HTTP Request Header
-func GetTokenClaims(r *http.Request) jwt.MapClaims {
-	t := r.Header.Get("Authorization")
-	splitToken := strings.Split(t, "Bearer")
-	token := strings.TrimSpace(splitToken[1])
+func GetTokenClaims(token string) jwt.MapClaims {
 	claims := jwt.MapClaims{}
-	jwt.ParseWithClaims(token, &claims, KF(os.Getenv("JWT_SECRET")))
+	if _, err := jwt.ParseWithClaims(token, &claims, KF(os.Getenv("JWT_SECRET"))); err != nil {
+		return jwt.MapClaims{}
+	}
 	return claims
+
 }
 
 // VerifyJWT - Return true if the JWT is valid, false otherwise
 func VerifyJWT(r *http.Request) bool {
-	if bearerToken := r.Header.Get("Authorization"); bearerToken != "" {
-		splitToken := strings.Split(bearerToken, "Bearer ")
-		token := strings.TrimSpace(splitToken[1])
+	if token := ExtractToken(r); token != "" {
 		return IsValidJWT(token, KF(os.Getenv("JWT_SECRET")))
 	}
 	return false
+}
+
+// ExtractToken returns the JWT token if it's provided otherwise, an empty string will be returned
+func ExtractToken(r *http.Request) string {
+	bearerToken := r.Header.Get("Authorization")
+	splitToken := strings.Split(bearerToken, "Bearer ")
+	if len(splitToken) < 2 {
+		return ""
+	}
+	return strings.TrimSpace(splitToken[1])
 }
 
 // IsValidJWT - Returning true whether the JWT is valid
@@ -52,6 +62,15 @@ func IsValidJWT(token string, kf jwt.Keyfunc) bool {
 		}
 	}
 	return false
+}
+
+// IsActiveToken returns whether the token is active or not (in the redis cache)
+func IsActiveToken(rc *redis.Client, r *http.Request) bool {
+	ctx := context.Background()
+	token := ExtractToken(r)
+	claims := GetTokenClaims(token)
+	uname := fmt.Sprintf("%v", claims["sub"])
+	return rc.Get(ctx, uname).Val() == token
 }
 
 // KF - Key Function to verify the token signing method (Used in conjunction with IsValidJWT)
@@ -70,11 +89,11 @@ func KF(secret string) jwt.Keyfunc {
 func IsSingleRecordActive(db *gorm.DB, tableName string, column string, val string, t interface{}) bool {
 	exists := SingleRecordExists(db, tableName, column, val, t)
 	if exists {
-		switch model := t.(type) {
+		switch m := t.(type) {
 		case *model.Club:
-			return model.Active
+			return m.Active
 		case *model.User:
-			return model.IsApproved
+			return m.IsApproved
 		}
 	}
 	return false
@@ -88,7 +107,7 @@ func SingleRecordExists(db *gorm.DB, tableName string, column string, val string
 
 // Returning true whether the user is an admin or not
 func isAdmin(db *gorm.DB, r *http.Request) bool {
-	claims := GetTokenClaims(r)
+	claims := GetTokenClaims(ExtractToken(r))
 	subject := fmt.Sprintf("%v", claims["sub"])
 	user := model.NewUser()
 	// If the user is an admin, it would already be active by default (No need to check for it's active state)

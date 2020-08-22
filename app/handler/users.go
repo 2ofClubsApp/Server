@@ -35,7 +35,7 @@ IsValidRequest - Validating the user request to ensure that they can only access
 True if the requested user has the same username identifier as the token username
 */
 func IsValidRequest(username string, r *http.Request) bool {
-	claims := GetTokenClaims(r)
+	claims := GetTokenClaims(ExtractToken(r))
 	sub := fmt.Sprintf("%v", claims["sub"])
 	return sub == username
 }

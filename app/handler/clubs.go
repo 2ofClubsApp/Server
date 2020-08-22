@@ -51,7 +51,7 @@ func UpdateClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.S
 	clubID := getVar(r, model.ClubIDVar)
 	club := model.NewClub()
 	user := model.NewUser()
-	claims := GetTokenClaims(r)
+	claims := GetTokenClaims(ExtractToken(r))
 	uname := fmt.Sprintf("%v", claims["sub"])
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, uname, user)
@@ -83,7 +83,7 @@ func UpdateClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.S
 // CreateClub - Creating a club (You must have an active user account first)
 // See model.Club or the docs for club information constraints
 func CreateClub(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
-	claims := GetTokenClaims(r)
+	claims := GetTokenClaims(ExtractToken(r))
 	user := model.NewUser()
 	uname := fmt.Sprintf("%v", claims["sub"])
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, uname, user)
@@ -148,12 +148,12 @@ func GetClubPhoto(db *gorm.DB, _ *redis.Client, w http.ResponseWriter, r *http.R
 
 // UploadClubPhoto - Uploading a club photo
 // Club photo file size upload is 10 MB max
-func UploadClubPhoto(db *gorm.DB,_ *redis.Client,  _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func UploadClubPhoto(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	maxMem := int64(10 << 20)
 	clubID := getVar(r, model.ClubIDVar)
 	club := model.NewClub()
 	user := model.NewUser()
-	claims := GetTokenClaims(r)
+	claims := GetTokenClaims(ExtractToken(r))
 	username := fmt.Sprintf("%v", claims["sub"])
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
@@ -201,7 +201,7 @@ func UploadClubPhoto(db *gorm.DB,_ *redis.Client,  _ http.ResponseWriter, r *htt
 func UpdateClubTags(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	clubID := getVar(r, model.ClubIDVar)
 	club := model.NewClub()
-	claims := GetTokenClaims(r)
+	claims := GetTokenClaims(ExtractToken(r))
 	username := fmt.Sprintf("%v", claims["sub"])
 	user := model.NewUser()
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
@@ -315,7 +315,7 @@ func editManagers(db *gorm.DB, r *http.Request, op string, s *status.Status) (in
 		successMessage = status.ManagerRemoveSuccess
 		failureMessage = status.ManagerRemoveFailure
 	}
-	claims := GetTokenClaims(r)
+	claims := GetTokenClaims(ExtractToken(r))
 	clubOwnerUsername := fmt.Sprintf("%v", claims["sub"])
 	newManagerUname := getVar(r, model.UsernameVar)
 	clubID := getVar(r, model.ClubIDVar)
