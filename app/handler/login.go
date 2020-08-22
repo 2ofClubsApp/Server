@@ -16,14 +16,14 @@ import (
 )
 
 const (
-	accessDuration  = 5       // 5 minutes
-	refreshDuration = 60 * 24 // 24 hours
+	accessDuration     = 5           // 5 minutes
+	refreshDuration    = 60 * 24     // 24 hours
+	minuteToNanosecond = 60000000000 // 6E10
 )
 
 // Login - User Login
-//   See model.credentials or docs for username and email constraints
+// See model.credentials or docs for username and email constraints
 func Login(db *gorm.DB, rc *redis.Client, w http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
-	var minuteToNanosecond = 60000000000
 	ctx := context.Background()
 	creds := model.NewCredentials()
 	if extractBody(r, creds) != nil {
@@ -44,12 +44,17 @@ func Login(db *gorm.DB, rc *redis.Client, w http.ResponseWriter, r *http.Request
 		c := GenerateCookie(model.RefreshToken, tp.RefreshToken)
 		http.SetCookie(w, c)
 		type login struct {
-			Token string
+			Token string `json:"token"`
 		}
 		s.Code = status.SuccessCode
 		s.Message = status.LoginSuccess
 		s.Data = login{Token: tp.AccessToken}
-		_, err := rc.Set(ctx, creds.Username, tp.AccessToken, time.Duration(accessDuration*minuteToNanosecond)).Result()
+
+		_, err := rc.Set(ctx, "access_"+creds.Username, tp.AccessToken, time.Duration(accessDuration*minuteToNanosecond)).Result()
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+		}
+		_, err = rc.Set(ctx, "refresh_"+creds.Username, tp.RefreshToken, time.Duration(refreshDuration*minuteToNanosecond)).Result()
 		if err != nil {
 			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
 		}
@@ -82,6 +87,7 @@ func GenerateCookie(name string, value string) *http.Cookie {
 		Value:    value,
 		HttpOnly: true,
 		Secure:   true,
+		SameSite: http.SameSiteStrictMode,
 	}
 }
 
@@ -106,10 +112,10 @@ func GenerateJWT(subject string, duration time.Duration, jwtSecret string) (stri
 func GetTokenPair(subject string, accessDuration time.Duration, refreshDuration time.Duration) (*model.TokenInfo, error) {
 	if accessToken, atErr := GenerateJWT(subject, accessDuration, os.Getenv("JWT_SECRET")); atErr == nil {
 		if refreshToken, rtErr := GenerateJWT(subject, refreshDuration, os.Getenv("JWT_SECRET")); rtErr == nil {
-			token := model.NewTokenInfo()
-			token.AccessToken = accessToken
-			token.RefreshToken = refreshToken
-			return token, nil
+			tokenInfo := model.NewTokenInfo()
+			tokenInfo.AccessToken = accessToken
+			tokenInfo.RefreshToken = refreshToken
+			return tokenInfo, nil
 		}
 	}
 	return nil, fmt.Errorf(status.ErrTokenGen)

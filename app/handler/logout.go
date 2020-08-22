@@ -20,7 +20,7 @@ func Logout(_ *gorm.DB, rc *redis.Client, _ http.ResponseWriter, r *http.Request
 	if tokenUsername == requestUsername {
 		s.Code = status.SuccessCode
 		s.Message = status.LogoutSuccess
-		rc.Del(ctx, requestUsername)
+		rc.Del(ctx, "access_"+requestUsername)
 		return http.StatusOK, nil
 	}
 	s.Message = status.LogoutFailure
