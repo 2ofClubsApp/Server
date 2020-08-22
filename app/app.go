@@ -97,9 +97,11 @@ func (app *App) setRoutes() {
 	app.Post("/signup", app.Handle(handler.SignUp, false)) // Done
 	// Logout Route
 	app.Post("/logout/{username}", app.Handle(handler.Logout, false)) // Done
-	// Login Routes
-	app.Post("/login", app.Handle(handler.Login, false)) // Done (Need to check for synchronous token (CSRF prevention))
+	// Login Route
+	app.Post("/login", app.Handle(handler.Login, false)) // Done
 
+	// Refresh Route
+	app.Post("/refreshToken", app.Handle(handler.RefreshToken, false))
 	// Admin Route
 	app.Post("/toggle/users/{username}", app.Handle(handler.ToggleUser, true))   // Done
 	app.Post("/toggle/clubs/{cid:[0-9]+}", app.Handle(handler.ToggleClub, true)) // Done

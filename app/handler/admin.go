@@ -7,12 +7,13 @@ import (
 	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 	"net/http"
+	"strings"
 )
 
 // ToggleUser - Toggling users as active or inactive
 func ToggleUser(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	user := model.NewUser()
-	username := getVar(r, model.UsernameVar)
+	username := strings.ToLower(getVar(r, model.UsernameVar))
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
 	if userExists {
 		if isAdmin(db, r) && !user.IsAdmin {

@@ -31,17 +31,18 @@ const (
 
 // Authentication status messages
 const (
-	SignupSuccess    = "signup successful"
-	SignupFailure    = "unable to sign up user"
-	LoginSuccess     = "successfully logged in"
-	LoginFailure     = "username or password is incorrect"
-	UsernameExists   = "username already exists"
-	UsernameAlphaNum = "username must start with a letter and can only contain the following characters: a-zA-Z0-9_ and must be 50 characters or less"
-	ValidEmail       = "must be a valid email"
-	EmailExists      = "email already exists"
-	PasswordRequired = "a password is required"
-	LogoutSuccess    = "successfully logged out"
-	LogoutFailure    = "unable to logout user"
+	TokenPairGenerateSuccess = "generated new token pair"
+	SignupSuccess            = "signup successful"
+	SignupFailure            = "unable to sign up user"
+	LoginSuccess             = "successfully logged in"
+	LoginFailure             = "username or password is incorrect"
+	UsernameExists           = "username already exists"
+	UsernameAlphaNum         = "username must start with a letter and can only contain the following characters: a-zA-Z0-9_ and must be 50 characters or less"
+	ValidEmail               = "must be a valid email"
+	EmailExists              = "email already exists"
+	PasswordRequired         = "a password is required"
+	LogoutSuccess            = "successfully logged out"
+	LogoutFailure            = "unable to logout user"
 )
 
 // Password reset status messages

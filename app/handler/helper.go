@@ -70,7 +70,7 @@ func IsActiveToken(rc *redis.Client, r *http.Request) bool {
 	token := ExtractToken(r)
 	claims := GetTokenClaims(token)
 	uname := fmt.Sprintf("%v", claims["sub"])
-	return rc.Get(ctx, uname).Val() == token
+	return rc.Get(ctx, "access_"+uname).Val() == token
 }
 
 // KF - Key Function to verify the token signing method (Used in conjunction with IsValidJWT)
