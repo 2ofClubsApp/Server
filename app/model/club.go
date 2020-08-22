@@ -20,7 +20,7 @@ type ClubBaseInfo struct {
 
 // NewClub - Create new default Club
 func NewClub() *Club {
-	return &Club{Sets: []Tag{}, Hosts: []Event{}, Active: false}
+	return &Club{Sets: []Tag{}, Active: false, Hosts: []Event{}}
 }
 
 // DisplayBaseClubInfo displays base club data

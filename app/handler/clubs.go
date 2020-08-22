@@ -273,6 +273,9 @@ func loadClubData(db *gorm.DB, club *model.Club) error {
 		return fmt.Errorf("unable to obtain club events hosted")
 	}
 	club.Sets = filterTags(club.Sets)
+	if len(club.Hosts) == 0 {
+		club.Hosts = []model.Event{}
+	}
 	return nil
 }
 
