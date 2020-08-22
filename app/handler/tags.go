@@ -6,6 +6,7 @@ import (
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
 	"github.com/2-of-clubs/2ofclubs-server/app/status"
 	"github.com/go-playground/validator"
+	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 	"io/ioutil"
 	"net/http"
@@ -32,7 +33,7 @@ func tagExists(db *gorm.DB, tagName string) bool {
 }
 
 // CreateTag - Create a single tag provided the proper JSON request (See the docs for more info)
-func CreateTag(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func CreateTag(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	if isAdmin(db, r) {
 		payload := map[string]string{}
 		decoder := json.NewDecoder(r.Body)
@@ -55,7 +56,7 @@ func CreateTag(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.St
 
 // UploadTagsList - Create tags based on a new line separated list
 // Refer to docs for file specifications.
-func UploadTagsList(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func UploadTagsList(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	if isAdmin(db, r) {
 		file, handler, err := r.FormFile("file")
 		if err != nil {
@@ -85,7 +86,7 @@ func UploadTagsList(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *stat
 }
 
 // GetTags - Obtaining all tags (both active and inactive)
-func GetTags(db *gorm.DB, _ http.ResponseWriter, _ *http.Request, s *status.Status) (int, error) {
+func GetTags(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, _ *http.Request, s *status.Status) (int, error) {
 	tags, err := getAllTags(db)
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
@@ -107,7 +108,7 @@ func getAllTags(db *gorm.DB) ([]model.Tag, error) {
 }
 
 // GetActiveTags - Obtaining all active tags
-func GetActiveTags(db *gorm.DB, _ http.ResponseWriter, _ *http.Request, s *status.Status) (int, error) {
+func GetActiveTags(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, _ *http.Request, s *status.Status) (int, error) {
 	tags, err := getAllTags(db)
 	if err != nil {
 		return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
@@ -133,7 +134,7 @@ func extractTags(db *gorm.DB, r *http.Request) []model.Tag {
 }
 
 // ToggleTag - Toggling tags as either active or inactive
-func ToggleTag(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func ToggleTag(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	if isAdmin(db, r) {
 		tagName := getVar(r, model.TagNameVar)
 		tagName = strings.TrimSpace(tagName)

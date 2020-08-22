@@ -1,5 +1,15 @@
 version: '3.3'
 services:
+  caching:
+    image: redis
+    container_name: 2ofClubsRedis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - backend
+    volumes:
+      - 2ofClubsRedis:/data
   db:
     image: postgres
     container_name: 2ofClubsDB
@@ -20,6 +30,7 @@ services:
     restart: unless-stopped
     depends_on:
       - db
+      - caching
     networks:
       - backend
     env_file:
@@ -29,6 +40,7 @@ services:
     command: go run main.go
 volumes:
   2ofClubsVolume:
+  2ofClubsRedis:
 networks:
   backend:
     driver: "bridge"

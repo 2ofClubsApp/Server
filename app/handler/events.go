@@ -5,12 +5,13 @@ import (
 	"github.com/2-of-clubs/2ofclubs-server/app/model"
 	"github.com/2-of-clubs/2ofclubs-server/app/status"
 	"github.com/go-playground/validator"
+	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 	"net/http"
 )
 
 // GetAllEvents - Returning all events from all clubs
-func GetAllEvents(db *gorm.DB, _ http.ResponseWriter, _ *http.Request, s *status.Status) (int, error) {
+func GetAllEvents(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, _ *http.Request, s *status.Status) (int, error) {
 	events := []model.Event{}
 	result := db.Find(&events)
 	if result.Error != nil {
@@ -26,7 +27,7 @@ func GetAllEvents(db *gorm.DB, _ http.ResponseWriter, _ *http.Request, s *status
 }
 
 // GetEvent - Obtaining an event from a specific club
-func GetEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func GetEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	eventID := getVar(r, model.EventIDVar)
 	event := model.NewEvent()
 	eventExists := SingleRecordExists(db, model.EventTable, model.IDColumn, eventID, event)
@@ -42,10 +43,10 @@ func GetEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Sta
 }
 
 // DeleteClubEvent - Deleting a club event
-func DeleteClubEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func DeleteClubEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	clubID := getVar(r, model.ClubIDVar)
 	eid := getVar(r, model.EventIDVar)
-	claims := GetTokenClaims(r)
+	claims := GetTokenClaims(ExtractToken(r))
 	uname := fmt.Sprintf("%v", claims["sub"])
 	club := model.NewClub()
 	event := model.NewEvent()
@@ -80,8 +81,8 @@ func DeleteClubEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *sta
 
 // CreateClubEvent - Creating an event for a particular club. The user creating the club must at least be a manager
 // See model.Event or docs for the event constraints
-func CreateClubEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
-	claims := GetTokenClaims(r)
+func CreateClubEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+	claims := GetTokenClaims(ExtractToken(r))
 	uname := fmt.Sprintf("%v", claims["sub"])
 	clubID := getVar(r, model.ClubIDVar)
 	club := model.NewClub()
@@ -122,7 +123,7 @@ func CreateClubEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *sta
 
 // UpdateClubEvent - Updating an event for a particular club
 func UpdateClubEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
-	claims := GetTokenClaims(r)
+	claims := GetTokenClaims(ExtractToken(r))
 	uname := fmt.Sprintf("%v", claims["sub"])
 	clubID := getVar(r, model.ClubIDVar)
 	club := model.NewClub()
@@ -160,19 +161,19 @@ func UpdateClubEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *sta
 }
 
 // RemoveUserAttendsEvent - Removing a user attended event
-func RemoveUserAttendsEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func RemoveUserAttendsEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return manageUserAttends(db, r, model.OpRemove, s)
 }
 
 // AddUserAttendsEvent - Adding a user attended event
-func AddUserAttendsEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func AddUserAttendsEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return manageUserAttends(db, r, model.OpAdd, s)
 }
 
 // Helper function to add or remove club events
 func manageUserAttends(db *gorm.DB, r *http.Request, operation string, s *status.Status) (int, error) {
 	eventID := getVar(r, model.EventIDVar)
-	claims := GetTokenClaims(r)
+	claims := GetTokenClaims(ExtractToken(r))
 	uname := fmt.Sprintf("%v", claims["sub"])
 	event := model.NewEvent()
 	user := model.NewUser()
