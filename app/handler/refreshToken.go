@@ -31,7 +31,7 @@ func RefreshToken(_ *gorm.DB, rc *redis.Client, w http.ResponseWriter, r *http.R
 		s.Code = status.SuccessCode
 		s.Message = status.TokenPairGenerateSuccess
 		s.Data = login{Token: tokenInfo.AccessToken}
-		if refreshToken, err := rc.Get(ctx, "refresh_"+username).Result(); refreshToken == currentRefreshToken {
+		if refreshToken, err := rc.Get(ctx, "refresh_"+username).Result(); refreshToken == currentRefreshToken && err != nil {
 			_, err = rc.Set(ctx, "access_"+username, tokenInfo.AccessToken, time.Duration(accessDuration*minuteToNanosecond)).Result()
 			if err != nil {
 				return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
