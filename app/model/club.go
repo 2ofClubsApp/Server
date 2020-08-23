@@ -6,7 +6,7 @@ type Club struct {
 	Name    string  `validate:"required,min=3,max=50" json:"name"`
 	Email   string  `validate:"required,email" json:"email"`
 	Bio     string  `validate:"required,max=300" json:"bio"`
-	Size    int     `validate:"required,gt=0" json:"size"` // Set > 0 as a restriction
+	Size    int     `validate:"required,gt=0" json:"size"`
 	Active  bool    `json:"-"`
 	Sets    []Tag   `gorm:"many2many:club_tag;foreignKey:id;References:Name;" json:"tags"`
 	Hosts   []Event `gorm:"many2many:club_event;" json:"hosts"`
@@ -19,9 +19,20 @@ type ClubBaseInfo struct {
 	Name string `json:"name"`
 }
 
+// ClubUpdateInfo - Payload for updating a club's info
+type ClubUpdateInfo struct {
+	Size int    `validate:"required,gt=0"`
+	Bio  string `validate:"required,max=300"`
+}
+
 // NewClub - Create new default Club
 func NewClub() *Club {
 	return &Club{Sets: []Tag{}, Active: false, Hosts: []Event{}}
+}
+
+// NewClubUpdate returns a struct to update club info
+func NewClubUpdate() *ClubUpdateInfo {
+	return &ClubUpdateInfo{}
 }
 
 // DisplayBaseClubInfo displays base club data
