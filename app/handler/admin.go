@@ -100,3 +100,27 @@ func getToggleModel(db *gorm.DB, r *http.Request, s *status.Status, modelType st
 	s.Message = status.AdminRequired
 	return http.StatusForbidden, nil
 }
+
+// GetClubManager returns all club managers (not including the club owner)
+func GetClubManager(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+	club := model.NewClub()
+	clubID := getVar(r, model.ClubIDVar)
+	clubExists := SingleRecordExists(db, model.ClubTable, model.IDColumn, clubID, club)
+	if clubExists {
+		clubManagers := []model.UserBaseInfo{}
+		if db.Table(model.ClubTable).Preload(model.ManagedClubColumn).Find(club).Error != nil {
+			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+		}
+		for _, user := range club.Managed {
+			if !isOwner(db, &user, club) {
+				clubManagers = append(clubManagers, user.DisplayBaseUserInfo())
+			}
+		}
+		s.Code = status.SuccessCode
+		s.Message = status.GetClubManagerSuccess
+		s.Data = clubManagers
+		return http.StatusOK, nil
+	}
+	s.Message = status.ClubNotFound
+	return http.StatusNotFound, nil
+}
