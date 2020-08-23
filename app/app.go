@@ -130,8 +130,8 @@ func (app *App) setRoutes() {
 	app.Post("/toggle/tags/{tagName}", app.Handle(handler.ToggleTag, true)) // Done
 
 	// Club routes
-	app.Post("/clubs", app.Handle(handler.CreateClub, true)) // Done
-	//app.Post("/clubs/{cid:[0-9]+}", app.Handle(handler.UpdateClub, true)) // Requires Fixing
+	app.Post("/clubs", app.Handle(handler.CreateClub, true))                                      // Done
+	app.Post("/clubs/{cid:[0-9]+}", app.Handle(handler.UpdateClub, true))                         // Done
 	app.Get("/clubs/{cid:[0-9]+}", app.Handle(handler.GetClub, false))                            // Done
 	app.Get("/clubs/{cid:[0-9]+}/manages", app.Handle(handler.GetClubManager, true))              // Done
 	app.Post("/clubs/{cid:[0-9]+}/manages/{username}", app.Handle(handler.AddManager, true))      // Done (Adding managers/maintainers to club)

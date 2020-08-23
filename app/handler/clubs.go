@@ -47,7 +47,7 @@ func GetClubs(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Reque
 
 // UpdateClub - Update club with new information
 // See model.Club or docs for club attribute specifications
-func UpdateClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func UpdateClub(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	clubID := getVar(r, model.ClubIDVar)
 	club := model.NewClub()
 	user := model.NewUser()
@@ -56,7 +56,7 @@ func UpdateClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.S
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, uname, user)
 	if clubExists && userExists && isManager(db, user, club) {
-		updatedClub := model.NewClub()
+		updatedClub := model.NewClubUpdate()
 		extractBody(r, updatedClub)
 		validate := validator.New()
 		err := validate.Struct(updatedClub)
@@ -64,7 +64,9 @@ func UpdateClub(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.S
 			s.Message = status.ClubUpdateFailure
 			return http.StatusUnprocessableEntity, nil
 		}
-		res := db.Model(club).Select(model.BioColumn, model.SizeColumn).Updates(updatedClub)
+		club.Bio = updatedClub.Bio
+		club.Size = updatedClub.Size
+		res := db.Model(club).Select(model.BioColumn, model.SizeColumn).Updates(club)
 		if res.Error != nil {
 			return http.StatusInternalServerError, fmt.Errorf("unable to update club")
 		}
