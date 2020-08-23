@@ -54,6 +54,30 @@ func ToggleClub(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Req
 	return http.StatusNotFound, nil
 }
 
+// GetClubPreview obtains a preview a non active club
+func GetClubPreview(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+	clubID := getVar(r, model.ClubIDVar)
+	club := model.NewClub()
+	clubExists := SingleRecordExists(db, model.ClubTable, model.IDColumn, clubID, club)
+	if isAdmin(db, r) {
+		if clubExists {
+			if !club.Active {
+				s.Code = status.SuccessCode
+				s.Message = status.ClubFound
+				s.Data = club // Obtaining extra club info won't be needed as you can't add any tags/events without activating the club
+				return http.StatusOK, nil
+			}
+			s.Message = status.ClubAlreadyActive
+			return http.StatusNotFound, nil
+		}
+		s.Message = status.ClubNotFound
+		return http.StatusNotFound, nil
+	}
+
+	s.Message = status.AdminRequired
+	return http.StatusForbidden, nil
+}
+
 // GetToggleClub obtains all clubs that need to be activated (toggled)
 func GetToggleClub(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return getToggleModel(db, r, s, model.ClubTable)
@@ -105,7 +129,7 @@ func getToggleModel(db *gorm.DB, r *http.Request, s *status.Status, modelType st
 func GetClubManager(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	club := model.NewClub()
 	clubID := getVar(r, model.ClubIDVar)
-	clubExists := SingleRecordExists(db, model.ClubTable, model.IDColumn, clubID, club)
+	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
 	if clubExists {
 		clubManagers := []model.UserBaseInfo{}
 		if db.Table(model.ClubTable).Preload(model.ManagedClubColumn).Find(club).Error != nil {

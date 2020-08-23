@@ -55,6 +55,7 @@ const (
 
 // User & Club status messages
 const (
+	ClubAlreadyActive          = "sorry, this club is already active"
 	GetClubManagerSuccess      = "retrieved all club managers"
 	ToggleUserSuccess          = "toggled user"
 	UserFound                  = "user found"
