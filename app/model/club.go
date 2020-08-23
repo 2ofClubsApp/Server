@@ -3,13 +3,14 @@ package model
 // Club - Base Club struct
 type Club struct {
 	Base
-	Name   string  `validate:"required,min=3,max=50" json:"name"`
-	Email  string  `validate:"required,email" json:"email"`
-	Bio    string  `validate:"required,max=300" json:"bio"`
-	Size   int     `validate:"required,gt=0" json:"size"` // Set > 0 as a restriction
-	Active bool    `json:"-"`
-	Sets   []Tag   `gorm:"many2many:club_tag;foreignKey:id;References:Name;" json:"tags"`
-	Hosts  []Event `gorm:"many2many:club_event;" json:"hosts"`
+	Name    string  `validate:"required,min=3,max=50" json:"name"`
+	Email   string  `validate:"required,email" json:"email"`
+	Bio     string  `validate:"required,max=300" json:"bio"`
+	Size    int     `validate:"required,gt=0" json:"size"` // Set > 0 as a restriction
+	Active  bool    `json:"-"`
+	Sets    []Tag   `gorm:"many2many:club_tag;foreignKey:id;References:Name;" json:"tags"`
+	Hosts   []Event `gorm:"many2many:club_event;" json:"hosts"`
+	Managed []User  `gorm:"many2many:user_club;" json:"-"`
 }
 
 // ClubBaseInfo - Displaying basic club data
@@ -30,6 +31,7 @@ func (c *Club) DisplayBaseClubInfo() ClubBaseInfo {
 
 // Club variables for db columns/route variables
 const (
+	ManagedClubColumn = "Managed"
 	ClubIDVar         = "cid"
 	AllClubInfo       = "all"
 	AllClubEventsHost = "events"

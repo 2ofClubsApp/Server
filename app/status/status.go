@@ -55,6 +55,7 @@ const (
 
 // User & Club status messages
 const (
+	GetClubManagerSuccess      = "retrieved all club managers"
 	ToggleUserSuccess          = "toggled user"
 	UserFound                  = "user found"
 	UserNotFound               = "user not found"
