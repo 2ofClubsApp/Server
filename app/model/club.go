@@ -5,7 +5,7 @@ type Club struct {
 	Base
 	Name    string  `validate:"required,min=3,max=50" json:"name"`
 	Email   string  `validate:"required,email" json:"email"`
-	Bio     string  `validate:"required,max=300" json:"bio"`
+	Bio     string  `validate:"required,min=1,max=300" json:"bio"`
 	Size    int     `validate:"required,gt=0" json:"size"`
 	Active  bool    `json:"-"`
 	Sets    []Tag   `gorm:"many2many:club_tag;foreignKey:id;References:Name;" json:"tags"`

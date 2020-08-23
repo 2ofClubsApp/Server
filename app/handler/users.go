@@ -205,6 +205,7 @@ func UpdateUserPassword(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *
 			s.Code = status.SuccessCode
 			return http.StatusOK, nil
 		}
+		s.Message = http.StatusText(http.StatusForbidden)
 		return http.StatusForbidden, nil
 	}
 	s.Message = status.UserNotFound
@@ -262,7 +263,6 @@ func RequestResetUserPassword(db *gorm.DB, _ *redis.Client, _ http.ResponseWrite
 	username := strings.ToLower(getVar(r, model.UsernameVar))
 	user := model.NewUser()
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
-	s.Message = status.EmailSendFailure
 	outputFileName := "template.html"
 	if userExists {
 		h := hermes.Hermes{
@@ -285,8 +285,8 @@ func RequestResetUserPassword(db *gorm.DB, _ *redis.Client, _ http.ResponseWrite
 		s.Message = status.EmailSendSuccess
 		return http.StatusOK, nil
 	}
-	s.Message = status.UserNotFound
-	return http.StatusNotFound, nil
+	s.Message = status.EmailSendSuccess
+	return http.StatusOK, nil
 }
 
 // Sending an email to the given user requesting the reset

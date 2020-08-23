@@ -8,7 +8,7 @@ type Event struct {
 	Name string `validate:"required,min=1,max=50" json:"name"`
 	//DateTime    time.Time  `validate:"required,gtetoday,datetime"`
 	Description string  `validate:"required,max=300" json:"description"`
-	Location    string  `validate:"required,max=100" json:"location"`
+	Location    string  `validate:"required,max=300" json:"location"`
 	Fee         float64 `validate:"gte=0" json:"fee"`
 }
 
@@ -19,11 +19,11 @@ func NewEvent() *Event {
 
 // EventRequirement - Listing out requirements for an event to be successfully created
 type EventRequirement struct {
-	Admin       string
-	Name        string
-	Description string
-	Location    string
-	Fee         string
+	Admin       string `json:"admin"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Location    string `json:"location"`
+	Fee         string `json:"fee"`
 }
 
 // NewEventRequirement returns the requirements when creating an event

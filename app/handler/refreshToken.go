@@ -23,7 +23,18 @@ func RefreshToken(_ *gorm.DB, rc *redis.Client, w http.ResponseWriter, r *http.R
 		if err != nil {
 			return http.StatusInternalServerError, fmt.Errorf("unable to generate token pair")
 		}
-		c := GenerateCookie(model.RefreshToken, tokenInfo.RefreshToken)
+		c := GenerateCookie(model.RefreshTokenVar, tokenInfo.RefreshToken)
+		if refreshToken, err := rc.Get(ctx, "refresh_"+username).Result(); refreshToken != currentRefreshToken && err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("unable to get refresh token from cache")
+		}
+		_, err = rc.Set(ctx, "access_"+username, tokenInfo.AccessToken, time.Duration(accessDuration*minuteToNanosecond)).Result()
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+		}
+		_, err = rc.Set(ctx, "refresh_"+username, tokenInfo.RefreshToken, time.Duration(refreshDuration*minuteToNanosecond)).Result()
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+		}
 		http.SetCookie(w, c)
 		type login struct {
 			Token string `json:"token"`
@@ -31,18 +42,7 @@ func RefreshToken(_ *gorm.DB, rc *redis.Client, w http.ResponseWriter, r *http.R
 		s.Code = status.SuccessCode
 		s.Message = status.TokenPairGenerateSuccess
 		s.Data = login{Token: tokenInfo.AccessToken}
-		if refreshToken, err := rc.Get(ctx, "refresh_"+username).Result(); refreshToken == currentRefreshToken && err != nil {
-			_, err = rc.Set(ctx, "access_"+username, tokenInfo.AccessToken, time.Duration(accessDuration*minuteToNanosecond)).Result()
-			if err != nil {
-				return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
-			}
-			_, err = rc.Set(ctx, "refresh_"+username, tokenInfo.RefreshToken, time.Duration(refreshDuration*minuteToNanosecond)).Result()
-			if err != nil {
-				return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
-			}
-			return http.StatusOK, nil
-		}
-		return http.StatusInternalServerError, fmt.Errorf("unable to get refresh token from cache")
+		return http.StatusOK, nil
 	}
 	return http.StatusForbidden, nil
 }

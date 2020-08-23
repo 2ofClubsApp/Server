@@ -16,6 +16,6 @@ func NewTokenInfo() *TokenInfo {
 
 // Token variable constants
 const (
-	RefreshToken = "RefreshToken"
+	RefreshTokenVar = "RefreshToken"
 	TokenVar     = "token"
 )

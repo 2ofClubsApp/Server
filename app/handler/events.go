@@ -122,7 +122,7 @@ func CreateClubEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *htt
 }
 
 // UpdateClubEvent - Updating an event for a particular club
-func UpdateClubEvent(db *gorm.DB, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+func UpdateClubEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	claims := GetTokenClaims(ExtractToken(r))
 	uname := fmt.Sprintf("%v", claims["sub"])
 	clubID := getVar(r, model.ClubIDVar)

@@ -61,6 +61,7 @@ const (
 	UserFound                  = "user found"
 	UserNotFound               = "user not found"
 	ClubFound                  = "club found"
+	ClubEventFound             = "all club events found"
 	ClubNotFound               = "club not found"
 	ClubCreationSuccess        = "club successfully created"
 	ClubCreationFailure        = "unable to create club"
@@ -102,7 +103,7 @@ const (
 // Photo upload status messages
 const (
 	InvalidPhotoFormat = "invalid file: A .jpg or .png file of 10 MB or less is required"
-	FileWriteSuccess   = "successfully written to file"
+	FileUploadSuccess  = "successfully uploaded file"
 	ClubPhotoNotFound  = "unable to find a photo for the club"
 )
 

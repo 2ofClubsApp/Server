@@ -133,7 +133,7 @@ func (app *App) setRoutes() {
 	app.Post("/clubs", app.Handle(handler.CreateClub, true))                                      // Done
 	app.Post("/clubs/{cid:[0-9]+}", app.Handle(handler.UpdateClub, true))                         // Done
 	app.Get("/clubs/{cid:[0-9]+}", app.Handle(handler.GetClub, false))                            // Done
-	app.Get("/clubs/{cid:[0-9]+}/manages", app.Handle(handler.GetClubManager, true))              // Done
+	app.Get("/clubs/{cid:[0-9]+}/manages", app.Handle(handler.GetClubManagers, true))              // Done
 	app.Post("/clubs/{cid:[0-9]+}/manages/{username}", app.Handle(handler.AddManager, true))      // Done (Adding managers/maintainers to club)
 	app.Delete("/clubs/{cid:[0-9]+}/manages/{username}", app.Handle(handler.RemoveManager, true)) // Partially done (Removing managers/maintainers) (If the current owner wants to leave, then they must appoint a new person)
 	app.Post("/clubs/{cid:[0-9]+}/tags", app.Handle(handler.UpdateClubTags, true))                // Done
@@ -144,7 +144,7 @@ func (app *App) setRoutes() {
 	app.Get("/clubs/{cid:[0-9]+}/events", app.Handle(handler.GetClubEvents, false))   // Done
 	app.Post("/clubs/{cid:[0-9]+}/events", app.Handle(handler.CreateClubEvent, true)) // Done
 
-	//app.Post("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.UpdateClubEvent, true))   // Done
+	app.Post("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.UpdateClubEvent, true))   // Done
 	app.Delete("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.DeleteClubEvent, true)) // Done
 
 	// 404 Route

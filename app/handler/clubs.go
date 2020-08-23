@@ -190,7 +190,7 @@ func UploadClubPhoto(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *htt
 			return http.StatusInternalServerError, fmt.Errorf("unable to write filebytes")
 		}
 		s.Code = status.SuccessCode
-		s.Message = status.FileWriteSuccess
+		s.Message = status.FileUploadSuccess
 		return http.StatusOK, nil
 	}
 	s.Message = http.StatusText(http.StatusForbidden)
@@ -247,6 +247,7 @@ func getClubInfo(db *gorm.DB, r *http.Request, infoType string, s *status.Status
 			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
 		}
 		s.Data = club
+		s.Message = status.ClubFound
 	case model.AllClubEventsHost:
 		clubEvents := make(map[string][]model.Event)
 		res := db.Table(model.ClubTable).Preload(model.HostsColumn).Find(club)
@@ -255,8 +256,8 @@ func getClubInfo(db *gorm.DB, r *http.Request, infoType string, s *status.Status
 		}
 		clubEvents[strings.ToLower(model.HostsColumn)] = club.Hosts
 		s.Data = clubEvents
+		s.Message = status.ClubEventFound
 	}
-	s.Message = status.ClubFound
 	s.Code = status.SuccessCode
 	return http.StatusOK, nil
 }
@@ -322,7 +323,7 @@ func editManagers(db *gorm.DB, r *http.Request, op string, s *status.Status) (in
 	}
 	claims := GetTokenClaims(ExtractToken(r))
 	clubOwnerUsername := fmt.Sprintf("%v", claims["sub"])
-	newManagerUname := getVar(r, model.UsernameVar)
+	newManagerUname := strings.ToLower(getVar(r, model.UsernameVar))
 	clubID := getVar(r, model.ClubIDVar)
 	owner := model.NewUser()
 	newManager := model.NewUser()
@@ -358,7 +359,10 @@ func editManagers(db *gorm.DB, r *http.Request, op string, s *status.Status) (in
 		}
 		s.Message = http.StatusText(http.StatusForbidden)
 		return http.StatusForbidden, nil
+	} else if !clubExists {
+		s.Message = status.ClubNotFound
+		return http.StatusNotFound, nil
 	}
-	s.Message = fmt.Sprintf("%s & %s", status.UserNotFound, status.ClubNotFound)
+	s.Message = status.UserNotFound
 	return http.StatusNotFound, nil
 }

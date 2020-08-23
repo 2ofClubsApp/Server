@@ -41,7 +41,7 @@ func Login(db *gorm.DB, rc *redis.Client, w http.ResponseWriter, r *http.Request
 	}
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, creds.Username, model.NewUser())
 	if tp, err := GetTokenPair(creds.Username, accessDuration, refreshDuration); err == nil && userExists {
-		c := GenerateCookie(model.RefreshToken, tp.RefreshToken)
+		c := GenerateCookie(model.RefreshTokenVar, tp.RefreshToken)
 		http.SetCookie(w, c)
 		type login struct {
 			Token string `json:"token"`

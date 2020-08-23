@@ -16,6 +16,7 @@ func ToggleUser(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Req
 	username := strings.ToLower(getVar(r, model.UsernameVar))
 	userExists := SingleRecordExists(db, model.UserTable, model.UsernameColumn, username, user)
 	if userExists {
+		// Must be an admin but the admin cannot toggle themselves off
 		if isAdmin(db, r) && !user.IsAdmin {
 			res := db.Model(user).Update(model.IsApprovedColumn, !user.IsApproved)
 			if res.Error != nil {
@@ -125,8 +126,8 @@ func getToggleModel(db *gorm.DB, r *http.Request, s *status.Status, modelType st
 	return http.StatusForbidden, nil
 }
 
-// GetClubManager returns all club managers (not including the club owner)
-func GetClubManager(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+// GetClubManagers returns all club managers (not including the club owner)
+func GetClubManagers(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	club := model.NewClub()
 	clubID := getVar(r, model.ClubIDVar)
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
