@@ -190,7 +190,7 @@ func UploadClubPhoto(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *htt
 			return http.StatusInternalServerError, fmt.Errorf("unable to write filebytes")
 		}
 		if club.Logo == "" {
-			club.Logo = fmt.Sprintf("photos/clubs/%v", club.ID)
+			club.Logo = fmt.Sprintf("/photos/clubs/%v", club.ID)
 			if db.Model(club).Select(model.LogoColumn).Updates(club).Error != nil {
 				return http.StatusInternalServerError, fmt.Errorf("unable to set club logo path")
 			}
