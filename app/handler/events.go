@@ -140,24 +140,29 @@ func UpdateClubEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *htt
 			return http.StatusInternalServerError, fmt.Errorf(err.Error())
 		}
 		err := validate.Struct(updatedEvent)
-		if err == nil {
-			db.Model(event).Updates(updatedEvent)
-			s.Code = status.SuccessCode
-			s.Message = status.UpdateEventSuccess
-		} else {
+		if err != nil {
 			s.Message = status.UpdateEventFailure
 			s.Data = model.NewEventRequirement()
+			return http.StatusUnprocessableEntity, nil
 		}
+		if db.Model(event).Select(model.NameColumn, model.DescriptionColumn, model.LocationColumn, model.FeeColumn).Updates(updatedEvent).Error != nil {
+			return http.StatusInternalServerError, fmt.Errorf("unable to update event")
+		}
+		s.Code = status.SuccessCode
+		s.Message = status.UpdateEventSuccess
+		return http.StatusOK, nil
 	} else if !eventExists {
 		s.Message = status.EventNotFound
-	}
-	if !clubExists {
+		return http.StatusNotFound, nil
+	} else if !clubExists {
 		s.Message = status.ClubNotFound
-	} else if !isManager(db, user, club) {
-		//httpStatusCode = http.StatusForbidden
-		//s.Message = http.StatusText(httpStatusCode)
+		return http.StatusNotFound, nil
+	} else if !userExists {
+		s.Message = status.UserNotFound
+		return http.StatusNotFound, nil
 	}
-	return 403, nil
+	s.Message = http.StatusText(http.StatusForbidden)
+	return http.StatusForbidden, nil
 }
 
 // RemoveUserAttendsEvent - Removing a user attended event

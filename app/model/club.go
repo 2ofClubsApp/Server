@@ -43,6 +43,9 @@ func (c *Club) DisplayBaseClubInfo() ClubBaseInfo {
 
 // Club variables for db columns/route variables
 const (
+	FeeColumn         = "fee"
+	DescriptionColumn = "description"
+	LocationColumn    = "location"
 	LogoColumn        = "logo"
 	ManagedClubColumn = "Managed"
 	ClubIDVar         = "cid"
