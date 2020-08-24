@@ -8,6 +8,7 @@ type Club struct {
 	Bio     string  `validate:"required,min=1,max=300" json:"bio"`
 	Size    int     `validate:"required,gt=0" json:"size"`
 	Active  bool    `json:"-"`
+	Logo    string  `json:"logo"`
 	Sets    []Tag   `gorm:"many2many:club_tag;foreignKey:id;References:Name;" json:"tags"`
 	Hosts   []Event `gorm:"many2many:club_event;" json:"hosts"`
 	Managed []User  `gorm:"many2many:user_club;" json:"-"`

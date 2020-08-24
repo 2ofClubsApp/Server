@@ -37,10 +37,13 @@ services:
       - app.env
     ports:
       - "8080:8080"
+    volumes:
+    - 2ofClubsPhotoStorage:/2ofClubsServer/images
     command: go run main.go
 volumes:
   2ofClubsVolume:
   2ofClubsRedis:
+  2ofClubsPhotoStorage:
 networks:
   backend:
     driver: "bridge"
