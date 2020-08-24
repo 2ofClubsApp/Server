@@ -167,7 +167,8 @@ func UploadClubPhoto(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *htt
 		// Max 10MB upload file
 		err := r.ParseMultipartForm(maxMem) // 2^20
 		if err != nil {
-			return http.StatusInternalServerError, fmt.Errorf("photo is exceeding upload limit")
+			s.Message = status.InvalidPhotoSize
+			return http.StatusBadRequest, nil
 		}
 		file, handler, err := r.FormFile("file")
 		if err != nil {
@@ -375,4 +376,85 @@ func editManagers(db *gorm.DB, r *http.Request, op string, s *status.Status) (in
 	}
 	s.Message = status.UserNotFound
 	return http.StatusNotFound, nil
+}
+
+// LeaveClub lets the user step down a club manager (The user won't have any correlations previously managed club)
+// Note: If the user is a club owner, they must appoint a new owner in replacement of them
+func LeaveClub(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+	club := model.NewClub()
+	user := model.NewUser()
+	clubID := getVar(r, model.ClubIDVar)
+	claims := GetTokenClaims(ExtractToken(r))
+	uname := fmt.Sprintf("%v", claims["sub"])
+	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
+	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, uname, user)
+	isOwner := isOwner(db, user, club)
+	if clubExists && userExists && isManager(db, user, club) && !isOwner {
+		err := db.Model(user).Association(model.ManagesColumn).Delete(club)
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("unable to leave club")
+		}
+		s.Code = status.SuccessCode
+		s.Message = status.LeaveClubSuccess
+		return http.StatusOK, nil
+	} else if !clubExists {
+		s.Message = status.ClubNotFound
+		return http.StatusNotFound, nil
+	} else if !userExists {
+		s.Message = status.UserNotFound
+		return http.StatusNotFound, nil
+	} else if isOwner {
+		s.Message = status.LeaveClubFailure
+		return http.StatusUnprocessableEntity, nil
+	}
+	s.Message = http.StatusText(http.StatusForbidden)
+	return http.StatusForbidden, nil
+}
+
+// PromoteOwner promotes a club manager to be the new owner while the current owner would step down and become a manager
+// Note: There can only be 1 club owner but you can have many club managers
+func PromoteOwner(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+	club := model.NewClub()
+	potentialNewOwner := model.NewUser()
+	currentOwner := model.NewUser()
+	clubID := getVar(r, model.ClubIDVar)
+	potentialNewOwnerUname := getVar(r, model.UsernameVar)
+	claims := GetTokenClaims(ExtractToken(r))
+	currentOwnerUname := fmt.Sprintf("%v", claims["sub"])
+	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
+	newOwnerExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, potentialNewOwnerUname, potentialNewOwner)
+	currentOwnerExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, currentOwnerUname, currentOwner)
+	if !currentOwnerExists || !newOwnerExists {
+		s.Message = status.UserNotFound
+		return http.StatusNotFound, nil
+	}
+	if !clubExists {
+		s.Message = status.ClubNotFound
+		return http.StatusNotFound, nil
+	}
+	if !isOwner(db, currentOwner, club) {
+		s.Message = status.ClubPromoteOwnerFailure
+		return http.StatusUnprocessableEntity, nil
+	}
+	if !isManager(db, potentialNewOwner, club) {
+		s.Message = status.ClubPromoteNeedManager
+		return http.StatusUnprocessableEntity, nil
+	}
+	if potentialNewOwnerUname == currentOwnerUname {
+		s.Message = status.ClubPromoteSelfFailure
+		return http.StatusUnprocessableEntity, nil
+	}
+	// New owner assumes new owner position
+	res := db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ? AND is_owner = ?", potentialNewOwner.ID, club.ID, false).Update(model.IsOwnerColumn, true)
+	if res.Error != nil {
+		return http.StatusInternalServerError, fmt.Errorf("unable to promote user to new owner")
+	}
+	// Old owner steps down and becomes manager
+	res = db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ? AND is_owner = ?", currentOwner.ID, club.ID, true).Update(model.IsOwnerColumn, false)
+	if res.Error != nil {
+		return http.StatusInternalServerError, fmt.Errorf("unable to convert user from owner to manager")
+	}
+	s.Code = status.SuccessCode
+	s.Message = status.ClubPromoteSuccess
+	return http.StatusOK, nil
 }
