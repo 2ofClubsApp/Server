@@ -49,7 +49,6 @@ const (
 const (
 	PasswordUpdateSuccess = "successfully updated password"
 	PasswordUpdateFailure = "unable to update password"
-	EmailSendFailure      = "unable to send email"
 	EmailSendSuccess      = "successfully sent email if user exists"
 )
 
