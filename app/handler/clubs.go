@@ -101,6 +101,10 @@ func CreateClub(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Req
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.NameColumn, club.Name, model.NewClub())
 	emailExists := SingleRecordExists(db, model.ClubTable, model.EmailColumn, club.Email, model.NewClub())
 	if !emailExists && !clubExists && userExists && err == nil {
+		// Clearing any links supplied
+		if club.Logo != "" {
+			club.Logo = ""
+		}
 		err := db.Model(user).Association(model.ManagesColumn).Append(club)
 		if err != nil {
 			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
