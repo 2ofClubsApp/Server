@@ -55,7 +55,7 @@ const (
 // User & Club status messages
 const (
 	ClubPromoteSuccess         = "successfully promoted new owner"
-	ClubPromoteSelfFailure     = "you can't promote yourself to an owner if you're already an owner"
+	ClubPromoteSelfFailure     = "you can't promote yourself to be the club owner if you're already the owner"
 	ClubPromoteOwnerFailure    = "you must be the owner of the club in order to promote a new owner"
 	ClubPromoteNeedManager     = "the user you're trying to promote must be a club manager"
 	LeaveClubFailure           = "sorry, only managers can leave the club. If you wish to do so, please promote another owner for this club"
