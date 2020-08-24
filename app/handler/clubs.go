@@ -175,7 +175,7 @@ func UploadClubPhoto(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *htt
 			return http.StatusUnsupportedMediaType, nil
 		}
 		defer file.Close()
-		fileName := fmt.Sprintf("./images/%v.png", club.ID)
+		fileName := fmt.Sprintf("images/%v.png", club.ID)
 		tempFile, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0600)
 		if err != nil {
 			return http.StatusInternalServerError, fmt.Errorf("unable to create temp file")
@@ -188,6 +188,12 @@ func UploadClubPhoto(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *htt
 		_, err = tempFile.Write(fileBytes)
 		if err != nil {
 			return http.StatusInternalServerError, fmt.Errorf("unable to write filebytes")
+		}
+		if club.Logo == "" {
+			club.Logo = fmt.Sprintf("photos/clubs/%v", club.ID)
+			if db.Model(club).Select(model.LogoColumn).Updates(club).Error != nil {
+				return http.StatusInternalServerError, fmt.Errorf("unable to set club logo path")
+			}
 		}
 		s.Code = status.SuccessCode
 		s.Message = status.FileUploadSuccess
