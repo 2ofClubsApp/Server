@@ -1,12 +1,15 @@
 package model
 
-import "github.com/2-of-clubs/2ofclubs-server/app/status"
+import (
+	"github.com/2-of-clubs/2ofclubs-server/app/status"
+	"time"
+)
 
 // Event - Basic Event Struct
 type Event struct {
 	Base
 	Name string `validate:"required,min=1,max=50" json:"name"`
-	//DateTime    time.Time  `validate:"required,gtetoday,datetime"`
+	DateTime    time.Time  `validate:"required,gtetoday,datetime"`
 	Description string  `validate:"required,max=300" json:"description"`
 	Location    string  `validate:"required,max=300" json:"location"`
 	Fee         float64 `validate:"gte=0" json:"fee"`
