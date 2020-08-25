@@ -64,6 +64,11 @@ You can contact us through these channels:
 - [Email](mailto:hello@2ofclubs.app)
 - [Github Issues](https://github.com/2ofClubsApp/2ofclubs-server/issues)
 
+## Contributing
+- If you're submitting a feature request or PR, please follow their associated templates
+- Properly [document](https://blog.golang.org/godoc) and [format](https://golang.org/doc/effective_go.html#formatting) your Go Code.
+
+For any code that can be reworked/improved upon, feel free to submit a PR
 ## License
 2ofClubs-Server is [MIT licensed](./LICENSE)
 
