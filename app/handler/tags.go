@@ -34,54 +34,54 @@ func tagExists(db *gorm.DB, tagName string) bool {
 
 // CreateTag - Create a single tag provided the proper JSON request (See the docs for more info)
 func CreateTag(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
-	if isAdmin(db, r) {
-		payload := map[string]string{}
-		decoder := json.NewDecoder(r.Body)
-		err := decoder.Decode(&payload)
-		if err != nil {
-			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
-		}
-		tagName := payload["Name"]
-		if tagExists(db, tagName) {
-			s.Message = status.TagExists
-			return http.StatusConflict, nil
-		}
-		s.Code = status.SuccessCode
-		s.Message = status.TagCreated
-		return http.StatusCreated, nil
+	if !isAdmin(db, r) {
+		s.Message = status.AdminRequired
+		return http.StatusForbidden, nil
 	}
-	s.Message = status.AdminRequired
-	return http.StatusForbidden, nil
+	payload := map[string]string{}
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&payload)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+	}
+	tagName := payload["Name"]
+	if tagExists(db, tagName) {
+		s.Message = status.TagExists
+		return http.StatusConflict, nil
+	}
+	s.Code = status.SuccessCode
+	s.Message = status.TagCreated
+	return http.StatusCreated, nil
 }
 
 // UploadTagsList - Create tags based on a new line separated list
 // Refer to docs for file specifications.
 func UploadTagsList(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
-	if isAdmin(db, r) {
-		file, handler, err := r.FormFile("file")
-		if err != nil {
-			s.Message = status.FileNotFound
-			return http.StatusBadRequest, nil
-		}
-		if filepath.Ext(handler.Filename) != ".txt" {
-			s.Message = status.InvalidTxtFile
-			return http.StatusUnsupportedMediaType, nil
-		}
-		fileContent, err := ioutil.ReadAll(file)
-		defer file.Close()
-		if err != nil {
-			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
-		}
-		for _, tagName := range strings.Split(string(fileContent), "\n") {
-			tagName = strings.TrimSpace(tagName)
-			tagExists(db, tagName)
-		}
-		s.Code = status.SuccessCode
-		s.Message = status.TagsCreated
-		return http.StatusCreated, nil
+	if !isAdmin(db, r) {
+		s.Message = status.AdminRequired
+		return http.StatusForbidden, nil
 	}
-	s.Message = status.AdminRequired
-	return http.StatusForbidden, nil
+	file, handler, err := r.FormFile("file")
+	if err != nil {
+		s.Message = status.FileNotFound
+		return http.StatusBadRequest, nil
+	}
+	if filepath.Ext(handler.Filename) != ".txt" {
+		s.Message = status.InvalidTxtFile
+		return http.StatusUnsupportedMediaType, nil
+	}
+	fileContent, err := ioutil.ReadAll(file)
+	defer file.Close()
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+	}
+	for _, tagName := range strings.Split(string(fileContent), "\n") {
+		tagName = strings.TrimSpace(tagName)
+		tagExists(db, tagName)
+	}
+	s.Code = status.SuccessCode
+	s.Message = status.TagsCreated
+	return http.StatusCreated, nil
 
 }
 
@@ -135,24 +135,25 @@ func extractTags(db *gorm.DB, r *http.Request) []model.Tag {
 
 // ToggleTag - Toggling tags as either active or inactive
 func ToggleTag(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
-	if isAdmin(db, r) {
-		tagName := getVar(r, model.TagNameVar)
-		tagName = strings.TrimSpace(tagName)
-		tag := model.NewTag()
-		if SingleRecordExists(db, model.TagTable, model.NameColumn, tagName, tag) {
-			err := db.Model(tag).Update(model.IsActiveColumn, !tag.IsActive).Error
-			if err != nil {
-				return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
-			}
-			s.Code = status.SuccessCode
-			s.Message = status.TagToggleSuccess
-			return http.StatusOK, nil
-		}
+	if !isAdmin(db, r) {
+		s.Message = status.AdminRequired
+		return http.StatusForbidden, nil
+	}
+	tagName := getVar(r, model.TagNameVar)
+	tagName = strings.TrimSpace(tagName)
+	tag := model.NewTag()
+	if !SingleRecordExists(db, model.TagTable, model.NameColumn, tagName, tag) {
 		s.Message = status.TagNotFound
 		return http.StatusNotFound, nil
 	}
-	s.Message = status.AdminRequired
-	return http.StatusForbidden, nil
+	err := db.Model(tag).Update(model.IsActiveColumn, !tag.IsActive).Error
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+	}
+	s.Code = status.SuccessCode
+	s.Message = status.TagToggleSuccess
+	return http.StatusOK, nil
+
 }
 
 // Filtering and returning []model.Tag that are active

@@ -32,14 +32,14 @@ func GetEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Reque
 	eventID := getVar(r, model.EventIDVar)
 	event := model.NewEvent()
 	eventExists := SingleRecordExists(db, model.EventTable, model.IDColumn, eventID, event)
-	if eventExists {
-		s.Code = status.SuccessCode
-		s.Message = status.EventFound
-		s.Data = event
-		return http.StatusOK, nil
+	if !eventExists {
+		s.Message = status.EventNotFound
+		return http.StatusNotFound, nil
 	}
-	s.Message = status.EventNotFound
-	return http.StatusNotFound, nil
+	s.Code = status.SuccessCode
+	s.Message = status.EventFound
+	s.Data = event
+	return http.StatusOK, nil
 
 }
 
@@ -55,29 +55,29 @@ func DeleteClubEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *htt
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
 	eventExists := SingleRecordExists(db, model.EventTable, model.IDColumn, eid, event)
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, uname, user)
-	fmt.Println(clubExists)
-	fmt.Println(eventExists)
-	fmt.Println(userExists)
-	if userExists && eventExists && clubExists && isManager(db, user, club) {
-		res := db.Delete(event)
-		if res.Error != nil {
-			return http.StatusInternalServerError, fmt.Errorf("unable to delete club event")
-		}
-		s.Code = status.SuccessCode
-		s.Message = status.EventDeleted
-		return http.StatusOK, nil
-	} else if !userExists {
+	if !userExists {
 		s.Message = status.UserNotFound
 		return http.StatusNotFound, nil
-	} else if !clubExists {
+	}
+	if !clubExists {
 		s.Message = status.ClubNotFound
 		return http.StatusNotFound, nil
-	} else if !eventExists {
+	}
+	if !eventExists {
 		s.Message = status.EventNotFound
 		return http.StatusNotFound, nil
 	}
-	s.Message = http.StatusText(http.StatusForbidden)
-	return http.StatusForbidden, nil
+	if !isManager(db, user, club) {
+		s.Message = http.StatusText(http.StatusForbidden)
+		return http.StatusForbidden, nil
+	}
+	res := db.Delete(event)
+	if res.Error != nil {
+		return http.StatusInternalServerError, fmt.Errorf("unable to delete club event")
+	}
+	s.Code = status.SuccessCode
+	s.Message = status.EventDeleted
+	return http.StatusOK, nil
 }
 
 // CreateClubEvent - Creating an event for a particular club. The user creating the club must at least be a manager
@@ -92,34 +92,34 @@ func CreateClubEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *htt
 	validate := validator.New()
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, uname, user)
-	if userExists {
-		if clubExists {
-			if isManager(db, user, club) {
-				if err := extractBody(r, event); err != nil {
-					return http.StatusInternalServerError, fmt.Errorf(err.Error())
-				}
-				err := validate.Struct(event)
-				if !isValidDate(event.DateTime.Format(time.RFC3339)) || err != nil {
-					s.Message = status.CreateEventFailure
-					s.Data = model.NewEventRequirement()
-					return http.StatusUnprocessableEntity, nil
-				}
-				err = db.Model(club).Association(model.HostsColumn).Append(event)
-				if err != nil {
-					return http.StatusInternalServerError, fmt.Errorf("unable to obtain club events")
-				}
-				s.Code = status.SuccessCode
-				s.Message = status.CreateEventSuccess
-				return http.StatusCreated, nil
-			}
-			s.Message = http.StatusText(http.StatusForbidden)
-			return http.StatusForbidden, nil
-		}
+	if !userExists {
+		s.Message = status.UserNotFound
+		return http.StatusNotFound, nil
+	}
+	if !clubExists {
 		s.Message = status.ClubNotFound
 		return http.StatusNotFound, nil
 	}
-	s.Message = status.UserNotFound
-	return http.StatusNotFound, nil
+	if !isManager(db, user, club) {
+		s.Message = http.StatusText(http.StatusForbidden)
+		return http.StatusForbidden, nil
+	}
+	if err := extractBody(r, event); err != nil {
+		return http.StatusInternalServerError, fmt.Errorf(err.Error())
+	}
+	err := validate.Struct(event)
+	if !isValidDate(event.DateTime.Format(time.RFC3339)) || err != nil {
+		s.Message = status.CreateEventFailure
+		s.Data = model.NewEventRequirement()
+		return http.StatusUnprocessableEntity, nil
+	}
+	err = db.Model(club).Association(model.HostsColumn).Append(event)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("unable to obtain club events")
+	}
+	s.Code = status.SuccessCode
+	s.Message = status.CreateEventSuccess
+	return http.StatusCreated, nil
 }
 
 func isValidDate(datetime string) bool {
@@ -151,36 +151,39 @@ func UpdateClubEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *htt
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, uname, user)
 	eventID := getVar(r, model.EventIDVar)
 	eventExists := SingleRecordExists(db, model.EventTable, model.IDColumn, eventID, event)
-	if eventExists && clubExists && userExists && isManager(db, user, club) {
-		updatedEvent := model.NewEvent()
-		if err := extractBody(r, updatedEvent); err != nil {
-			return http.StatusInternalServerError, fmt.Errorf(err.Error())
-		}
-		err := validate.Struct(updatedEvent)
-		validDate := isValidDate(updatedEvent.DateTime.Format(time.RFC3339))
-		if !validDate || err != nil {
-			s.Message = status.UpdateEventFailure
-			s.Data = model.NewEventRequirement()
-			return http.StatusUnprocessableEntity, nil
-		}
-		if db.Model(event).Select(model.NameColumn, model.DescriptionColumn, model.LocationColumn, model.FeeColumn, model.DateTimeColumn).Updates(updatedEvent).Error != nil {
-			return http.StatusInternalServerError, fmt.Errorf("unable to update event")
-		}
-		s.Code = status.SuccessCode
-		s.Message = status.UpdateEventSuccess
-		return http.StatusOK, nil
-	} else if !eventExists {
+	if !eventExists {
 		s.Message = status.EventNotFound
 		return http.StatusNotFound, nil
-	} else if !clubExists {
+	}
+	if !clubExists {
 		s.Message = status.ClubNotFound
 		return http.StatusNotFound, nil
-	} else if !userExists {
+	}
+	if !userExists {
 		s.Message = status.UserNotFound
 		return http.StatusNotFound, nil
 	}
-	s.Message = http.StatusText(http.StatusForbidden)
-	return http.StatusForbidden, nil
+	if !isManager(db, user, club) {
+		s.Message = http.StatusText(http.StatusForbidden)
+		return http.StatusForbidden, nil
+	}
+	updatedEvent := model.NewEvent()
+	if err := extractBody(r, updatedEvent); err != nil {
+		return http.StatusInternalServerError, fmt.Errorf(err.Error())
+	}
+	err := validate.Struct(updatedEvent)
+	validDate := isValidDate(updatedEvent.DateTime.Format(time.RFC3339))
+	if !validDate || err != nil {
+		s.Message = status.UpdateEventFailure
+		s.Data = model.NewEventRequirement()
+		return http.StatusUnprocessableEntity, nil
+	}
+	if db.Model(event).Select(model.NameColumn, model.DescriptionColumn, model.LocationColumn, model.FeeColumn, model.DateTimeColumn).Updates(updatedEvent).Error != nil {
+		return http.StatusInternalServerError, fmt.Errorf("unable to update event")
+	}
+	s.Code = status.SuccessCode
+	s.Message = status.UpdateEventSuccess
+	return http.StatusOK, nil
 }
 
 // RemoveUserAttendsEvent - Removing a user attended event
@@ -202,31 +205,29 @@ func manageUserAttends(db *gorm.DB, r *http.Request, operation string, s *status
 	user := model.NewUser()
 	eventExists := SingleRecordExists(db, model.EventTable, model.IDColumn, eventID, event)
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, uname, user)
-	if eventExists {
-		if userExists {
-			switch operation {
-			case model.OpAdd:
-				err := db.Model(user).Association(model.AttendsColumn).Append(event)
-				if err != nil {
-					return http.StatusInternalServerError, fmt.Errorf("unable to obtain user attended events")
-
-				}
-				s.Code = status.SuccessCode
-				s.Message = status.EventAttendSuccess
-				return http.StatusOK, nil
-			case model.OpRemove:
-				err := db.Model(user).Association(model.AttendsColumn).Delete(event)
-				if err != nil {
-					return http.StatusInternalServerError, fmt.Errorf("unable to delete user attended events")
-				}
-				s.Code = status.SuccessCode
-				s.Message = status.EventUnattendSuccess
-				return http.StatusOK, nil
-			}
-		}
+	if !eventExists {
+		s.Message = status.EventNotFound
+		return http.StatusNotFound, nil
+	}
+	if !userExists {
 		s.Message = status.UserNotFound
 		return http.StatusNotFound, nil
 	}
-	s.Message = status.EventNotFound
-	return http.StatusNotFound, nil
+	switch operation {
+	case model.OpAdd:
+		err := db.Model(user).Association(model.AttendsColumn).Append(event)
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("unable to obtain user attended events")
+
+		}
+		s.Message = status.EventAttendSuccess
+	case model.OpRemove:
+		err := db.Model(user).Association(model.AttendsColumn).Delete(event)
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("unable to delete user attended events")
+		}
+		s.Message = status.EventUnattendSuccess
+	}
+	s.Code = status.SuccessCode
+	return http.StatusOK, nil
 }

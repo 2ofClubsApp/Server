@@ -49,7 +49,6 @@ func Login(db *gorm.DB, rc *redis.Client, w http.ResponseWriter, r *http.Request
 		s.Code = status.SuccessCode
 		s.Message = status.LoginSuccess
 		s.Data = login{Token: tp.AccessToken}
-
 		_, err := rc.Set(ctx, "access_"+creds.Username, tp.AccessToken, time.Duration(accessDuration*minuteToNanosecond)).Result()
 		if err != nil {
 			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))

@@ -55,31 +55,36 @@ func UpdateClub(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Req
 	uname := fmt.Sprintf("%v", claims["sub"])
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, uname, user)
-	if clubExists && userExists && isManager(db, user, club) {
-		updatedClub := model.NewClubUpdate()
-		extractBody(r, updatedClub)
-		validate := validator.New()
-		err := validate.Struct(updatedClub)
-		if err != nil {
-			s.Message = status.ClubUpdateFailure
-			return http.StatusUnprocessableEntity, nil
-		}
-		club.Bio = updatedClub.Bio
-		club.Size = updatedClub.Size
-		res := db.Model(club).Select(model.BioColumn, model.SizeColumn).Updates(club)
-		if res.Error != nil {
-			return http.StatusInternalServerError, fmt.Errorf("unable to update club")
-		}
-		s.Code = status.SuccessCode
-		s.Message = status.ClubUpdateSuccess
-		return http.StatusOK, nil
-	} else if !clubExists {
+	if !clubExists {
 		s.Message = status.ClubNotFound
 		return http.StatusNotFound, nil
 	}
-	s.Code = status.FailureCode
-	s.Message = http.StatusText(http.StatusForbidden)
-	return http.StatusForbidden, nil
+	if !userExists {
+		s.Message = status.UserNotFound
+		return http.StatusNotFound, nil
+	}
+	if !isManager(db, user, club) {
+		s.Code = status.FailureCode
+		s.Message = http.StatusText(http.StatusForbidden)
+		return http.StatusForbidden, nil
+	}
+	updatedClub := model.NewClubUpdate()
+	extractBody(r, updatedClub)
+	validate := validator.New()
+	err := validate.Struct(updatedClub)
+	if err != nil {
+		s.Message = status.ClubUpdateFailure
+		return http.StatusUnprocessableEntity, nil
+	}
+	club.Bio = updatedClub.Bio
+	club.Size = updatedClub.Size
+	res := db.Model(club).Select(model.BioColumn, model.SizeColumn).Updates(club)
+	if res.Error != nil {
+		return http.StatusInternalServerError, fmt.Errorf("unable to update club")
+	}
+	s.Code = status.SuccessCode
+	s.Message = status.ClubUpdateSuccess
+	return http.StatusOK, nil
 }
 
 // CreateClub - Creating a club (You must have an active user account first)
@@ -125,31 +130,31 @@ func CreateClub(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Req
 func GetClubPhoto(db *gorm.DB, _ *redis.Client, w http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	clubID := getVar(r, model.ClubIDVar)
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, model.NewClub())
-	if clubExists {
-		_, err := ioutil.ReadDir("./images")
-		if err != nil {
-			return http.StatusInternalServerError, fmt.Errorf("dir doesn't exist")
-		}
-		path := fmt.Sprintf("images/%s.png", clubID)
-		if _, err := os.Stat(path); err != nil {
-			s.Message = status.ClubPhotoNotFound
-			return http.StatusNotFound, nil
-		}
-		img, err := os.Open(path)
-		if err != nil {
-			return http.StatusInternalServerError, fmt.Errorf("unable to open photo")
-		}
-		defer img.Close()
-		//w.Header().Set("Content-Type", "image/jpeg")
-		_, err = io.Copy(w, img)
-		if err != nil {
-			return http.StatusInternalServerError, fmt.Errorf("unable to read file contents")
-		}
-		s.Code = status.SuccessCode
-		return http.StatusOK, nil
+	if !clubExists {
+		s.Message = status.ClubNotFound
+		return http.StatusNotFound, nil
 	}
-	s.Message = status.ClubNotFound
-	return http.StatusNotFound, nil
+	_, err := ioutil.ReadDir("./images")
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("dir doesn't exist")
+	}
+	path := fmt.Sprintf("images/%s.png", clubID)
+	if _, err := os.Stat(path); err != nil {
+		s.Message = status.ClubPhotoNotFound
+		return http.StatusNotFound, nil
+	}
+	img, err := os.Open(path)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("unable to open photo")
+	}
+	defer img.Close()
+	//w.Header().Set("Content-Type", "image/jpeg")
+	_, err = io.Copy(w, img)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("unable to read file contents")
+	}
+	s.Code = status.SuccessCode
+	return http.StatusOK, nil
 }
 
 // UploadClubPhoto - Uploading a club photo
@@ -163,49 +168,49 @@ func UploadClubPhoto(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *htt
 	username := fmt.Sprintf("%v", claims["sub"])
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
-	if clubExists && userExists && isManager(db, user, club) {
-		// Max 10MB upload file
-		err := r.ParseMultipartForm(maxMem) // 2^20
-		if err != nil {
-			s.Message = status.InvalidPhotoSize
-			return http.StatusBadRequest, nil
-		}
-		file, handler, err := r.FormFile("file")
-		if err != nil {
-			s.Message = status.FileNotFound
-			return http.StatusBadRequest, nil
-		}
-		if filepath.Ext(handler.Filename) != ".png" && filepath.Ext(handler.Filename) != ".jpg" {
-			s.Message = status.InvalidPhotoFormat
-			return http.StatusUnsupportedMediaType, nil
-		}
-		defer file.Close()
-		fileName := fmt.Sprintf("images/%v.png", club.ID)
-		tempFile, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0600)
-		if err != nil {
-			return http.StatusInternalServerError, fmt.Errorf("unable to create temp file")
-		}
-		defer tempFile.Close()
-		fileBytes, err := ioutil.ReadAll(file)
-		if err != nil {
-			return http.StatusInternalServerError, fmt.Errorf("unable to read file contents")
-		}
-		_, err = tempFile.Write(fileBytes)
-		if err != nil {
-			return http.StatusInternalServerError, fmt.Errorf("unable to write filebytes")
-		}
-		if club.Logo == "" {
-			club.Logo = fmt.Sprintf("/photos/clubs/%v", club.ID)
-			if db.Model(club).Select(model.LogoColumn).Updates(club).Error != nil {
-				return http.StatusInternalServerError, fmt.Errorf("unable to set club logo path")
-			}
-		}
-		s.Code = status.SuccessCode
-		s.Message = status.FileUploadSuccess
-		return http.StatusOK, nil
+	if !(clubExists && userExists && isManager(db, user, club)) {
+		s.Message = http.StatusText(http.StatusForbidden)
+		return http.StatusForbidden, nil
 	}
-	s.Message = http.StatusText(http.StatusForbidden)
-	return http.StatusForbidden, nil
+	// Max 10MB upload file
+	err := r.ParseMultipartForm(maxMem) // 2^20
+	if err != nil {
+		s.Message = status.InvalidPhotoSize
+		return http.StatusBadRequest, nil
+	}
+	file, handler, err := r.FormFile("file")
+	if err != nil {
+		s.Message = status.FileNotFound
+		return http.StatusBadRequest, nil
+	}
+	if filepath.Ext(handler.Filename) != ".png" && filepath.Ext(handler.Filename) != ".jpg" {
+		s.Message = status.InvalidPhotoFormat
+		return http.StatusUnsupportedMediaType, nil
+	}
+	defer file.Close()
+	fileName := fmt.Sprintf("images/%v.png", club.ID)
+	tempFile, err := os.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0600)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("unable to create temp file")
+	}
+	defer tempFile.Close()
+	fileBytes, err := ioutil.ReadAll(file)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("unable to read file contents")
+	}
+	_, err = tempFile.Write(fileBytes)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("unable to write filebytes")
+	}
+	if club.Logo == "" {
+		club.Logo = fmt.Sprintf("/photos/clubs/%v", club.ID)
+		if db.Model(club).Select(model.LogoColumn).Updates(club).Error != nil {
+			return http.StatusInternalServerError, fmt.Errorf("unable to set club logo path")
+		}
+	}
+	s.Code = status.SuccessCode
+	s.Message = status.FileUploadSuccess
+	return http.StatusOK, nil
 
 }
 
@@ -219,23 +224,23 @@ func UpdateClubTags(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http
 	user := model.NewUser()
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
-	// Must check with both user and club existing in the event that a user gets deleted but you manage to get a hold of their access token
-	if userExists && clubExists && isManager(db, user, club) {
-		tags := filterTags(extractTags(db, r))
-		err := db.Model(club).Association(model.SetsColumn).Replace(tags)
-		if err != nil {
-			return http.StatusInternalServerError, fmt.Errorf("unable to get club tags")
-		}
-		s.Message = status.TagsUpdated
-		s.Code = status.SuccessCode
-		return http.StatusOK, nil
-	}
 	if !clubExists {
 		s.Message = status.ClubNotFound
 		return http.StatusNotFound, nil
 	}
-	s.Message = http.StatusText(http.StatusForbidden)
-	return http.StatusForbidden, nil
+	// Must check with both user and club existing in the event that a user gets deleted but you manage to get a hold of their access token
+	if !(userExists && clubExists && isManager(db, user, club)) {
+		s.Message = http.StatusText(http.StatusForbidden)
+		return http.StatusForbidden, nil
+	}
+	tags := filterTags(extractTags(db, r))
+	err := db.Model(club).Association(model.SetsColumn).Replace(tags)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("unable to get club tags")
+	}
+	s.Message = status.TagsUpdated
+	s.Code = status.SuccessCode
+	return http.StatusOK, nil
 }
 
 // GetClub - Obtaining all information about a club
@@ -344,38 +349,39 @@ func editManagers(db *gorm.DB, r *http.Request, op string, s *status.Status) (in
 	// If owner is found, then the owner struct isn't populated, which gives ID=0, but ID's start at 1, so this shouldn't cause any potential security issues
 	managerExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, newManagerUname, newManager)
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
-	if ownerExists && managerExists && clubExists {
-		if isOwner(db, owner, club) && owner.Username != newManager.Username {
-			var err error
-			switch op {
-			case model.OpAdd:
-				res := db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ?", newManager.ID, club.ID).First(model.NewUserClub())
-				if res.Error != nil { // Record not existing, then add the new manager
-					err = db.Model(newManager).Association(model.ManagesColumn).Append(club)
-					if err != nil {
-						s.Message = failureMessage
-						return http.StatusInternalServerError, fmt.Errorf("unable to add new manager")
-					}
-				}
-			case model.OpRemove:
-				err = db.Model(newManager).Association(model.ManagesColumn).Delete(club)
-				if err != nil {
-					s.Message = failureMessage
-					return http.StatusInternalServerError, fmt.Errorf("unable to remove manager")
-				}
-			}
-			s.Message = successMessage
-			s.Code = status.SuccessCode
-			return http.StatusOK, nil
-		}
-		s.Message = http.StatusText(http.StatusForbidden)
-		return http.StatusForbidden, nil
-	} else if !clubExists {
+	if !clubExists {
 		s.Message = status.ClubNotFound
 		return http.StatusNotFound, nil
 	}
-	s.Message = status.UserNotFound
-	return http.StatusNotFound, nil
+	if !ownerExists || !managerExists {
+		s.Message = status.UserNotFound
+		return http.StatusNotFound, nil
+	}
+	if !(isOwner(db, owner, club) && owner.Username != newManager.Username) {
+		s.Message = http.StatusText(http.StatusForbidden)
+		return http.StatusForbidden, nil
+	}
+	var err error
+	switch op {
+	case model.OpAdd:
+		res := db.Table(model.UserClubTable).Where("user_id = ? AND club_id = ?", newManager.ID, club.ID).First(model.NewUserClub())
+		if res.Error != nil { // Record not existing, then add the new manager
+			err = db.Model(newManager).Association(model.ManagesColumn).Append(club)
+			if err != nil {
+				s.Message = failureMessage
+				return http.StatusInternalServerError, fmt.Errorf("unable to add new manager")
+			}
+		}
+	case model.OpRemove:
+		err = db.Model(newManager).Association(model.ManagesColumn).Delete(club)
+		if err != nil {
+			s.Message = failureMessage
+			return http.StatusInternalServerError, fmt.Errorf("unable to remove manager")
+		}
+	}
+	s.Message = successMessage
+	s.Code = status.SuccessCode
+	return http.StatusOK, nil
 }
 
 // LeaveClub lets the user step down a club manager (The user won't have any correlations previously managed club)
@@ -389,26 +395,29 @@ func LeaveClub(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Requ
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, clubID, club)
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, uname, user)
 	isOwner := isOwner(db, user, club)
-	if clubExists && userExists && isManager(db, user, club) && !isOwner {
-		err := db.Model(user).Association(model.ManagesColumn).Delete(club)
-		if err != nil {
-			return http.StatusInternalServerError, fmt.Errorf("unable to leave club")
-		}
-		s.Code = status.SuccessCode
-		s.Message = status.LeaveClubSuccess
-		return http.StatusOK, nil
-	} else if !clubExists {
+	if !clubExists {
 		s.Message = status.ClubNotFound
 		return http.StatusNotFound, nil
-	} else if !userExists {
+	}
+	if !userExists {
 		s.Message = status.UserNotFound
 		return http.StatusNotFound, nil
-	} else if isOwner {
+	}
+	if isOwner {
 		s.Message = status.LeaveClubFailure
 		return http.StatusUnprocessableEntity, nil
 	}
-	s.Message = http.StatusText(http.StatusForbidden)
-	return http.StatusForbidden, nil
+	if !isManager(db, user, club) {
+		s.Message = http.StatusText(http.StatusForbidden)
+		return http.StatusForbidden, nil
+	}
+	err := db.Model(user).Association(model.ManagesColumn).Delete(club)
+	if err != nil {
+		return http.StatusInternalServerError, fmt.Errorf("unable to leave club")
+	}
+	s.Code = status.SuccessCode
+	s.Message = status.LeaveClubSuccess
+	return http.StatusOK, nil
 }
 
 // PromoteOwner promotes a club manager to be the new owner while the current owner would step down and become a manager
