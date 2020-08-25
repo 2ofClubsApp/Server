@@ -96,7 +96,7 @@ const (
 	EventDescriptionConstraint = "event description must be a maximum of 300 characters or less"
 	EventLocationConstraint    = "event location must be a maximum of 100 characters or less"
 	EventFeeConstraint         = "fee must be greater or equal to 0"
-	EventDateTimeConstraint    = "datetime must be in the RFC3339 format and the event must be later than the current time"
+	EventDateTimeConstraint    = "datetime must be in the RFC3339 format and the event must occur later than the current time"
 	EventFound                 = "event found"
 	EventNotFound              = "event not found"
 	EventDeleted               = "event deleted"

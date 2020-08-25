@@ -36,8 +36,8 @@ func NewEventRequirement() *EventRequirement {
 	return &EventRequirement{
 		Admin:       status.ManagerOwnerRequired,
 		Name:        status.EventNameConstraint,
-		DateTime:    status.EventDateTimeConstraint,
 		Description: status.EventDescriptionConstraint,
+		DateTime:    status.EventDateTimeConstraint,
 		Location:    status.EventLocationConstraint,
 		Fee:         status.EventFeeConstraint,
 	}
