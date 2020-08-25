@@ -1,10 +1,12 @@
 <h1 align="center">
   <p align="center">2ofClubs Server</p>
   <h4 align="center">Finding the perfect club for you!</h4>
-  <a href="https://2ofClubs.app><img src="https://avatars3.githubusercontent.com/u/64863952?s=400&u=293c427becbc89d1388ece6182462f14ad81d3a5&v=4 alt="2ofClubs"></a>
+  <a href="https://2ofClubs.app><img src="https://avatars3.githubusercontent.com/u/64863952?s=400&u=293c427becbc89d1388ece6182462f14ad81d3a5&v=4" alt="2ofClubs"></a>
 </h1>
 <p align="center">
   <a href="https://goreportcard.com/report/github.com/2ofClubsApp/2ofclubs-server"><img src="https://goreportcard.com/badge/github.com/2ofClubsApp/2ofclubs-server" alt="Go Report Card"/> </a>
+  <a href="https://hub.docker.com/r/2ofclubsapp/server"><img src="https://img.shields.io/docker/cloud/build/2ofclubsapp/server" alt="Docker Build Status"></a>
+  <a href="https://hub.docker.com/r/2ofclubsapp/server"><img src="https://img.shields.io/docker/pulls/2ofclubsapp/server" alt="Docker Pulls"></a>
   <a href="https://godoc.org/github.com/2-of-clubs/2ofclubs-server"><img src="https://godoc.org/github.com/2-of-clubs/2ofclubs-server?status.svg" alt="Go Doc"/></a>
   <a href="#License" alt="License"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"/></a>
 </p>
