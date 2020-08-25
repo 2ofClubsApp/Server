@@ -28,7 +28,11 @@ type ClubUpdateInfo struct {
 
 // NewClub - Create new default Club
 func NewClub() *Club {
-	return &Club{Sets: []Tag{}, Active: false, Hosts: []Event{}}
+	return &Club{
+		Sets:   []Tag{},
+		Active: false,
+		Hosts:  []Event{},
+	}
 }
 
 // NewClubUpdate returns a struct to update club info
@@ -38,7 +42,10 @@ func NewClubUpdate() *ClubUpdateInfo {
 
 // DisplayBaseClubInfo displays base club data
 func (c *Club) DisplayBaseClubInfo() ClubBaseInfo {
-	return ClubBaseInfo{ID: c.ID, Name: c.Name}
+	return ClubBaseInfo{
+		ID:   c.ID,
+		Name: c.Name,
+	}
 }
 
 // Club variables for db columns/route variables

@@ -3,11 +3,11 @@ package app
 import (
 	"context"
 	"fmt"
-	"github.com/2-of-clubs/2ofclubs-server/app/handler"
-	"github.com/2-of-clubs/2ofclubs-server/app/logger"
-	"github.com/2-of-clubs/2ofclubs-server/app/model"
-	"github.com/2-of-clubs/2ofclubs-server/app/status"
-	"github.com/2-of-clubs/2ofclubs-server/config"
+	"github.com/2ofClubsApp/2ofClubs-Server/app/handler"
+	"github.com/2ofClubsApp/2ofClubs-Server/app/logger"
+	"github.com/2ofClubsApp/2ofClubs-Server/app/model"
+	"github.com/2ofClubsApp/2ofClubs-Server/app/status"
+	"github.com/2ofClubsApp/2ofClubs-Server/config"
 	"github.com/go-redis/redis/v8"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -55,16 +55,13 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 		log.Fatal("Unable to connect to Redis\n", err)
 	}
 	db, err := gorm.Open(postgres.Open(dbFormat), &gorm.Config{
-		NamingStrategy: schema.NamingStrategy{SingularTable: true},
-		//DisableForeignKeyConstraintWhenMigrating: true,
-	})
+		NamingStrategy: schema.NamingStrategy{SingularTable: true}})
 	if err != nil {
 		log.Fatal("Unable to connect to database\n", err)
 	}
 	app.db = db
 	app.redis = redisClient
 	app.router = mux.NewRouter()
-	//StrictSlash(true)
 	app.router.Use(logger.LoggingMiddleware)
 	// Note: Set this as env var later
 	app.origin = handlers.AllowedOrigins([]string{"http://localhost:3000"})
@@ -88,7 +85,6 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 	if db.Create(adminConfig).Error != nil {
 		log.Println("Unable to create admin account. Account already exists")
 	}
-
 }
 
 // Set all routes for API server

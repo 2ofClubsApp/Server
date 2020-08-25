@@ -9,6 +9,8 @@ type User struct {
 	Attends      []Event `gorm:"many2many:user_event;" json:"-"`
 	IsAdmin      bool    `json:"-"`
 	IsApproved   bool    `json:"-"`
+	Swiped       []Club  `gorm:"many2many:user_swipe_club;" json:"-"`
+	Beans        string
 }
 
 // UserDisplay - Displaying public user data
@@ -34,17 +36,28 @@ type ManagesDisplay struct {
 
 // DisplayAllInfo public user data
 func (u *User) DisplayAllInfo() *UserDisplay {
-	return &UserDisplay{Email: u.Email}
+	return &UserDisplay{
+		Email: u.Email,
+	}
 }
 
 // DisplayBaseUserInfo displays base user data
 func (u *User) DisplayBaseUserInfo() UserBaseInfo {
-	return UserBaseInfo{ID: u.ID, Username: u.Username}
+	return UserBaseInfo{
+		ID:       u.ID,
+		Username: u.Username,
+	}
 }
 
 // NewUser - Create new default User
 func NewUser() *User {
-	return &User{Credentials: NewCredentials(), Manages: []Club{}, Chooses: []Tag{}, Attends: []Event{}}
+	return &User{
+		Credentials: NewCredentials(),
+		Manages:     []Club{},
+		Chooses:     []Tag{},
+		Attends:     []Event{},
+		Swiped:      []Club{},
+	}
 }
 
 // User variables for db columns/route variables
