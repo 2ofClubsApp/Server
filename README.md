@@ -1,5 +1,6 @@
 <h1 align="center">
   <p align="center">2ofClubs Server</p>
+  <h4 align="center">Finding the perfect club for you!</h4>
   <a href="https://2ofClubs.app><img src="https://avatars3.githubusercontent.com/u/64863952?s=400&u=293c427becbc89d1388ece6182462f14ad81d3a5&v=4 alt="2ofClubs"></a>
 </h1>
 <p align="center">
@@ -65,11 +66,11 @@ You can contact us through these channels:
 - [Github Issues](https://github.com/2ofClubsApp/2ofclubs-server/issues)
 
 ## Contributing
-- If you're submitting a feature request or PR, please follow their associated templates
 - Properly [document](https://blog.golang.org/godoc) and [format](https://golang.org/doc/effective_go.html#formatting) your Go Code.
+- If you're submitting a feature request or PR, please follow their associated templates
 
 For any code that can be reworked/improved upon, feel free to submit a PR
 ## License
-2ofClubs-Server is [MIT licensed](./LICENSE)
+The 2ofClubs-Server is [MIT licensed](./LICENSE)
 
 <a href="https://2ofClubs.app"><img src="https://user-images.githubusercontent.com/41246112/83603397-5d4d6800-a542-11ea-9dcd-3916bc86474d.png" alt="2ofClubsServer"/>
