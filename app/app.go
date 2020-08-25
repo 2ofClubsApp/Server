@@ -37,7 +37,7 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 	ctx := context.Background()
 	dbFormat :=
 		fmt.Sprintf(
-			"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+			"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable TimeZone=America/New_York",
 			dbConfig.Host,
 			dbConfig.Port,
 			dbConfig.User,

@@ -16,8 +16,10 @@ services:
     restart: unless-stopped
     ports:
       - "5432:5432"
-    environment:
+    env_file:
       - db.env
+    environment:
+      - TZ=America/New_York
     networks:
       - backend
     volumes:
@@ -35,10 +37,12 @@ services:
       - backend
     env_file:
       - app.env
+    environment:
+      - TZ=America/New_York
     ports:
       - "8080:8080"
     volumes:
-    - 2ofClubsPhotoStorage:/2ofClubsServer/images
+      - 2ofClubsPhotoStorage:/2ofClubsServer/images
     command: go run main.go
 volumes:
   2ofClubsVolume:

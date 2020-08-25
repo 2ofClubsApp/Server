@@ -27,15 +27,15 @@ func GetClubs(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Reque
 	fmt.Println(activeTags)
 	db.Table(model.ClubTagTable).Where("tag_name IN ?", activeTags).Find(&clubs)
 
-	db.Joins("JOIN club_tag ON club_tag.club_id=club.id").
-		Joins("JOIN tag ON club_tag.tag_name=tag.name").
-		Where("tag.name IN ?", activeTags).
-		Distinct("club.name").
-		Find(&clubs)
+	//db.Joins("JOIN club_tag ON club_tag.club_id=club.id").
+	//	Joins("JOIN tag ON club_tag.tag_name=tag.name").
+	//	Where("tag.name IN ?", activeTags).
+	//	Distinct("club.name").
+	//	Find(&clubs)
 	//db.Joins("club").Joins("club_tag").Joins("tags").Find(&clubs, "club.sets IN ?", activeTags)
 	//db.Raw("SELECT DISTINCT c.name FROM club AS c NATURAL JOIN club_tag AS ct WHERE tag.name IN ?", activeTags).Scan(&clubs)
 	//db.Raw(" SELECT * FROM club_tag WHERE tag_name IN ?", activeTags).Find(&clubs)
-	//res := db.Raw("Select club.id From club NATURAL JOIN club_tag Where club_tag.tag_name IN ?", activeTags).Find(&clubs)
+	db.Raw("Select club.id From club NATURAL JOIN club_tag Where club_tag.tag_name IN ?", activeTags).Find(&clubs)
 	//fmt.Println(res.RowsAffected)
 	//fmt.Println(res.Error)
 	fmt.Println(clubs)
