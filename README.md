@@ -44,9 +44,7 @@ Make sure your version of Docker supports docker-compose v3.3 or later
 docker-compose up --build -d
 ```
 
-3. Enjoy !
-
-The server is listening and serving on port `8080`
+3. The server should be listening and serving on port `8080`
 
 You can check out our full [installation guide](https://2ofclubs.app/docs/installation), app requirements and more on our website.
 
