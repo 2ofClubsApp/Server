@@ -24,12 +24,36 @@
 > Find the perfect club for you in just a couple of swipes!
 
 - **Explore anywhere**
-> You can find cclubs and their hosted events whever you go!
+> You can find clubs and their hosted events whever you go!
 
 ## Installation
 2ofClubs-Server is available as a [Docker Container](https://hub.docker.com/r/2ofclubsapp/server) on [Docker Hub](https://hub.docker.com)
 
-You can also check out our [installation guide](https://2ofclubs.app/docs/installation) on our website.
+### Deployment using Docker
+
+1. Pull the latest image from Docker Hub:
+
+```
+docker pull 2ofclubsapp/server
+```
+
+2. Run `docker-compose` 
+Make sure your version of Docker supports docker-compose v3.3 or later
+
+```
+docker-compose up --build -d
+```
+
+3. Enjoy !
+
+The server is listening and serving on port `8080`
+
+You can check out our full [installation guide](https://2ofclubs.app/docs/installation), app requirements and more on our website.
+
+### Configuration
+* By default, the 2ofClubs-Server is listening and serving on port `8080`. This can be changed in the `docker-compose.yaml` file.
+* App environemnt variables can be set in `app.env`
+* Database environment variable can be set in `db.env`
 
 ## Documentation
 Our documentation can be found [here](https://2ofclubs.app/docs)
