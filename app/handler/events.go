@@ -8,6 +8,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 	"net/http"
+	"time"
 )
 
 // GetAllEvents - Returning all events from all clubs
@@ -98,7 +99,7 @@ func CreateClubEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *htt
 					return http.StatusInternalServerError, fmt.Errorf(err.Error())
 				}
 				err := validate.Struct(event)
-				if err != nil {
+				if !isValidDate(event.DateTime) || err != nil {
 					s.Message = status.CreateEventFailure
 					s.Data = model.NewEventRequirement()
 					return http.StatusUnprocessableEntity, nil
@@ -121,6 +122,21 @@ func CreateClubEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *htt
 	return http.StatusNotFound, nil
 }
 
+func isValidDate(datetime string) bool {
+	location, err := time.LoadLocation("Local")
+	if err != nil {
+		return false
+	}
+	t, err := time.Parse(time.RFC3339, datetime)
+	if err != nil {
+		return false
+	}
+	eventTime := time.Date(t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), location)
+	now := time.Now().In(location)
+	return eventTime.After(now)
+
+}
+
 // UpdateClubEvent - Updating an event for a particular club
 func UpdateClubEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	claims := GetTokenClaims(ExtractToken(r))
@@ -140,12 +156,13 @@ func UpdateClubEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *htt
 			return http.StatusInternalServerError, fmt.Errorf(err.Error())
 		}
 		err := validate.Struct(updatedEvent)
-		if err != nil {
+		validDate := isValidDate(updatedEvent.DateTime)
+		if !validDate || err != nil {
 			s.Message = status.UpdateEventFailure
 			s.Data = model.NewEventRequirement()
 			return http.StatusUnprocessableEntity, nil
 		}
-		if db.Model(event).Select(model.NameColumn, model.DescriptionColumn, model.LocationColumn, model.FeeColumn).Updates(updatedEvent).Error != nil {
+		if db.Model(event).Select(model.NameColumn, model.DescriptionColumn, model.LocationColumn, model.FeeColumn, model.DateTimeColumn).Updates(updatedEvent).Error != nil {
 			return http.StatusInternalServerError, fmt.Errorf("unable to update event")
 		}
 		s.Code = status.SuccessCode
