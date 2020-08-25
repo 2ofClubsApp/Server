@@ -21,34 +21,34 @@ func SignUp(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request
 	credStatus := status.CredentialStatus{}
 	creds, isValidCred := verifyCredentials(r)
 	hashedPass, hashErr := Hash(creds.Password)
-	if isValidCred == nil && hashErr == nil {
-		creds.Password = hashedPass
-		user := model.NewUser()
-		unameAvailable := !SingleRecordExists(db, model.UserTable, model.UsernameColumn, creds.Username, user)
-		emailAvailable := !SingleRecordExists(db, model.UserTable, model.EmailColumn, creds.Email, user)
-		if unameAvailable && emailAvailable {
-			err := createUser(db, creds, user)
-			if err != nil {
-				return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
-			}
-			s.Code = status.SuccessCode
-			s.Message = status.SignupSuccess
-			return http.StatusCreated, nil
-		}
-		if !unameAvailable {
-			credStatus.Username = status.UsernameExists
-		}
-		if !emailAvailable {
-			credStatus.Email = status.EmailExists
-		}
+	if !(isValidCred == nil && hashErr == nil) {
+		credStatus.Username = status.UsernameAlphaNum
+		credStatus.Email = status.ValidEmail
+		credStatus.Password = status.PasswordRequired
 		s.Data = credStatus
-		return http.StatusConflict, nil
+		return http.StatusUnprocessableEntity, nil
 	}
-	credStatus.Username = status.UsernameAlphaNum
-	credStatus.Email = status.ValidEmail
-	credStatus.Password = status.PasswordRequired
+	creds.Password = hashedPass
+	user := model.NewUser()
+	unameAvailable := !SingleRecordExists(db, model.UserTable, model.UsernameColumn, creds.Username, user)
+	emailAvailable := !SingleRecordExists(db, model.UserTable, model.EmailColumn, creds.Email, user)
+	if unameAvailable && emailAvailable {
+		err := createUser(db, creds, user)
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+		}
+		s.Code = status.SuccessCode
+		s.Message = status.SignupSuccess
+		return http.StatusCreated, nil
+	}
+	if !unameAvailable {
+		credStatus.Username = status.UsernameExists
+	}
+	if !emailAvailable {
+		credStatus.Email = status.EmailExists
+	}
 	s.Data = credStatus
-	return http.StatusUnprocessableEntity, nil
+	return http.StatusConflict, nil
 }
 
 // Hash - Returning (hash, true) on Hash success otherwise, ("", false) on error.

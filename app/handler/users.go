@@ -66,55 +66,56 @@ Current Supported Information:
 func getUserInfo(db *gorm.DB, r *http.Request, infoType string, s *status.Status) (int, error) {
 	username := strings.ToLower(getVar(r, model.UsernameVar))
 	user := model.NewUser()
-	if IsValidRequest(username, r) {
-		userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
-		if userExists {
-			switch strings.ToLower(infoType) {
-			case model.AllUserInfo:
-				userDisplay := user.DisplayAllInfo()
-				res := db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
-				if res.Error != nil {
-					return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
-				}
-				res = db.Table(model.UserTable).Preload(model.ChoosesColumn).Find(user)
-				if res.Error != nil {
-					return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
-
-				}
-				res = db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
-				if res.Error != nil {
-					return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
-				}
-				userDisplay.Manages = getManages(db, user)
-				userDisplay.Tags = filterTags(user.Chooses)
-				userDisplay.Attends = user.Attends
-				s.Data = userDisplay
-			case model.AllUserClubsManage:
-				res := db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
-				if res.Error != nil {
-					return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
-				}
-				response := make(map[string][]*model.ManagesDisplay)
-				response[strings.ToLower(model.ManagesColumn)] = getManages(db, user)
-				s.Data = response
-			case model.AllUserEventsAttend:
-				res := db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
-				if res.Error != nil {
-					return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
-				}
-				response := make(map[string][]model.Event)
-				response[strings.ToLower(model.AttendsColumn)] = user.Attends
-				s.Data = response
-			}
-			s.Code = status.SuccessCode
-			s.Message = status.UserFound
-			return http.StatusOK, nil
-		}
+	if !IsValidRequest(username, r) {
+		s.Message = http.StatusText(http.StatusForbidden)
+		return http.StatusForbidden, nil
+	}
+	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
+	if !userExists {
 		s.Message = status.UserNotFound
 		return http.StatusNotFound, nil
 	}
-	s.Message = http.StatusText(http.StatusForbidden)
-	return http.StatusForbidden, nil
+
+	switch strings.ToLower(infoType) {
+	case model.AllUserInfo:
+		userDisplay := user.DisplayAllInfo()
+		res := db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
+		if res.Error != nil {
+			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+		}
+		res = db.Table(model.UserTable).Preload(model.ChoosesColumn).Find(user)
+		if res.Error != nil {
+			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+
+		}
+		res = db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
+		if res.Error != nil {
+			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+		}
+		userDisplay.Manages = getManages(db, user)
+		userDisplay.Tags = filterTags(user.Chooses)
+		userDisplay.Attends = user.Attends
+		s.Data = userDisplay
+	case model.AllUserClubsManage:
+		res := db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
+		if res.Error != nil {
+			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+		}
+		response := make(map[string][]*model.ManagesDisplay)
+		response[strings.ToLower(model.ManagesColumn)] = getManages(db, user)
+		s.Data = response
+	case model.AllUserEventsAttend:
+		res := db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
+		if res.Error != nil {
+			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+		}
+		response := make(map[string][]model.Event)
+		response[strings.ToLower(model.AttendsColumn)] = user.Attends
+		s.Data = response
+	}
+	s.Code = status.SuccessCode
+	s.Message = status.UserFound
+	return http.StatusOK, nil
 }
 
 /*
@@ -153,18 +154,21 @@ func UpdateUserTags(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http
 	username := strings.ToLower(getVar(r, model.UsernameVar))
 	user := model.NewUser()
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
-	if userExists && IsValidRequest(username, r) {
-		chooses := filterTags(extractTags(db, r))
-		fmt.Println(chooses)
-		if db.Model(user).Association(model.ChoosesColumn).Replace(chooses) != nil {
-			return http.StatusInternalServerError, fmt.Errorf("unable to obtain user tags")
-		}
-		s.Code = status.SuccessCode
-		s.Message = status.TagsUpdated
-		return http.StatusCreated, nil
+	if !userExists {
+		s.Message = status.UserNotFound
+		return http.StatusNotFound, nil
 	}
-	s.Message = http.StatusText(http.StatusForbidden)
-	return http.StatusForbidden, nil
+	if !IsValidRequest(username, r) {
+		s.Message = http.StatusText(http.StatusForbidden)
+		return http.StatusForbidden, nil
+	}
+	chooses := filterTags(extractTags(db, r))
+	if db.Model(user).Association(model.ChoosesColumn).Replace(chooses) != nil {
+		return http.StatusInternalServerError, fmt.Errorf("unable to obtain user tags")
+	}
+	s.Code = status.SuccessCode
+	s.Message = status.TagsUpdated
+	return http.StatusCreated, nil
 }
 
 // UpdateUserPassword - Updating a user's password by providing the correct original password and the password
@@ -179,37 +183,37 @@ func UpdateUserPassword(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *
 	user := model.NewUser()
 	s.Message = status.PasswordUpdateFailure
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
-	if userExists {
-		if IsValidRequest(user.Username, r) {
-			currentPass, ok := getPasswordHash(db, user.Username)
-			if bcrypt.CompareHashAndPassword(currentPass, []byte(newCreds.OldPassword)) != nil && !ok {
-				return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
-			}
-			validate := validator.New()
-			creds.Username = user.Username
-			creds.Password = newCreds.NewPassword
-			creds.Email = user.Email
-			validUser := validate.Struct(creds)
-			hashedNewPass, hashErr := Hash(newCreds.NewPassword)
-			if validUser != nil {
-				return http.StatusUnprocessableEntity, nil
-			}
-			if hashErr != nil {
-				return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
-			}
-			res := db.Model(user).Update(model.PasswordColumn, hashedNewPass)
-			if res.Error != nil {
-				return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
-			}
-			s.Message = status.PasswordUpdateSuccess
-			s.Code = status.SuccessCode
-			return http.StatusOK, nil
-		}
+	if !userExists {
+		s.Message = status.UserNotFound
+		return http.StatusNotFound, nil
+	}
+	if !IsValidRequest(user.Username, r) {
 		s.Message = http.StatusText(http.StatusForbidden)
 		return http.StatusForbidden, nil
 	}
-	s.Message = status.UserNotFound
-	return http.StatusNotFound, nil
+	currentPass, ok := getPasswordHash(db, user.Username)
+	if bcrypt.CompareHashAndPassword(currentPass, []byte(newCreds.OldPassword)) != nil && !ok {
+		return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+	}
+	validate := validator.New()
+	creds.Username = user.Username
+	creds.Password = newCreds.NewPassword
+	creds.Email = user.Email
+	validUser := validate.Struct(creds)
+	hashedNewPass, hashErr := Hash(newCreds.NewPassword)
+	if validUser != nil {
+		return http.StatusUnprocessableEntity, nil
+	}
+	if hashErr != nil {
+		return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+	}
+	res := db.Model(user).Update(model.PasswordColumn, hashedNewPass)
+	if res.Error != nil {
+		return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+	}
+	s.Message = status.PasswordUpdateSuccess
+	s.Code = status.SuccessCode
+	return http.StatusOK, nil
 }
 
 /*
@@ -222,35 +226,35 @@ func ResetUserPassword(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *h
 	username := getVar(r, model.UsernameVar)
 	user := model.NewUser()
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
-	s.Message = status.PasswordUpdateFailure
-	if userExists {
-		hash, obtainedHash := getPasswordHash(db, username)
-		if obtainedHash {
-			if IsValidJWT(token, KF(string(hash))) {
-				extractBody(r, creds)
-				validate := validator.New()
-				// Populate creds struct to validate
-				creds.Username = user.Username
-				creds.Email = user.Email
-				credErr := validate.Struct(creds)
-				if newPass, hashErr := Hash(creds.Password); credErr == nil && hashErr == nil {
-					res := db.Model(user).Update(model.PasswordColumn, newPass)
-					if res.Error != nil {
-						return http.StatusInternalServerError, fmt.Errorf("unable to update password")
-					}
-					s.Code = status.SuccessCode
-					s.Message = status.PasswordUpdateSuccess
-					return http.StatusOK, nil
-				}
-				return http.StatusInternalServerError, fmt.Errorf("invalid credentials")
-			}
-			s.Message = http.StatusText(http.StatusForbidden)
-			return http.StatusForbidden, nil
-		}
+	hash, obtainedHash := getPasswordHash(db, username)
+	if !userExists {
+		s.Message = status.UserNotFound
+		return http.StatusNotFound, nil
+	}
+	if !obtainedHash {
+		s.Message = status.PasswordUpdateFailure
 		return http.StatusInternalServerError, fmt.Errorf("unable to hash password")
 	}
-	s.Message = status.UserNotFound
-	return http.StatusNotFound, nil
+	if !IsValidJWT(token, KF(string(hash))) {
+		s.Message = http.StatusText(http.StatusForbidden)
+		return http.StatusForbidden, nil
+	}
+	extractBody(r, creds)
+	validate := validator.New()
+	// Populate creds struct to validate
+	creds.Username = user.Username
+	creds.Email = user.Email
+	credErr := validate.Struct(creds)
+	if newPass, hashErr := Hash(creds.Password); credErr == nil && hashErr == nil {
+		res := db.Model(user).Update(model.PasswordColumn, newPass)
+		if res.Error != nil {
+			return http.StatusInternalServerError, fmt.Errorf("unable to update password")
+		}
+		s.Code = status.SuccessCode
+		s.Message = status.PasswordUpdateSuccess
+		return http.StatusOK, nil
+	}
+	return http.StatusInternalServerError, fmt.Errorf("invalid credentials")
 }
 
 /*
@@ -264,27 +268,27 @@ func RequestResetUserPassword(db *gorm.DB, _ *redis.Client, _ http.ResponseWrite
 	user := model.NewUser()
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, username, user)
 	outputFileName := "template.html"
-	if userExists {
-		h := hermes.Hermes{
-			Product: hermes.Product{
-				Name:      os.Getenv("COMPANY_NAME"),
-				Link:      os.Getenv("COMPANY_LINK"),
-				Logo:      os.Getenv("COMPANY_LOGO"),
-				Copyright: os.Getenv("COMPANY_COPYRIGHT"),
-			},
-		}
-
-		token, jwtErr := GenerateJWT(user.Username, emailExpiryTime, user.Password)
-		generateErr := generateEmailTemplate(user, h, outputFileName, token)
-		body, fileReadErr := ioutil.ReadFile(outputFileName)
-		sendErr := sendEmail(os.Getenv("EMAIL_FROM_HEADER"), user.Email, "Password Reset Request", body)
-		if generateErr != nil || fileReadErr != nil || sendErr != nil || jwtErr != nil {
-			return http.StatusInternalServerError, fmt.Errorf("unable to generate and send email")
-		}
-		s.Code = status.SuccessCode
+	if !userExists {
 		s.Message = status.EmailSendSuccess
 		return http.StatusOK, nil
 	}
+	h := hermes.Hermes{
+		Product: hermes.Product{
+			Name:      os.Getenv("COMPANY_NAME"),
+			Link:      os.Getenv("COMPANY_LINK"),
+			Logo:      os.Getenv("COMPANY_LOGO"),
+			Copyright: os.Getenv("COMPANY_COPYRIGHT"),
+		},
+	}
+
+	token, jwtErr := GenerateJWT(user.Username, emailExpiryTime, user.Password)
+	generateErr := generateEmailTemplate(user, h, outputFileName, token)
+	body, fileReadErr := ioutil.ReadFile(outputFileName)
+	sendErr := sendEmail(os.Getenv("EMAIL_FROM_HEADER"), user.Email, "Password Reset Request", body)
+	if generateErr != nil || fileReadErr != nil || sendErr != nil || jwtErr != nil {
+		return http.StatusInternalServerError, fmt.Errorf("unable to generate and send email")
+	}
+	s.Code = status.SuccessCode
 	s.Message = status.EmailSendSuccess
 	return http.StatusOK, nil
 }
