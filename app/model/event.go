@@ -2,16 +2,17 @@ package model
 
 import (
 	"github.com/2-of-clubs/2ofclubs-server/app/status"
+	"time"
 )
 
 // Event - Basic Event Struct
 type Event struct {
 	Base
-	Name        string  `validate:"required,min=1,max=50" json:"name"`
-	DateTime    string  `validate:"required" json:"datetime"`
-	Description string  `validate:"required,max=300" json:"description"`
-	Location    string  `validate:"required,max=300" json:"location"`
-	Fee         float64 `validate:"gte=0" json:"fee"`
+	Name        string    `validate:"required,min=1,max=50" json:"name"`
+	DateTime    time.Time `validate:"required" json:"datetime"`
+	Description string    `validate:"required,max=300" json:"description"`
+	Location    string    `validate:"required,max=300" json:"location"`
+	Fee         float64   `validate:"gte=0" json:"fee"`
 }
 
 // NewEvent - Create new default Event

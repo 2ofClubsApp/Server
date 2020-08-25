@@ -99,7 +99,7 @@ func CreateClubEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *htt
 					return http.StatusInternalServerError, fmt.Errorf(err.Error())
 				}
 				err := validate.Struct(event)
-				if !isValidDate(event.DateTime) || err != nil {
+				if !isValidDate(event.DateTime.Format(time.RFC3339)) || err != nil {
 					s.Message = status.CreateEventFailure
 					s.Data = model.NewEventRequirement()
 					return http.StatusUnprocessableEntity, nil
@@ -127,6 +127,7 @@ func isValidDate(datetime string) bool {
 	if err != nil {
 		return false
 	}
+	fmt.Println(datetime)
 	t, err := time.Parse(time.RFC3339, datetime)
 	if err != nil {
 		return false
@@ -156,7 +157,7 @@ func UpdateClubEvent(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *htt
 			return http.StatusInternalServerError, fmt.Errorf(err.Error())
 		}
 		err := validate.Struct(updatedEvent)
-		validDate := isValidDate(updatedEvent.DateTime)
+		validDate := isValidDate(updatedEvent.DateTime.Format(time.RFC3339))
 		if !validDate || err != nil {
 			s.Message = status.UpdateEventFailure
 			s.Data = model.NewEventRequirement()
