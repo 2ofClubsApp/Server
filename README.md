@@ -7,7 +7,7 @@
   <a href="https://goreportcard.com/report/github.com/2ofClubsApp/2ofclubs-server"><img src="https://goreportcard.com/badge/github.com/2ofClubsApp/2ofclubs-server" alt="Go Report Card"/> </a>
   <a href="https://hub.docker.com/r/2ofclubsapp/server"><img src="https://img.shields.io/docker/cloud/build/2ofclubsapp/server" alt="Docker Build Status"></a>
   <a href="https://hub.docker.com/r/2ofclubsapp/server"><img src="https://img.shields.io/docker/pulls/2ofclubsapp/server" alt="Docker Pulls"></a>
-  <a href="https://godoc.org/github.com/2-of-clubs/2ofclubs-server"><img src="https://godoc.org/github.com/2-of-clubs/2ofclubs-server?status.svg" alt="Go Doc"/></a>
+  <a href="https://godoc.org/github.com/2ofClubsApp/2ofClubs-Server"><img src="https://pkg.go.dev/badge/github.com/2ofClubsApp/2ofclubs-server?status.svg" alt="Go Doc"/></a>
   <a href="#License" alt="License"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"/></a>
 </p>
 
