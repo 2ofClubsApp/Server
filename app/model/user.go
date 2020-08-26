@@ -66,6 +66,7 @@ const (
 	AllUserEventsAttend = "events"
 	ChoosesColumn       = "Chooses"
 	AttendsColumn       = "Attends"
+	SwipedColumn        = "Swiped"
 	UserClubTable       = "user_club"
 	UserTable           = "user"
 	ManagesColumn       = "Manages"
