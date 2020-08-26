@@ -16,6 +16,7 @@ import (
 	"gorm.io/gorm/schema"
 	"log"
 	"net/http"
+	"os"
 )
 
 type routeHandler func(w http.ResponseWriter, r *http.Request)
@@ -63,8 +64,7 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 	app.redis = redisClient
 	app.router = mux.NewRouter()
 	app.router.Use(logger.LoggingMiddleware)
-	// Note: Set this as env var later
-	app.origin = handlers.AllowedOrigins([]string{"http://localhost:3000"})
+	app.origin = handlers.AllowedOrigins([]string{os.Getenv("FRONTEND_URL")})
 	app.methods = handlers.AllowedMethods([]string{http.MethodGet, http.MethodPost, http.MethodPut, http.MethodDelete, http.MethodOptions})
 	app.headers = handlers.AllowedHeaders([]string{"Content-Type", "Authorization"})
 
@@ -87,7 +87,7 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 	}
 }
 
-// Set all routes for API server
+// Set all API endpoints
 func (app *App) setRoutes() {
 	// Signup Route
 	app.Post("/signup", app.Handle(handler.SignUp, false)) // Done
@@ -177,7 +177,6 @@ func (app *App) Delete(path string, f routeHandler) {
 // Handle - Wrapper function to return a base Handler function
 func (app *App) Handle(h hdlr, verifyRequest bool) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Must verify for sensitive information
 		s := status.New()
 		if verifyRequest {
 			if isValid := handler.VerifyJWT(r); isValid && handler.IsActiveToken(app.redis, r) {
