@@ -27,7 +27,7 @@
 > Find the perfect club for you in just a couple of swipes!
 
 - **Explore anywhere**
-> You can find clubs and their hosted events whever you go!
+> You can find clubs and their hosted events wherever you go!
 
 ## Installation
 2ofClubs-Server is available as a [Docker Container](https://hub.docker.com/r/2ofclubsapp/server) on [Docker Hub](https://hub.docker.com)
