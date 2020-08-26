@@ -26,9 +26,7 @@ services:
       - 2ofClubsVolume:/var/lib/postgresql/data
   app:
     container_name: 2ofClubsServer
-    build:
-      context: ./
-      dockerfile: Dockerfile
+    image: 2ofclubsapp/server
     restart: unless-stopped
     depends_on:
       - db
@@ -44,6 +42,9 @@ services:
     volumes:
       - 2ofClubsPhotoStorage:/2ofClubsServer/images
     command: go run main.go
+    #    build:
+    #      context: ./
+    #      dockerfile: Dockerfile
 volumes:
   2ofClubsVolume:
   2ofClubsRedis:
