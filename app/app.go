@@ -118,7 +118,7 @@ func (app *App) setRoutes() {
 	app.Post("/users/{username}/clubs/{cid:[0-9]+}/swipe", app.Handle(handler.SwipeClub, true))
 	app.Post("/users/{username}/clubs/{cid:[0-9]+}/unswipe", app.Handle(handler.UnSwipeClub, true))
 	app.Get("/users/{username}/clubs/swipe", app.Handle(handler.GetUserSwipedClubs, true))
-	app.Get("/users/{username}/clubs", app.Handle(handler.GetClubs, true))
+	app.Post("/users/{username}/clubs", app.Handle(handler.GetClubs, true))
 
 	// Tag Routes
 	app.Get("/tags", app.Handle(handler.GetTags, false))
