@@ -10,6 +10,7 @@ services:
       - backend
     volumes:
       - 2ofClubsRedis:/data
+    command: redis-server --requirepass password
   db:
     image: postgres
     container_name: 2ofClubsDB
@@ -25,8 +26,11 @@ services:
     volumes:
       - 2ofClubsVolume:/var/lib/postgresql/data
   app:
-    container_name: 2ofClubsServer
     image: 2ofclubsapp/server
+    container_name: 2ofClubsServer
+#    build:
+#      context: ./
+#      dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
       - db
@@ -42,9 +46,6 @@ services:
     volumes:
       - 2ofClubsPhotoStorage:/2ofClubsServer/images
     command: go run main.go
-    #    build:
-    #      context: ./
-    #      dockerfile: Dockerfile
 volumes:
   2ofClubsVolume:
   2ofClubsRedis:
