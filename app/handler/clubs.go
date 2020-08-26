@@ -40,7 +40,6 @@ func GetClubs(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Reque
 	if len(activeTags) != 0 {
 		for _, c := range allClubs {
 			loadClubData(db, &c)
-			fmt.Println(c.Hosts)
 			set := false
 			for _, tag := range c.Sets {
 				if tagInSlice(tag.Name, activeTags) && !set {
@@ -54,9 +53,6 @@ func GetClubs(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Reque
 			loadClubData(db, &c)
 			clubsWithTag = append(clubsWithTag, c)
 		}
-	}
-	for _, c := range clubsWithTag {
-		fmt.Println(c.Name)
 	}
 	res := db.Table(model.UserTable).Preload(model.SwipedColumn).Find(user)
 	if res.Error != nil {
