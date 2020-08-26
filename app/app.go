@@ -115,9 +115,9 @@ func (app *App) setRoutes() {
 	app.Post("/resetpassword/{username}", app.Handle(handler.RequestResetUserPassword, false))  // Done
 	app.Post("/resetpassword/{username}/{token}", app.Handle(handler.ResetUserPassword, false)) // Done
 	app.Post("/changePassword/users/{username}", app.Handle(handler.UpdateUserPassword, true))  // Done
-	app.Post("/clubs/{cid:[0-9]+}/favourite", app.Handle(handler.FavouriteClub, true))          // Done
-	app.Post("/clubs/{cid:[0-9]+}/unfavourite", app.Handle(handler.UnfavouriteClub, true))      // Done
-
+	app.Post("/users/{username}/clubs/{cid:[0-9]+}/swipe", app.Handle(handler.SwipeClub, true))                  // Done
+	app.Post("/users/{username}/clubs/{cid:[0-9]+}/unswipe", app.Handle(handler.UnSwipeClub, true))                // Done
+	app.Get("/users/{username}/clubs/swipe", app.Handle(handler.GetUserSwipedClubs, true))      // Done
 	// Tag Routes
 	app.Get("/tags", app.Handle(handler.GetTags, false))               // Done
 	app.Get("/tags/active", app.Handle(handler.GetActiveTags, false))  // Done

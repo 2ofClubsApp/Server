@@ -342,13 +342,42 @@ func generateEmailTemplate(user *model.User, h hermes.Hermes, outputFileName str
 	return nil
 }
 
-// FavouriteClub adds the club to a users favourite club list (i.e. The user is interested in this club)
-func FavouriteClub(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+// GetUserSwipedClubs obtains all clubs that a user has swiped (i.e. the clubs that a user has favourited)
+func GetUserSwipedClubs(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+	user := model.NewUser()
+	uname := strings.ToLower(getVar(r, model.UsernameVar))
+	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, uname, user)
+	claims := GetTokenClaims(ExtractToken(r))
+	tokenUname := fmt.Sprintf("%v", claims["sub"])
+	if uname != tokenUname {
+		s.Message = http.StatusText(http.StatusForbidden)
+		return http.StatusForbidden, nil
+	}
+	if !userExists {
+		s.Message = status.UserNotFound
+		return http.StatusNotFound, nil
+	}
+	res := db.Table(model.UserTable).Preload(model.SwipedColumn).Find(user)
+	if res.Error != nil {
+		return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+	}
+	clubsSwiped := []model.ClubBaseInfo{}
+	for _, u := range user.Swiped {
+		clubsSwiped = append(clubsSwiped, u.DisplayBaseClubInfo())
+	}
+	s.Code = status.SuccessCode
+	s.Message = status.GetAllClubsSwipedSuccess
+	s.Data = clubsSwiped
+	return http.StatusOK, nil
+}
+
+// SwipeClub adds the club to a users favourite club list (i.e. The user is interested in this club)
+func SwipeClub(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return manageSwipe(db, r, model.OpAdd, s)
 }
 
-// UnfavouriteClub removes the club from the users favourite club list
-func UnfavouriteClub(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+// UnSwipeClub removes the club from the users favourite club list
+func UnSwipeClub(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	return manageSwipe(db, r, model.OpRemove, s)
 }
 
@@ -359,10 +388,14 @@ func manageSwipe(db *gorm.DB, r *http.Request, op string, s *status.Status) (int
 	club := model.NewClub()
 	user := model.NewUser()
 	claims := GetTokenClaims(ExtractToken(r))
-	uname := fmt.Sprintf("%v", claims["sub"])
+	tokenUname := fmt.Sprintf("%v", claims["sub"])
+	uname := getVar(r, model.UsernameVar)
 	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, cid, club)
 	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, uname, user)
-
+	if tokenUname != uname {
+		s.Message = http.StatusText(http.StatusForbidden)
+		return http.StatusForbidden, nil
+	}
 	if !clubExists {
 		s.Message = status.ClubNotFound
 		return http.StatusNotFound, nil
@@ -375,15 +408,15 @@ func manageSwipe(db *gorm.DB, r *http.Request, op string, s *status.Status) (int
 	case model.OpAdd:
 		err := db.Model(user).Association(model.SwipedColumn).Append(club)
 		if err != nil {
-			return http.StatusInternalServerError, fmt.Errorf("unable to favourite club")
+			return http.StatusInternalServerError, fmt.Errorf("unable to swipe club")
 		}
-		s.Message = status.ClubFavouriteSuccess
+		s.Message = status.ClubSwipeSuccess
 	case model.OpRemove:
 		err := db.Model(user).Association(model.SwipedColumn).Delete(club)
 		if err != nil {
-			return http.StatusInternalServerError, fmt.Errorf("unable to unfavourite club")
+			return http.StatusInternalServerError, fmt.Errorf("unable to unswipe club")
 		}
-		s.Message = status.ClubUnfavouriteSuccess
+		s.Message = status.ClubUnswipeSuccess
 	}
 	s.Code = status.SuccessCode
 	return http.StatusOK, nil
