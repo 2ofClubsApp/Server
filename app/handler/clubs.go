@@ -15,7 +15,8 @@ import (
 	"strings"
 )
 
-// GetClubs returns all of the clubs that are
+// GetClubs returns all tag filtered non-swiped clubs
+// Note: If all of the tags supplied are invalid or an empty list is given, the tag filter is not applied
 func GetClubs(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
 	uname := getVar(r, model.UsernameVar)
 	user := model.NewUser()
