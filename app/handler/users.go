@@ -81,20 +81,32 @@ func getUserInfo(db *gorm.DB, r *http.Request, infoType string, s *status.Status
 		userDisplay := user.DisplayAllInfo()
 		res := db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
 		if res.Error != nil {
-			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+			return http.StatusInternalServerError, fmt.Errorf("unable to load user manages club")
 		}
 		res = db.Table(model.UserTable).Preload(model.ChoosesColumn).Find(user)
 		if res.Error != nil {
-			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+			return http.StatusInternalServerError, fmt.Errorf("unable to load user chooses tag")
 
 		}
 		res = db.Table(model.UserTable).Preload(model.AttendsColumn).Find(user)
 		if res.Error != nil {
-			return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+			return http.StatusInternalServerError, fmt.Errorf("unable to load user event attends")
+		}
+		res = db.Table(model.UserTable).Preload(model.SwipedColumn).Find(user)
+		if res.Error != nil {
+			return http.StatusInternalServerError, fmt.Errorf("unable to load club swipes")
 		}
 		userDisplay.Manages = getManages(db, user)
 		userDisplay.Tags = filterTags(user.Chooses)
 		userDisplay.Attends = user.Attends
+		swipedClubs := []model.Club{}
+		for _, c := range user.Swiped {
+			if loadClubData(db, &c) != nil {
+				return http.StatusInternalServerError, fmt.Errorf("unable to load club data")
+			}
+			swipedClubs = append(swipedClubs, c)
+		}
+		userDisplay.Swiped = swipedClubs
 		s.Data = userDisplay
 	case model.AllUserClubsManage:
 		res := db.Table(model.UserTable).Preload(model.ManagesColumn).Find(user)
