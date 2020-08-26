@@ -54,6 +54,8 @@ const (
 
 // User & Club status messages
 const (
+	ClubFavouriteSuccess       = "successfully favourited club"
+	ClubUnfavouriteSuccess     = "successfully unfavourited club"
 	ClubPromoteSuccess         = "successfully promoted new owner"
 	ClubPromoteSelfFailure     = "you can't promote yourself to be the club owner if you're already the owner"
 	ClubPromoteOwnerFailure    = "you must be the owner of the club in order to promote a new owner"

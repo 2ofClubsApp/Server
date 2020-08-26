@@ -341,3 +341,50 @@ func generateEmailTemplate(user *model.User, h hermes.Hermes, outputFileName str
 	}
 	return nil
 }
+
+// FavouriteClub adds the club to a users favourite club list (i.e. The user is interested in this club)
+func FavouriteClub(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+	return manageSwipe(db, r, model.OpAdd, s)
+}
+
+// UnfavouriteClub removes the club from the users favourite club list
+func UnfavouriteClub(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
+	return manageSwipe(db, r, model.OpRemove, s)
+}
+
+// Helper function for FavouriteClub and Unfavourite Club
+// Adds or removes a club from a users favourite list respectively
+func manageSwipe(db *gorm.DB, r *http.Request, op string, s *status.Status) (int, error) {
+	cid := getVar(r, model.ClubIDVar)
+	club := model.NewClub()
+	user := model.NewUser()
+	claims := GetTokenClaims(ExtractToken(r))
+	uname := fmt.Sprintf("%v", claims["sub"])
+	clubExists := IsSingleRecordActive(db, model.ClubTable, model.IDColumn, cid, club)
+	userExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, uname, user)
+
+	if !clubExists {
+		s.Message = status.ClubNotFound
+		return http.StatusNotFound, nil
+	}
+	if !userExists {
+		s.Message = status.UserNotFound
+		return http.StatusNotFound, nil
+	}
+	switch op {
+	case model.OpAdd:
+		err := db.Model(user).Association(model.SwipedColumn).Append(club)
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("unable to favourite club")
+		}
+		s.Message = status.ClubFavouriteSuccess
+	case model.OpRemove:
+		err := db.Model(user).Association(model.SwipedColumn).Delete(club)
+		if err != nil {
+			return http.StatusInternalServerError, fmt.Errorf("unable to unfavourite club")
+		}
+		s.Message = status.ClubUnfavouriteSuccess
+	}
+	s.Code = status.SuccessCode
+	return http.StatusOK, nil
+}
