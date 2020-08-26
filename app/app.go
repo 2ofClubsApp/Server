@@ -106,18 +106,20 @@ func (app *App) setRoutes() {
 	app.Get("/clubs/{cid:[0-9]+}/preview", app.Handle(handler.GetClubPreview, true)) // Done
 
 	// User Routes
-	app.Get("/users/{username}", app.Handle(handler.GetUser, true))                             // Done
-	app.Post("/users/{username}/tags", app.Handle(handler.UpdateUserTags, true))                // Done
-	app.Get("/users/{username}/manages", app.Handle(handler.GetUserClubsManage, true))          // Done
-	app.Get("/users/{username}/attends", app.Handle(handler.GetUserEventsAttend, true))         // Done
-	app.Post("/events/{eid:[0-9]+}/attend", app.Handle(handler.AddUserAttendsEvent, true))      // Done
-	app.Post("/events/{eid:[0-9]+}/unattend", app.Handle(handler.RemoveUserAttendsEvent, true)) // Done
-	app.Post("/resetpassword/{username}", app.Handle(handler.RequestResetUserPassword, false))  // Done
-	app.Post("/resetpassword/{username}/{token}", app.Handle(handler.ResetUserPassword, false)) // Done
-	app.Post("/changePassword/users/{username}", app.Handle(handler.UpdateUserPassword, true))  // Done
-	app.Post("/users/{username}/clubs/{cid:[0-9]+}/swipe", app.Handle(handler.SwipeClub, true))                  // Done
-	app.Post("/users/{username}/clubs/{cid:[0-9]+}/unswipe", app.Handle(handler.UnSwipeClub, true))                // Done
-	app.Get("/users/{username}/clubs/swipe", app.Handle(handler.GetUserSwipedClubs, true))      // Done
+	app.Get("/users/{username}", app.Handle(handler.GetUser, true))                                 // Done
+	app.Post("/users/{username}/tags", app.Handle(handler.UpdateUserTags, true))                    // Done
+	app.Get("/users/{username}/manages", app.Handle(handler.GetUserClubsManage, true))              // Done
+	app.Get("/users/{username}/attends", app.Handle(handler.GetUserEventsAttend, true))             // Done
+	app.Post("/events/{eid:[0-9]+}/attend", app.Handle(handler.AddUserAttendsEvent, true))          // Done
+	app.Post("/events/{eid:[0-9]+}/unattend", app.Handle(handler.RemoveUserAttendsEvent, true))     // Done
+	app.Post("/resetpassword/{username}", app.Handle(handler.RequestResetUserPassword, false))      // Done
+	app.Post("/resetpassword/{username}/{token}", app.Handle(handler.ResetUserPassword, false))     // Done
+	app.Post("/changePassword/users/{username}", app.Handle(handler.UpdateUserPassword, true))      // Done
+	app.Post("/users/{username}/clubs/{cid:[0-9]+}/swipe", app.Handle(handler.SwipeClub, true))     // Done
+	app.Post("/users/{username}/clubs/{cid:[0-9]+}/unswipe", app.Handle(handler.UnSwipeClub, true)) // Done
+	app.Get("/users/{username}/clubs/swipe", app.Handle(handler.GetUserSwipedClubs, true))          // Done
+	app.Get("/users/{username}/clubs", app.Handle(handler.GetClubs, true))                          // Done
+
 	// Tag Routes
 	app.Get("/tags", app.Handle(handler.GetTags, false))               // Done
 	app.Get("/tags/active", app.Handle(handler.GetActiveTags, false))  // Done
@@ -137,7 +139,6 @@ func (app *App) setRoutes() {
 	app.Post("/clubs/{cid:[0-9]+}/leave", app.Handle(handler.LeaveClub, true))                       // Done
 	app.Post("/clubs/{cid:[0-9]+}/promote/{username}", app.Handle(handler.PromoteOwner, true))       // Done
 	app.Post("/clubs/{cid:[0-9]+}/tags", app.Handle(handler.UpdateClubTags, true))                   // Done
-	app.Get("/clubs", app.Handle(handler.GetClubs, false))                                           // In-Progress
 	app.Get("/clubs/{cid:[0-9]+}/events", app.Handle(handler.GetClubEvents, false))                  // Done
 	app.Post("/clubs/{cid:[0-9]+}/events", app.Handle(handler.CreateClubEvent, true))                // Done
 	app.Post("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.UpdateClubEvent, true))   // Done

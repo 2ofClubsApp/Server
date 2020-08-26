@@ -18,6 +18,7 @@ type UserDisplay struct {
 	Manages []*ManagesDisplay `json:"manages"`
 	Tags    []Tag             `json:"tags"`
 	Attends []Event           `json:"attends"`
+	Swiped  []Club            `json:"swiped"`
 }
 
 // UserBaseInfo - Displaying basic user data

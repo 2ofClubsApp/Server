@@ -359,7 +359,7 @@ func GetUserSwipedClubs(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *
 	}
 	res := db.Table(model.UserTable).Preload(model.SwipedColumn).Find(user)
 	if res.Error != nil {
-		return http.StatusInternalServerError, fmt.Errorf(http.StatusText(http.StatusInternalServerError))
+		return http.StatusInternalServerError, fmt.Errorf("unable to load swiped clubs")
 	}
 	clubsSwiped := []model.ClubBaseInfo{}
 	for _, u := range user.Swiped {

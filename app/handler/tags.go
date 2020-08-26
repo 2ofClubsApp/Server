@@ -123,7 +123,7 @@ func GetActiveTags(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, _ *http.
 func extractTags(db *gorm.DB, r *http.Request) []model.Tag {
 	var chooses []model.Tag
 	payload := map[string][]string{"Tags": {}}
-	extractBody(r, &payload) // Error check here later
+	extractBody(r, &payload)
 	for _, name := range payload["Tags"] {
 		tag := model.NewTag()
 		if SingleRecordExists(db, model.TagTable, model.NameColumn, name, tag) {

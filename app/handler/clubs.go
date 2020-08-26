@@ -15,34 +15,80 @@ import (
 	"strings"
 )
 
-// GetClubs - In-Progress
+// GetClubs returns all of the clubs that are
 func GetClubs(db *gorm.DB, _ *redis.Client, _ http.ResponseWriter, r *http.Request, s *status.Status) (int, error) {
-	type Club struct {
-		clubId int
+	uname := getVar(r, model.UsernameVar)
+	user := model.NewUser()
+	unameExists := IsSingleRecordActive(db, model.UserTable, model.UsernameColumn, uname, user)
+	claims := GetTokenClaims(ExtractToken(r))
+	tokenUname := fmt.Sprintf("%v", claims["sub"])
+	if uname != tokenUname {
+		s.Message = http.StatusText(http.StatusForbidden)
+		return http.StatusForbidden, nil
 	}
-	var clubs []model.Club
-	//clubs := []model.Club{}
-	//s.Message = status.ClubsFound
+	if !unameExists {
+		s.Message = status.UserNotFound
+		return http.StatusNotFound, nil
+	}
 	activeTags := flatten(filterTags(extractTags(db, r)))
-	fmt.Println(activeTags)
-	db.Table(model.ClubTagTable).Where("tag_name IN ?", activeTags).Find(&clubs)
-
-	//db.Joins("JOIN club_tag ON club_tag.club_id=club.id").
-	//	Joins("JOIN tag ON club_tag.tag_name=tag.name").
-	//	Where("tag.name IN ?", activeTags).
-	//	Distinct("club.name").
-	//	Find(&clubs)
-	//db.Joins("club").Joins("club_tag").Joins("tags").Find(&clubs, "club.sets IN ?", activeTags)
-	//db.Raw("SELECT DISTINCT c.name FROM club AS c NATURAL JOIN club_tag AS ct WHERE tag.name IN ?", activeTags).Scan(&clubs)
-	//db.Raw(" SELECT * FROM club_tag WHERE tag_name IN ?", activeTags).Find(&clubs)
-	db.Raw("Select club.id From club NATURAL JOIN club_tag Where club_tag.tag_name IN ?", activeTags).Find(&clubs)
-	//fmt.Println(res.RowsAffected)
-	//fmt.Println(res.Error)
-	fmt.Println(clubs)
-	for _, r := range clubs {
-		fmt.Println(r.Name)
+	allClubs := []model.Club{}
+	clubsWithTag := []model.Club{}
+	clubsWithTagNonFavourited := []model.Club{}
+	if db.Where(model.ActiveColumn+"= ?", true).Find(&allClubs).Error != nil {
+		return http.StatusInternalServerError, fmt.Errorf("unable to obtain all active clubs")
 	}
-	return http.StatusForbidden, nil
+	if len(activeTags) != 0 {
+		for _, c := range allClubs {
+			loadClubData(db, &c)
+			fmt.Println(c.Hosts)
+			set := false
+			for _, tag := range c.Sets {
+				if tagInSlice(tag.Name, activeTags) && !set {
+					clubsWithTag = append(clubsWithTag, c)
+					set = true
+				}
+			}
+		}
+	} else {
+		for _, c := range allClubs {
+			loadClubData(db, &c)
+			clubsWithTag = append(clubsWithTag, c)
+		}
+	}
+	for _, c := range clubsWithTag {
+		fmt.Println(c.Name)
+	}
+	res := db.Table(model.UserTable).Preload(model.SwipedColumn).Find(user)
+	if res.Error != nil {
+		return http.StatusInternalServerError, fmt.Errorf("unable to load user swiped clubs")
+	}
+	for _, filteredTagClub := range clubsWithTag {
+		swiped := false
+		for _, club := range user.Swiped {
+			if club.ID == filteredTagClub.ID {
+				swiped = true
+				break
+			}
+		}
+		if !swiped {
+			clubsWithTagNonFavourited = append(clubsWithTagNonFavourited, filteredTagClub)
+		}
+	}
+	s.Code = status.SuccessCode
+	s.Message = status.GetFilteredNonSwipedClubsSuccess
+	s.Data = clubsWithTagNonFavourited
+	return http.StatusOK, nil
+}
+
+// Returns true if the tagName is in the slice, false otherwise
+// Helper function for GetClubs
+func tagInSlice(tag string, activeTags []string) bool {
+	for _, tagName := range activeTags {
+		if tag == tagName {
+			return true
+		}
+	}
+	return false
 }
 
 // UpdateClub - Update club with new information
