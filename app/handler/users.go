@@ -3,8 +3,8 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/2ofClubsApp/2ofClubs-Server/app/model"
-	"github.com/2ofClubsApp/2ofClubs-Server/app/status"
+	"github.com/2-of-clubs/2ofclubs-server/app/model"
+	"github.com/2-of-clubs/2ofclubs-server/app/status"
 	"github.com/go-playground/validator"
 	"github.com/go-redis/redis/v8"
 	"github.com/matcornic/hermes/v2"

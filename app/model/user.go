@@ -10,7 +10,6 @@ type User struct {
 	IsAdmin      bool    `json:"-"`
 	IsApproved   bool    `json:"-"`
 	Swiped       []Club  `gorm:"many2many:user_swipe_club;" json:"-"`
-	Beans        string
 }
 
 // UserDisplay - Displaying public user data
