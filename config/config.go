@@ -37,7 +37,7 @@ func GetDBConfig() *DBConfig {
 func GetRedisConfig() *RedisConfig {
 	return &RedisConfig{
 		Addr:     os.Getenv("REDIS_ADDR"),
-		Password: "",
+		Password: os.Getenv("REDIS_PASS"),
 		DB:       0,
 	}
 }
