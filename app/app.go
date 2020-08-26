@@ -90,63 +90,63 @@ func (app *App) Initialize(dbConfig *config.DBConfig, redisConfig *config.RedisC
 // Set all API endpoints
 func (app *App) setRoutes() {
 	// Signup Route
-	app.Post("/signup", app.Handle(handler.SignUp, false)) // Done
+	app.Post("/signup", app.Handle(handler.SignUp, false))
 	// Logout Route
-	app.Post("/logout/{username}", app.Handle(handler.Logout, false)) // Done
+	app.Post("/logout/{username}", app.Handle(handler.Logout, false))
 	// Login Route
-	app.Post("/login", app.Handle(handler.Login, false)) // Done
+	app.Post("/login", app.Handle(handler.Login, false))
 
 	// Refresh Route
 	app.Post("/refreshToken", app.Handle(handler.RefreshToken, false))
 	// Admin Route
-	app.Post("/toggle/users/{username}", app.Handle(handler.ToggleUser, true))       // Done
-	app.Post("/toggle/clubs/{cid:[0-9]+}", app.Handle(handler.ToggleClub, true))     // Done
-	app.Get("/users/toggle", app.Handle(handler.GetToggleUser, true))                // Done
-	app.Get("/clubs/toggle", app.Handle(handler.GetToggleClub, true))                // Done
-	app.Get("/clubs/{cid:[0-9]+}/preview", app.Handle(handler.GetClubPreview, true)) // Done
+	app.Post("/toggle/users/{username}", app.Handle(handler.ToggleUser, true))
+	app.Post("/toggle/clubs/{cid:[0-9]+}", app.Handle(handler.ToggleClub, true))
+	app.Get("/users/toggle", app.Handle(handler.GetToggleUser, true))
+	app.Get("/clubs/toggle", app.Handle(handler.GetToggleClub, true))
+	app.Get("/clubs/{cid:[0-9]+}/preview", app.Handle(handler.GetClubPreview, true))
 
 	// User Routes
-	app.Get("/users/{username}", app.Handle(handler.GetUser, true))                                 // Done
-	app.Post("/users/{username}/tags", app.Handle(handler.UpdateUserTags, true))                    // Done
-	app.Get("/users/{username}/manages", app.Handle(handler.GetUserClubsManage, true))              // Done
-	app.Get("/users/{username}/attends", app.Handle(handler.GetUserEventsAttend, true))             // Done
-	app.Post("/events/{eid:[0-9]+}/attend", app.Handle(handler.AddUserAttendsEvent, true))          // Done
-	app.Post("/events/{eid:[0-9]+}/unattend", app.Handle(handler.RemoveUserAttendsEvent, true))     // Done
-	app.Post("/resetpassword/{username}", app.Handle(handler.RequestResetUserPassword, false))      // Done
-	app.Post("/resetpassword/{username}/{token}", app.Handle(handler.ResetUserPassword, false))     // Done
-	app.Post("/changePassword/users/{username}", app.Handle(handler.UpdateUserPassword, true))      // Done
-	app.Post("/users/{username}/clubs/{cid:[0-9]+}/swipe", app.Handle(handler.SwipeClub, true))     // Done
-	app.Post("/users/{username}/clubs/{cid:[0-9]+}/unswipe", app.Handle(handler.UnSwipeClub, true)) // Done
-	app.Get("/users/{username}/clubs/swipe", app.Handle(handler.GetUserSwipedClubs, true))          // Done
-	app.Get("/users/{username}/clubs", app.Handle(handler.GetClubs, true))                          // Done
+	app.Get("/users/{username}", app.Handle(handler.GetUser, true))
+	app.Post("/users/{username}/tags", app.Handle(handler.UpdateUserTags, true))
+	app.Get("/users/{username}/manages", app.Handle(handler.GetUserClubsManage, true))
+	app.Get("/users/{username}/attends", app.Handle(handler.GetUserEventsAttend, true))
+	app.Post("/events/{eid:[0-9]+}/attend", app.Handle(handler.AddUserAttendsEvent, true))
+	app.Post("/events/{eid:[0-9]+}/unattend", app.Handle(handler.RemoveUserAttendsEvent, true))
+	app.Post("/resetpassword/{username}", app.Handle(handler.RequestResetUserPassword, false))
+	app.Post("/resetpassword/{username}/{token}", app.Handle(handler.ResetUserPassword, false))
+	app.Post("/changePassword/users/{username}", app.Handle(handler.UpdateUserPassword, true))
+	app.Post("/users/{username}/clubs/{cid:[0-9]+}/swipe", app.Handle(handler.SwipeClub, true))
+	app.Post("/users/{username}/clubs/{cid:[0-9]+}/unswipe", app.Handle(handler.UnSwipeClub, true))
+	app.Get("/users/{username}/clubs/swipe", app.Handle(handler.GetUserSwipedClubs, true))
+	app.Get("/users/{username}/clubs", app.Handle(handler.GetClubs, true))
 
 	// Tag Routes
-	app.Get("/tags", app.Handle(handler.GetTags, false))               // Done
-	app.Get("/tags/active", app.Handle(handler.GetActiveTags, false))  // Done
-	app.Post("/tags", app.Handle(handler.CreateTag, true))             // Done
-	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true)) // Done
+	app.Get("/tags", app.Handle(handler.GetTags, false))
+	app.Get("/tags/active", app.Handle(handler.GetActiveTags, false))
+	app.Post("/tags", app.Handle(handler.CreateTag, true))
+	app.Post("/upload/tags", app.Handle(handler.UploadTagsList, true))
 	app.Post("/upload/photos/clubs/{cid:[0-9]+}", app.Handle(handler.UploadClubPhoto, true))
 	app.Get("/photos/clubs/{cid:[0-9]+}", app.Handle(handler.GetClubPhoto, false))
-	app.Post("/toggle/tags/{tagName}", app.Handle(handler.ToggleTag, true)) // Done
+	app.Post("/toggle/tags/{tagName}", app.Handle(handler.ToggleTag, true))
 
 	// Club routes
-	app.Post("/clubs", app.Handle(handler.CreateClub, true))                                         // Done
-	app.Post("/clubs/{cid:[0-9]+}", app.Handle(handler.UpdateClub, true))                            // Done
-	app.Get("/clubs/{cid:[0-9]+}", app.Handle(handler.GetClub, false))                               // Done
-	app.Get("/clubs/{cid:[0-9]+}/manages", app.Handle(handler.GetClubManagers, true))                // Done
-	app.Post("/clubs/{cid:[0-9]+}/manages/{username}", app.Handle(handler.AddManager, true))         // Done
-	app.Delete("/clubs/{cid:[0-9]+}/manages/{username}", app.Handle(handler.RemoveManager, true))    // Done
-	app.Post("/clubs/{cid:[0-9]+}/leave", app.Handle(handler.LeaveClub, true))                       // Done
-	app.Post("/clubs/{cid:[0-9]+}/promote/{username}", app.Handle(handler.PromoteOwner, true))       // Done
-	app.Post("/clubs/{cid:[0-9]+}/tags", app.Handle(handler.UpdateClubTags, true))                   // Done
-	app.Get("/clubs/{cid:[0-9]+}/events", app.Handle(handler.GetClubEvents, false))                  // Done
-	app.Post("/clubs/{cid:[0-9]+}/events", app.Handle(handler.CreateClubEvent, true))                // Done
-	app.Post("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.UpdateClubEvent, true))   // Done
-	app.Delete("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.DeleteClubEvent, true)) // Done
+	app.Post("/clubs", app.Handle(handler.CreateClub, true))
+	app.Post("/clubs/{cid:[0-9]+}", app.Handle(handler.UpdateClub, true))
+	app.Get("/clubs/{cid:[0-9]+}", app.Handle(handler.GetClub, false))
+	app.Get("/clubs/{cid:[0-9]+}/manages", app.Handle(handler.GetClubManagers, true))
+	app.Post("/clubs/{cid:[0-9]+}/manages/{username}", app.Handle(handler.AddManager, true))
+	app.Delete("/clubs/{cid:[0-9]+}/manages/{username}", app.Handle(handler.RemoveManager, true))
+	app.Post("/clubs/{cid:[0-9]+}/leave", app.Handle(handler.LeaveClub, true))
+	app.Post("/clubs/{cid:[0-9]+}/promote/{username}", app.Handle(handler.PromoteOwner, true))
+	app.Post("/clubs/{cid:[0-9]+}/tags", app.Handle(handler.UpdateClubTags, true))
+	app.Get("/clubs/{cid:[0-9]+}/events", app.Handle(handler.GetClubEvents, false))
+	app.Post("/clubs/{cid:[0-9]+}/events", app.Handle(handler.CreateClubEvent, true))
+	app.Post("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.UpdateClubEvent, true))
+	app.Delete("/clubs/{cid:[0-9]+}/events/{eid:[0-9]+}", app.Handle(handler.DeleteClubEvent, true))
 
 	// Event Routes
-	app.Get("/events", app.Handle(handler.GetAllEvents, false))          // Done
-	app.Get("/events/{eid:[0-9]+}", app.Handle(handler.GetEvent, false)) // Done
+	app.Get("/events", app.Handle(handler.GetAllEvents, false))
+	app.Get("/events/{eid:[0-9]+}", app.Handle(handler.GetEvent, false))
 	// 404 Route
 	app.router.NotFoundHandler = notFound() // Done
 }
