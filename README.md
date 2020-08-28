@@ -72,6 +72,12 @@ You can contact us through these channels:
 - If you're submitting a feature request or PR, please follow their associated templates
 
 For any code that can be reworked/improved upon, feel free to submit a PR
+
+## Honorable mentions
+Thank you so much for your help and guidance! We couldn't have done this without you!
+
+[Nicholas Hawkes](https://github.com/hawkesnc) and [Michael Liut](https://github.com/MichaelLiut)
+
 ## License
 The 2ofClubs-Server is [MIT licensed](./LICENSE)
 
