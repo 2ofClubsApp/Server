@@ -55,7 +55,7 @@ You can check out our full [installation guide](https://2ofclubs.app/docs/instal
 ### Configuration
 * By default, the 2ofClubs-Server is listening and serving on port `8080`. This can be changed in the `docker-compose.yaml` file.
 * App environemnt variables can be set in `app.env`
-* Database environment variable can be set in `db.env`
+* Database environment variables can be set in `db.env`
 
 ## Documentation
 Our documentation can be found [here](https://2ofclubs.app/docs)
