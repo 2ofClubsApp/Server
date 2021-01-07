@@ -161,17 +161,17 @@ func (app *App) Run(port string) {
 
 // Post - Setting a POST route and its associated handler
 func (app *App) Post(path string, f routeHandler) {
-	app.router.HandleFunc(path, f).Schemes("https").Methods(http.MethodPost)
+	app.router.HandleFunc(path, f).Methods(http.MethodPost)
 }
 
 // Get - Setting a GET route and its associated handler
 func (app *App) Get(path string, f routeHandler) {
-	app.router.HandleFunc(path, f).Schemes("https").Methods(http.MethodGet)
+	app.router.HandleFunc(path, f).Methods(http.MethodGet)
 }
 
 // Delete - Setting a Delete route and its associated handler
 func (app *App) Delete(path string, f routeHandler) {
-	app.router.HandleFunc(path, f).Schemes("https").Methods(http.MethodDelete)
+	app.router.HandleFunc(path, f).Methods(http.MethodDelete)
 }
 
 // Handle - Wrapper function to return a base Handler function

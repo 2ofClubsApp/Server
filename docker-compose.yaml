@@ -26,11 +26,11 @@ services:
     volumes:
       - 2ofClubsVolume:/var/lib/postgresql/data
   app:
-    image: 2ofclubsapp/server
+#    image: 2ofclubsapp/server
     container_name: 2ofClubsServer
-#    build:
-#      context: ./
-#      dockerfile: Dockerfile
+    build:
+      context: ./
+      dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
       - db
